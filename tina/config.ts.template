@@ -1,0 +1,73 @@
+import { defineConfig } from 'tinacms';
+
+export default defineConfig({
+  branch: process.env.TINA_BRANCH || process.env.VERCEL_GIT_COMMIT_REF || 'main',
+  clientId: process.env.NEXT_PUBLIC_TINA_CLIENT_ID || '',
+  token: process.env.TINA_TOKEN || '',
+  build: {
+    outputFolder: 'admin',
+    publicFolder: 'public',
+  },
+  media: {
+    tina: {
+      mediaRoot: 'uploads',
+      publicFolder: 'public',
+    },
+  },
+  schema: {
+    collections: [
+      {
+        name: 'project',
+        label: 'Projects',
+        path: 'content/projects',
+        format: 'mdx',
+        fields: [
+          {
+            type: 'string',
+            name: 'title',
+            label: 'Title',
+            isTitle: true,
+            required: true,
+          },
+          {
+            type: 'rich-text',
+            name: 'description',
+            label: 'Description',
+          },
+          {
+            type: 'string',
+            name: 'atmosphere',
+            label: 'Atmosphere',
+            required: true,
+            options: [
+              { value: 'music', label: 'Music (Kinetic)' },
+              { value: 'ocean', label: 'Ocean (Fluid)' },
+              { value: 'tech', label: 'Tech (Vector)' },
+            ],
+          },
+          {
+            type: 'image',
+            name: 'heroImage',
+            label: 'Hero Image',
+          },
+          {
+            type: 'string',
+            name: 'techStack',
+            label: 'Tech Stack',
+            list: true,
+          },
+          {
+            type: 'string',
+            name: 'externalLink',
+            label: 'External Link',
+          },
+          {
+            type: 'number',
+            name: 'sortOrder',
+            label: 'Sort Order',
+          },
+        ],
+      },
+    ],
+  },
+});
