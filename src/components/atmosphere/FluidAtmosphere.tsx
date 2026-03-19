@@ -1,69 +1,57 @@
 'use client';
 
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-const FILAMENT_COUNT = 80;
-
+const BAR_COUNT = 64;
 const BEAT_FREQ = 2.0;
 
 /**
  * PocketAtmosphere — Stage 2 (26–50% scroll)
  *
  * The Visceral: heat and kinetic energy of touring and live production.
- * UPDATED: Deeper saturation, more aggressive jitter, harder beat response,
- * flash bursts on the snare hit. Near OLED-black between beats.
+ * 3D waveform: 64 vertical bars in a horizontal array, driven by a
+ * traveling sine wave. Mouse Y modulates amplitude for hover interaction.
  */
 export function PocketAtmosphere() {
   const meshRef = useRef<THREE.InstancedMesh>(null);
-  const flashRef = useRef<THREE.Mesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
+  const mouseRef = useRef({ y: 0 });
+  const smoothMouseY = useRef(0);
 
-  const filamentData = useMemo(
+  useEffect(() => {
+    const handleMouse = (e: MouseEvent) => {
+      mouseRef.current.y = (e.clientY / window.innerHeight - 0.5) * 2;
+    };
+    window.addEventListener('mousemove', handleMouse, { passive: true });
+    return () => window.removeEventListener('mousemove', handleMouse);
+  }, []);
+
+  const barData = useMemo(
     () =>
-      Array.from({ length: FILAMENT_COUNT }, (_, i) => ({
-        x: (Math.random() - 0.5) * 28,
-        y: (Math.random() - 0.5) * 17,
-        z: -28 - i * 0.52,
-        length: 0.25 + Math.random() * 2.2,
-        radius: 0.014 + Math.random() * 0.028,
-        phase: Math.random() * Math.PI * 2,
-        driftSpeed: 0.05 + Math.random() * 0.18,
-        rotX: Math.random() * Math.PI,
-        rotZ: Math.random() * Math.PI,
-        beatWeight: 0.3 + Math.random() * 1.7,
-        jitterAmp: 0.06 + Math.random() * 0.14,
-        isHot: Math.random() > 0.7,
+      Array.from({ length: BAR_COUNT }, (_, i) => ({
+        xNorm: i / (BAR_COUNT - 1), // 0→1
+        x: ((i / (BAR_COUNT - 1)) - 0.5) * 32, // -16 → +16
+        phase: (i / BAR_COUNT) * Math.PI * 6, // initial wave phase
+        baseHeight: 0.08 + Math.random() * 0.04, // very thin at rest
+        width: 0.12 + Math.random() * 0.06,
       })),
     []
   );
 
-  const geometry = useMemo(() => new THREE.CylinderGeometry(1, 0.65, 1, 5), []);
+  const geometry = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
 
   const material = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: '#ff7700',
+        color: '#cc6600',
         emissive: '#ff4400',
-        emissiveIntensity: 0.6,
-        roughness: 0.05,
-        metalness: 0.35,
+        emissiveIntensity: 0.3,
+        roughness: 0.25,
+        metalness: 0.4,
         transparent: true,
         opacity: 0.7,
-      }),
-    []
-  );
-
-  const flashMat = useMemo(
-    () =>
-      new THREE.MeshBasicMaterial({
-        color: '#ff6600',
-        transparent: true,
-        opacity: 0,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
       }),
     []
   );
@@ -85,65 +73,32 @@ export function PocketAtmosphere() {
             ? 1
             : Math.max(0, 1 - (progress - 0.52) / 0.08);
 
-    material.opacity = visibility * 0.78;
+    material.opacity = visibility * 0.72;
 
+    // Smooth mouse
+    smoothMouseY.current += (mouseRef.current.y - smoothMouseY.current) * 0.06;
+    const hoverAmp = 0.35 + Math.abs(smoothMouseY.current) * 0.9;
+
+    // Beat pulse — only drives emissive, not position
     const rawBeat = Math.sin(time * Math.PI * BEAT_FREQ * 2);
     const beat = Math.pow(Math.max(0, rawBeat), 10);
+    material.emissiveIntensity = 0.25 + beat * 1.8;
 
-    const ghostBeat = Math.pow(Math.max(0, Math.sin(time * Math.PI * BEAT_FREQ * 2 + Math.PI)), 12) * 0.35;
+    // Traveling waveform
+    for (let i = 0; i < BAR_COUNT; i++) {
+      const d = barData[i];
 
-    const combinedBeat = Math.min(1, beat + ghostBeat);
+      // Multi-frequency waveform height
+      const wave1 = Math.sin(d.xNorm * Math.PI * 4 - time * 1.2) * 0.6;
+      const wave2 = Math.sin(d.xNorm * Math.PI * 8 - time * 2.1 + 1.0) * 0.25;
+      const wave3 = Math.sin(d.xNorm * Math.PI * 2.5 - time * 0.7 + 2.3) * 0.15;
+      const waveHeight = (wave1 + wave2 + wave3) * hoverAmp;
 
-    material.emissiveIntensity = 0.15 + combinedBeat * 2.65;
+      const barH = d.baseHeight + Math.abs(waveHeight);
 
-    const beatHue = beat > 0.5 ? 0.08 : 0;
-    material.emissive.setRGB(1.0 + beatHue, 0.27 + beat * 0.25, 0.0);
-
-    if (flashRef.current) {
-      flashMat.opacity = beat > 0.7 ? (beat - 0.7) * 1.2 * visibility : 0;
-    }
-
-    for (let i = 0; i < FILAMENT_COUNT; i++) {
-      const d = filamentData[i];
-
-      const driftY = Math.cos(time * d.driftSpeed + d.phase) * 1.1;
-      const driftX = Math.sin(time * d.driftSpeed * 0.7 + d.phase + 1.0) * 0.5;
-
-      const jitterSeed = d.phase + time * 47.0;
-      const jitterX = combinedBeat * d.beatWeight * d.jitterAmp *
-        Math.sin(jitterSeed * 13.37) * 2.5;
-      const jitterY = combinedBeat * d.beatWeight * d.jitterAmp *
-        Math.cos(jitterSeed * 7.91) * 2.5;
-
-      const kickX = beat > 0.6
-        ? Math.sign(d.x) * beat * d.beatWeight * 0.3
-        : 0;
-      const kickY = beat > 0.6
-        ? Math.sign(d.y) * beat * d.beatWeight * 0.2
-        : 0;
-
-      dummy.position.set(
-        d.x + driftX + jitterX + kickX,
-        d.y + driftY + jitterY + kickY,
-        d.z
-      );
-
-      const beatSwell = combinedBeat * d.beatWeight;
-      dummy.scale.set(
-        d.radius * (1 + beatSwell * 0.7),
-        d.length * (1 + beatSwell * 0.15),
-        d.radius * (1 + beatSwell * 0.7)
-      );
-
-      if (d.isHot) {
-        dummy.scale.multiplyScalar(1 + beat * 0.3);
-      }
-
-      dummy.rotation.set(
-        d.rotX + combinedBeat * d.beatWeight * 0.05,
-        0,
-        d.rotZ + combinedBeat * d.beatWeight * 0.03
-      );
+      dummy.position.set(d.x, waveHeight * 0.5, -32);
+      dummy.scale.set(d.width, barH, 0.06);
+      dummy.rotation.set(0, 0, 0);
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
     }
@@ -152,19 +107,10 @@ export function PocketAtmosphere() {
   });
 
   return (
-    <group>
-      <instancedMesh
-        ref={meshRef}
-        args={[geometry, material, FILAMENT_COUNT]}
-        frustumCulled={false}
-      />
-      <mesh
-        ref={flashRef}
-        position={[0, 0, -35]}
-        material={flashMat}
-      >
-        <planeGeometry args={[60, 40]} />
-      </mesh>
-    </group>
+    <instancedMesh
+      ref={meshRef}
+      args={[geometry, material, BAR_COUNT]}
+      frustumCulled={false}
+    />
   );
 }

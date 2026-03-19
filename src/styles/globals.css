@@ -166,3 +166,97 @@ body::after {
 .horizon-active .hud-text {
   color: #333333;
 }
+
+/* ── Airplane cursor (Horizon section) ──────────────────── */
+.cursor-airplane {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg transform='translate(16,16)'%3E%3Cpolygon points='0,-12 3,-2 0,0 -3,-2' fill='%23222' opacity='0.9'/%3E%3Cpolygon points='-10,2 0,-1 10,2 0,4' fill='%23222' opacity='0.85'/%3E%3Cpolygon points='-4,6 0,4 4,6 0,8' fill='%23222' opacity='0.8'/%3E%3C/g%3E%3C/svg%3E") 16 16, crosshair;
+}
+
+/* ── Cloud drift animation ───────────────────────────────── */
+@keyframes cloud-drift-1 {
+  from { transform: translateX(110vw); }
+  to   { transform: translateX(-110vw); }
+}
+@keyframes cloud-drift-2 {
+  from { transform: translateX(115vw); }
+  to   { transform: translateX(-115vw); }
+}
+@keyframes cloud-drift-3 {
+  from { transform: translateX(105vw); }
+  to   { transform: translateX(-105vw); }
+}
+@keyframes cloud-drift-4 {
+  from { transform: translateX(120vw); }
+  to   { transform: translateX(-120vw); }
+}
+
+.cloud-layer {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+/* ── Cyberspace data cascade ────────────────────────────── */
+@keyframes data-fall {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 0.8; }
+  100% { transform: translateY(110vh); opacity: 0; }
+}
+
+.data-cascade-column {
+  position: absolute;
+  top: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.05em;
+  color: #00ff88;
+  opacity: 0;
+  white-space: pre;
+  line-height: 1.4;
+  pointer-events: none;
+  animation: data-fall 1.6s ease-in forwards;
+}
+
+/* ── Social link beacon glow ────────────────────────────── */
+@keyframes beacon-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.0); }
+  50%       { box-shadow: 0 0 12px 3px rgba(255,255,255,0.15); }
+}
+
+.beacon-link {
+  animation: beacon-pulse 3s ease-in-out infinite;
+}
+
+.beacon-link:hover {
+  animation: none;
+  box-shadow: 0 0 16px 4px rgba(255,255,255,0.25) !important;
+}
+
+/* ── Portfolio card hover ───────────────────────────────── */
+.portfolio-card {
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.portfolio-card:hover {
+  border-color: rgba(136,136,136,0.5) !important;
+  background: rgba(0,255,136,0.03) !important;
+}
+
+.portfolio-card:hover .tech-tag {
+  color: #00ff88 !important;
+  opacity: 0.8 !important;
+}
+
+/* ── Gauge instrument ──────────────────────────────────── */
+.flight-gauge {
+  border: 1px solid rgba(68,68,68,0.4);
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(255,255,255,0.06), inset 0 0 8px rgba(0,0,0,0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.flight-gauge:hover {
+  box-shadow: 0 0 20px rgba(255,255,255,0.12), inset 0 0 8px rgba(0,0,0,0.1);
+}

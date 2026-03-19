@@ -5,6 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 const MODULE_COUNT = 14;
+const CLOUD_PUFF_COUNT = 24;
 
 export function EngineRoomAtmosphere() {
   const meshRef = useRef<THREE.InstancedMesh>(null);
@@ -83,13 +84,15 @@ export function EngineRoomAtmosphere() {
 /**
  * HorizonAtmosphere — Stage 4 (76–100% scroll)
  *
- * UPDATED: Two-stage mouse smoothing mimics PA-28 banking at cruise.
- * Aileron damping 0.025 + roll damping 0.04 = ~0.8s delay.
+ * Aviation: PA-28 banking horizon line + cloud puffs rushing past.
+ * Two-stage mouse smoothing mimics banking at cruise altitude.
  */
 export function HorizonAtmosphere() {
   const groupRef = useRef<THREE.Group>(null);
+  const cloudsRef = useRef<THREE.InstancedMesh>(null);
   const mouseRef = useRef({ x: 0, y: 0 });
   const smoothMouse = useRef({ x: 0, y: 0 });
+  const cloudDummy = useMemo(() => new THREE.Object3D(), []);
 
   useEffect(() => {
     const handleMouse = (e: MouseEvent) => {
@@ -151,6 +154,32 @@ export function HorizonAtmosphere() {
     return group;
   }, []);
 
+  // Cloud puff geometry and material
+  const cloudGeo = useMemo(() => new THREE.SphereGeometry(1, 6, 4), []);
+  const cloudMat = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        color: '#ffffff',
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+      }),
+    []
+  );
+
+  // Cloud puff data — clusters scattered around horizon Z zone
+  const cloudData = useMemo(
+    () =>
+      Array.from({ length: CLOUD_PUFF_COUNT }, (_, i) => ({
+        x: (Math.random() - 0.5) * 60,
+        y: (Math.random() - 0.5) * 12,
+        z: -75 - Math.random() * 25, // horizon Z range
+        scale: 3 + Math.random() * 9,
+        opacity: 0.06 + Math.random() * 0.10,
+      })),
+    []
+  );
+
   useFrame(() => {
     const scrollY = window.scrollY || 0;
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
@@ -171,6 +200,21 @@ export function HorizonAtmosphere() {
       m.opacity = visibility * 0.18;
     });
 
+    // Cloud opacity
+    cloudMat.opacity = visibility * 0.5;
+
+    // Update cloud instances
+    if (cloudsRef.current) {
+      for (let i = 0; i < CLOUD_PUFF_COUNT; i++) {
+        const d = cloudData[i];
+        cloudDummy.position.set(d.x, d.y, d.z);
+        cloudDummy.scale.setScalar(d.scale);
+        cloudDummy.updateMatrix();
+        cloudsRef.current.setMatrixAt(i, cloudDummy.matrix);
+      }
+      cloudsRef.current.instanceMatrix.needsUpdate = true;
+    }
+
     if (groupRef.current) {
       // PA-28 banking: two-stage smoothing
       const AILERON_DAMPING = 0.025;
@@ -190,10 +234,19 @@ export function HorizonAtmosphere() {
   });
 
   return (
-    <group ref={groupRef} position={[0, 0, -88]}>
-      <primitive object={horizonLine} />
-      <primitive object={ticks} />
-      <primitive object={wings} />
-    </group>
+    <>
+      {/* Cloud puffs — fixed in world space, camera flies through */}
+      <instancedMesh
+        ref={cloudsRef}
+        args={[cloudGeo, cloudMat, CLOUD_PUFF_COUNT]}
+        frustumCulled={false}
+      />
+      {/* Horizon reference group — mouse-driven banking */}
+      <group ref={groupRef} position={[0, 0, -88]}>
+        <primitive object={horizonLine} />
+        <primitive object={ticks} />
+        <primitive object={wings} />
+      </group>
+    </>
   );
 }

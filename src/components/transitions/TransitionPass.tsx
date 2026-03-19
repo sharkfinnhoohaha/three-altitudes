@@ -198,7 +198,7 @@ class TransitionEffectImpl extends Effect {
         ['uVelocity', new THREE.Uniform(0.0)],
         ['uMask', new THREE.Uniform(null)],
         ['uWipeProgress', new THREE.Uniform(0.0)],
-        ['uEdgeSoftness', new THREE.Uniform(0.18)],
+        ['uEdgeSoftness', new THREE.Uniform(0.09)],
         ['uMaskActive', new THREE.Uniform(0.0)],
       ]),
     });
