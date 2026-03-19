@@ -1,24 +1,16 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useScroll } from '@/contexts/ScrollContext';
 
 const IDENTITIES = ['PILOT', 'PRODUCER', 'DEVELOPER'];
 
-/**
- * ScrollSections — 4-stage cinematic HTML overlay.
- *
- * Stage 1 — Shoreline (0–25%):  Identity. FINN BENNETT title card + surf photos.
- * Stage 2 — Pocket (26–50%):    The Visceral. Live drum photos + touring archive.
- * Stage 3 — Engine Room (51–75%): The Systems. Overlook modules with logo.
- * Stage 4 — Horizon (76–100%):  The Perspective. LA altitude shot + HUD data.
- *
- * Total scroll height: 800vh (200vh × 4 stages)
- */
 export function ScrollSections() {
-  const { atmosphere } = useScroll();
+  const { atmosphere, velocity } = useScroll();
   const [identityIndex, setIdentityIndex] = useState(0);
+
+  const pocketTextRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -26,6 +18,16 @@ export function ScrollSections() {
     }, 2200);
     return () => clearInterval(id);
   }, []);
+
+  // Pocket text vibration — linked to scroll velocity
+  useEffect(() => {
+    if (atmosphere !== 'pocket' || !pocketTextRef.current) return;
+    const el = pocketTextRef.current;
+    const absV = Math.min(Math.abs(velocity), 30);
+    const jitterX = (Math.random() - 0.5) * absV * 0.12;
+    const jitterY = (Math.random() - 0.5) * absV * 0.08;
+    el.style.transform = `translate(${jitterX}px, ${jitterY}px)`;
+  }, [atmosphere, velocity]);
 
   const show = (zone: typeof atmosphere) => atmosphere === zone;
 
@@ -48,7 +50,6 @@ export function ScrollSections() {
             pointerEvents: show('shoreline') ? 'all' : 'none',
           }}
         >
-          {/* B&W paddle photo — floated hard left, cropped portrait */}
           <div
             style={{
               position: 'absolute',
@@ -72,7 +73,6 @@ export function ScrollSections() {
             />
           </div>
 
-          {/* Surf portrait — floated hard right */}
           <div
             style={{
               position: 'absolute',
@@ -95,7 +95,6 @@ export function ScrollSections() {
             />
           </div>
 
-          {/* ── Centre identity block ── */}
           <h1
             className="serif-text"
             style={{
@@ -112,7 +111,6 @@ export function ScrollSections() {
             FINN BENNETT
           </h1>
 
-          {/* Cycling identity */}
           <div
             className="hud-text"
             style={{
@@ -142,10 +140,10 @@ export function ScrollSections() {
             className="hud-text"
             style={{
               marginTop: '3rem',
-              fontSize: '0.5rem',
-              letterSpacing: '0.35em',
+              fontSize: '0.4rem',
+              letterSpacing: '0.4em',
               color: '#3dd9c4',
-              opacity: 0.3,
+              opacity: 0.2,
               zIndex: 1,
             }}
           >
@@ -171,7 +169,6 @@ export function ScrollSections() {
             gap: '0.5rem',
           }}
         >
-          {/* Live photo — Finn at The Mint, left side */}
           <div
             style={{
               position: 'absolute',
@@ -194,7 +191,6 @@ export function ScrollSections() {
             />
           </div>
 
-          {/* Band shot — right side */}
           <div
             style={{
               position: 'absolute',
@@ -217,59 +213,61 @@ export function ScrollSections() {
             />
           </div>
 
-          {/* Centre content */}
-          <p
-            className="hud-text"
-            style={{
-              fontSize: '0.5rem',
-              letterSpacing: '0.4em',
-              color: '#ff8c00',
-              opacity: 0.5,
-              marginBottom: '1.5rem',
-              zIndex: 1,
-            }}
-          >
-            OVERLOOK AUDIO
-          </p>
+          <div ref={pocketTextRef} style={{ willChange: 'transform', transition: 'transform 0.05s linear' }}>
+            <p
+              className="hud-text"
+              style={{
+                fontSize: '0.5rem',
+                letterSpacing: '0.4em',
+                color: '#ff8c00',
+                opacity: 0.5,
+                marginBottom: '1.5rem',
+                zIndex: 1,
+                textAlign: 'center',
+              }}
+            >
+              OVERLOOK AUDIO
+            </p>
 
-          <h2
-            className="serif-text"
-            style={{
-              fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-              fontWeight: 300,
-              color: '#f5e6d0',
-              letterSpacing: '0.08em',
-              textAlign: 'center',
-              lineHeight: 1.2,
-              zIndex: 1,
-            }}
-          >
-            Sonic Work
-          </h2>
+            <h2
+              className="serif-text"
+              style={{
+                fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+                fontWeight: 300,
+                color: '#f5e6d0',
+                letterSpacing: '0.08em',
+                textAlign: 'center',
+                lineHeight: 1.2,
+                zIndex: 1,
+              }}
+            >
+              Sonic Work
+            </h2>
 
-          <div
-            style={{
-              marginTop: '2.5rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.75rem',
-              alignItems: 'center',
-              zIndex: 1,
-            }}
-          >
-            {[
-              { band: 'MINERAL KING', role: 'LIVE PRODUCTION // TOURING' },
-              { band: 'SUBLIME, STRANGE CASE', role: 'FRONT OF HOUSE // ENGINEERING' },
-            ].map(({ band, role }) => (
-              <div key={band} style={{ textAlign: 'center' }}>
-                <p className="hud-text" style={{ fontSize: '0.6rem', letterSpacing: '0.3em', color: '#ff8c00', opacity: 0.8 }}>
-                  {band}
-                </p>
-                <p className="hud-text" style={{ fontSize: '0.45rem', letterSpacing: '0.3em', color: '#ff8c00', opacity: 0.3, marginTop: '0.2rem' }}>
-                  {role}
-                </p>
-              </div>
-            ))}
+            <div
+              style={{
+                marginTop: '2.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem',
+                alignItems: 'center',
+                zIndex: 1,
+              }}
+            >
+              {[
+                { band: 'MINERAL KING', role: 'LIVE PRODUCTION // TOURING' },
+                { band: 'SUBLIME, STRANGE CASE', role: 'FRONT OF HOUSE // ENGINEERING' },
+              ].map(({ band, role }) => (
+                <div key={band} style={{ textAlign: 'center' }}>
+                  <p className="hud-text" style={{ fontSize: '0.6rem', letterSpacing: '0.3em', color: '#ff8c00', opacity: 0.8 }}>
+                    {band}
+                  </p>
+                  <p className="hud-text" style={{ fontSize: '0.4rem', letterSpacing: '0.3em', color: '#ff8c00', opacity: 0.25, marginTop: '0.2rem' }}>
+                    {role}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -293,14 +291,12 @@ export function ScrollSections() {
         >
           <p
             className="hud-text"
-            style={{ fontSize: '0.5rem', letterSpacing: '0.4em', color: '#888', opacity: 0.5, marginBottom: '1rem' }}
+            style={{ fontSize: '0.45rem', letterSpacing: '0.4em', color: '#888', opacity: 0.4, marginBottom: '1rem' }}
           >
             OVERLOOK SYSTEMS
           </p>
 
           <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-
-            {/* Module 01 — Overlook Strategy */}
             <div
               style={{
                 border: '1px solid rgba(136,136,136,0.2)',
@@ -311,10 +307,9 @@ export function ScrollSections() {
                 background: 'rgba(255,255,255,0.025)',
               }}
             >
-              <p className="hud-text" style={{ fontSize: '0.45rem', letterSpacing: '0.3em', color: '#888', opacity: 0.5, marginBottom: '1.2rem' }}>
+              <p className="hud-text" style={{ fontSize: '0.4rem', letterSpacing: '0.3em', color: '#888', opacity: 0.4, marginBottom: '1.2rem' }}>
                 MODULE_01
               </p>
-              {/* Overlook logo mark */}
               <div style={{ marginBottom: '1rem', opacity: 0.4, width: 36, height: 36, position: 'relative' }}>
                 <Image src="/images/overlook-logo.png" alt="Overlook" fill style={{ objectFit: 'contain' }} sizes="36px" />
               </div>
@@ -324,7 +319,7 @@ export function ScrollSections() {
               >
                 Overlook Strategy
               </h3>
-              <p className="hud-text" style={{ fontSize: '0.45rem', letterSpacing: '0.2em', color: '#666', lineHeight: 1.8 }}>
+              <p className="hud-text" style={{ fontSize: '0.4rem', letterSpacing: '0.2em', color: '#666', lineHeight: 1.8 }}>
                 BRANDING  //  WEB DEVELOPMENT
                 <br />
                 DIGITAL SYSTEMS  //  IDENTITY
@@ -333,7 +328,6 @@ export function ScrollSections() {
               <div style={{ position: 'absolute', bottom: -1, left: -1, width: 8, height: 8, borderBottom: '1px solid #888', borderLeft: '1px solid #888' }} />
             </div>
 
-            {/* Module 02 — Overlook Audio */}
             <div
               style={{
                 border: '1px solid rgba(136,136,136,0.2)',
@@ -344,10 +338,9 @@ export function ScrollSections() {
                 background: 'rgba(255,255,255,0.025)',
               }}
             >
-              <p className="hud-text" style={{ fontSize: '0.45rem', letterSpacing: '0.3em', color: '#888', opacity: 0.5, marginBottom: '1.2rem' }}>
+              <p className="hud-text" style={{ fontSize: '0.4rem', letterSpacing: '0.3em', color: '#888', opacity: 0.4, marginBottom: '1.2rem' }}>
                 MODULE_02
               </p>
-              {/* Reuse logo for Audio module too */}
               <div style={{ marginBottom: '1rem', opacity: 0.4, width: 36, height: 36, position: 'relative' }}>
                 <Image src="/images/overlook-logo.png" alt="Overlook" fill style={{ objectFit: 'contain' }} sizes="36px" />
               </div>
@@ -357,7 +350,7 @@ export function ScrollSections() {
               >
                 Overlook Audio
               </h3>
-              <p className="hud-text" style={{ fontSize: '0.45rem', letterSpacing: '0.2em', color: '#666', lineHeight: 1.8 }}>
+              <p className="hud-text" style={{ fontSize: '0.4rem', letterSpacing: '0.2em', color: '#666', lineHeight: 1.8 }}>
                 LIVE PRODUCTION  //  STUDIO
                 <br />
                 SIGNAL ENGINEERING  //  TOURING
@@ -386,15 +379,7 @@ export function ScrollSections() {
             gap: '0.4rem',
           }}
         >
-          {/* LA altitude photo — full bleed background, faint */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              zIndex: 0,
-              overflow: 'hidden',
-            }}
-          >
+          <div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden' }}>
             <Image
               src="/images/la-altitude.jpg"
               alt=""
@@ -409,22 +394,13 @@ export function ScrollSections() {
             />
           </div>
 
-          {/* Content */}
-          <div
-            style={{
-              width: '120px',
-              height: '1px',
-              background: 'rgba(68,68,68,0.3)',
-              marginBottom: '2.5rem',
-              zIndex: 1,
-            }}
-          />
+          <div style={{ width: '120px', height: '1px', background: 'rgba(68,68,68,0.3)', marginBottom: '2.5rem', zIndex: 1 }} />
 
           <p
             className="hud-text"
-            style={{ fontSize: '0.5rem', letterSpacing: '0.5em', color: '#333', opacity: 0.4, zIndex: 1 }}
+            style={{ fontSize: '0.4rem', letterSpacing: '0.5em', color: '#333', opacity: 0.3, zIndex: 1 }}
           >
-            34.2746° N  //  119.2290° W
+            34°12′48″N  //  119°05′39″W
           </p>
 
           <h2
@@ -448,13 +424,13 @@ export function ScrollSections() {
             {[
               { label: 'ALTITUDE', value: '+5,200 FT' },
               { label: 'HEADING', value: '270° W' },
-              { label: 'ORIGIN', value: 'VNY' },
+              { label: 'ORIGIN', value: 'KCMA' },
             ].map(({ label, value }) => (
               <div key={label} style={{ textAlign: 'center' }}>
-                <p className="hud-text" style={{ fontSize: '0.45rem', letterSpacing: '0.3em', color: '#999', marginBottom: '0.3rem' }}>
+                <p className="hud-text" style={{ fontSize: '0.38rem', letterSpacing: '0.3em', color: '#aaa', marginBottom: '0.3rem' }}>
                   {label}
                 </p>
-                <p className="hud-text" style={{ fontSize: '0.7rem', letterSpacing: '0.15em', color: '#333' }}>
+                <p className="hud-text" style={{ fontSize: '0.6rem', letterSpacing: '0.15em', color: '#333' }}>
                   {value}
                 </p>
               </div>

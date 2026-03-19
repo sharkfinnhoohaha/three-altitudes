@@ -26,7 +26,7 @@ const ATMOSPHERE_CONFIG: Record<Atmosphere, AtmosphereConfig> = {
   },
   horizon: {
     primaryLabel: 'MSL +5,200 FT',
-    secondaryLabel: 'VNY → KVTA // IFR',
+    secondaryLabel: 'KCMA → KVTA // IFR CLR',
     color: '#444444',
   },
 };
@@ -39,7 +39,6 @@ export function HUD() {
 
   return (
     <>
-      {/* Top-left: identity/coordinate data */}
       <div
         className="hud-text"
         style={{
@@ -55,10 +54,10 @@ export function HUD() {
       >
         <span
           style={{
-            fontSize: '0.6rem',
+            fontSize: '0.55rem',
             letterSpacing: '0.25em',
             color,
-            opacity: 0.9,
+            opacity: 0.85,
             transition: 'color 0.8s ease, opacity 0.8s ease',
           }}
         >
@@ -66,10 +65,10 @@ export function HUD() {
         </span>
         <span
           style={{
-            fontSize: '0.5rem',
+            fontSize: '0.42rem',
             letterSpacing: '0.3em',
             color,
-            opacity: 0.4,
+            opacity: 0.35,
             transition: 'color 0.8s ease',
           }}
         >
@@ -77,7 +76,6 @@ export function HUD() {
         </span>
       </div>
 
-      {/* Top-right: site name */}
       <div
         className="hud-text"
         style={{
@@ -86,17 +84,16 @@ export function HUD() {
           right: '2rem',
           zIndex: 10,
           pointerEvents: 'none',
-          fontSize: '0.5rem',
-          letterSpacing: '0.3em',
+          fontSize: '0.42rem',
+          letterSpacing: '0.35em',
           color,
-          opacity: 0.3,
+          opacity: 0.2,
           transition: 'color 0.8s ease',
         }}
       >
         FINN BENNETT
       </div>
 
-      {/* Right-side progress rail */}
       <div
         style={{
           position: 'fixed',
@@ -105,14 +102,13 @@ export function HUD() {
           transform: 'translateY(-50%)',
           width: '1px',
           height: '100px',
-          background: 'rgba(255,255,255,0.08)',
+          background: 'rgba(255,255,255,0.06)',
           zIndex: 10,
           borderRadius: '1px',
           overflow: 'visible',
           pointerEvents: 'none',
         }}
       >
-        {/* Progress fill */}
         <div
           style={{
             width: '100%',
@@ -122,7 +118,6 @@ export function HUD() {
             borderRadius: '1px',
           }}
         />
-        {/* Scrubber tick */}
         <div
           style={{
             position: 'absolute',
@@ -136,16 +131,15 @@ export function HUD() {
         />
       </div>
 
-      {/* Progress readout */}
       <div
         className="hud-text"
         style={{
           position: 'fixed',
           right: '2rem',
           top: 'calc(50% + 62px)',
-          fontSize: '0.5rem',
+          fontSize: '0.42rem',
           letterSpacing: '0.2em',
-          opacity: 0.3,
+          opacity: 0.2,
           color,
           zIndex: 10,
           pointerEvents: 'none',

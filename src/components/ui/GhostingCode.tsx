@@ -3,89 +3,146 @@
 import { useRef, useEffect, useMemo } from 'react';
 import { useScroll } from '@/contexts/ScrollContext';
 
-/**
- * GhostingCode — Stage 3: The Engine Room (51–75% scroll)
- *
- * Faint, low-opacity TypeScript / Next.js / Three.js code fragments
- * scattered across the screen. Each snippet subtly repels from the
- * mouse cursor — like ghostly code that doesn't want to be seen.
- *
- * Runs on RAF with direct DOM manipulation for zero re-render overhead.
- */
-
 const CODE_SNIPPETS = [
-  `const useProgress = () => {
-  const ref = useRef(0);
-  useFrame(() => {
-    const s = window.scrollY;
-    const max = doc.scrollHeight - win.h;
-    ref.current = s / max;
-  });
-  return ref;
-};`,
-
-  `type Atmosphere =
-  | 'shoreline'
-  | 'pocket'
-  | 'engine-room'
-  | 'horizon';
-
-function getAtmosphere(p: number) {
-  if (p < 0.25) return 'shoreline';
-  if (p < 0.50) return 'pocket';
-  if (p < 0.75) return 'engine-room';
-  return 'horizon';
-}`,
-
-  `export async function generateStaticParams() {
-  const projects = await tina
-    .queries.projectConnection();
-  return projects.map((p) => ({
-    slug: p._sys.filename,
+  `// sømliøya — dynamic cabin routes
+export async function generateStaticParams() {
+  const cabins = await sanity.fetch(
+    \`*[_type == "cabin"]{ slug }\`
+  );
+  return cabins.map((c) => ({
+    slug: c.slug.current,
   }));
+}
+
+export default async function CabinPage({
+  params,
+}: {
+  params: { slug: string };
+}) {
+  const cabin = await getCabin(params.slug);
+  return <CabinHero data={cabin} />;
 }`,
 
-  `const lenis = new Lenis({
-  duration: 1.2,
-  easing: (t: number) =>
-    Math.min(1, 1.001 - 2 ** (-10 * t)),
-  orientation: 'vertical',
-  smoothWheel: true,
+  `// overlook-strategy/lib/brand.ts
+export const OVERLOOK_BRAND = {
+  primary: '#0a0a0a',
+  accent: '#ff6b35',
+  grid: 12,
+  type: {
+    display: 'Cormorant Garamond',
+    mono: 'JetBrains Mono',
+    body: 'Helvetica Neue',
+  },
+  breakpoints: {
+    sm: '640px',
+    md: '1024px',
+    lg: '1440px',
+  },
+} as const;`,
+
+  `// three-altitudes/SceneManager.tsx
+useFrame((_state, delta) => {
+  const scrollY = window.scrollY || 0;
+  const maxScroll =
+    doc.scrollHeight - window.innerHeight;
+  const p = scrollY / maxScroll;
+
+  // Camera rail — Z-axis scroll
+  const targetZ = lerp(10, -100, p);
+  camera.position.z +=
+    (targetZ - camera.position.z) * 0.08;
+
+  // Background: 4 cinematic stages
+  tempColor.copy(SHORELINE).lerp(
+    POCKET, smoothstep(p, 0.25, 0.50)
+  );
 });`,
 
-  `<Canvas
-  gl={{ antialias: true,
-    powerPreference: 'high-performance' }}
-  dpr={[1, 2]}
->
-  <SceneManager
-    transitionRef={transitionRef} />
-  <EffectComposer>
-    <TransitionPass ref={transitionRef} />
-    <Bloom intensity={0.8} mipmapBlur />
-  </EffectComposer>
-</Canvas>`,
+  `// overlook-audio/lib/signalChain.ts
+const ctx = new AudioContext();
+const compressor = ctx.createDynamicsCompressor();
+compressor.threshold.setValueAtTime(-24, ctx.currentTime);
+compressor.ratio.setValueAtTime(4, ctx.currentTime);
+compressor.attack.setValueAtTime(0.003, ctx.currentTime);
+compressor.release.setValueAtTime(0.25, ctx.currentTime);
 
-  `const submergeFactor =
-  exp(-pow(
-    (uProgress - 0.25) * 12.0, 2.0
-  ));
-float noiseDisplace =
-  snoise(vec3(uv * 3.5, uTime * 0.4))
-  * 0.05 * submergeFactor;`,
+source.connect(compressor)
+  .connect(ctx.destination);`,
 
-  `smoothProgress.current +=
-  (rawProgress - smoothProgress.current)
-  * 0.06;
+  `// contexts/ScrollContext.tsx
+const lenis = new Lenis({
+  duration: 1.2,
+  easing: (t) =>
+    Math.min(1, 1.001 - 2 ** (-10 * t)),
+  smoothWheel: true,
+});
 
-camera.position.z +=
-  (targetZ - camera.position.z) * 0.08;`,
+lenis.on('scroll', () => {
+  ScrollTrigger.update();
+  onScroll();
+});
+
+function raf(time: number) {
+  lenis.raf(time);
+  requestAnimationFrame(raf);
+}`,
+
+  `// shaders/TransitionPass.glsl
+float luma = dot(
+  texture2D(uMask, uv).rgb,
+  vec3(0.2126, 0.7152, 0.0722)
+);
+
+float edge = smoothstep(
+  uWipeProgress - uEdgeSoftness,
+  uWipeProgress + uEdgeSoftness,
+  luma
+);
+
+// Wave crests wipe first
+outputColor = mix(
+  atmosphere1, atmosphere2, edge
+);`,
+
+  `// next.config.ts
+const nextConfig: NextConfig = {
+  reactStrictMode: true,
+  transpilePackages: ['three'],
+  images: {
+    remotePatterns: [{
+      protocol: 'https',
+      hostname: 'cdn.sanity.io',
+    }],
+  },
+  experimental: {
+    turbo: {},
+  },
+};`,
+
+  `// lib/aviation.ts
+interface FlightPlan {
+  origin: 'KCMA';     // Camarillo
+  destination: string;
+  altitude: number;    // MSL feet
+  heading: number;     // degrees
+  squawk: string;      // transponder
+  remarks: 'VFR' | 'IFR';
+}
+
+const today: FlightPlan = {
+  origin: 'KCMA',
+  destination: 'KVTA',
+  altitude: 5200,
+  heading: 270,
+  squawk: '1200',
+  remarks: 'VFR',
+};`,
 ];
 
 interface SnippetDef {
   code: string;
-  x: number;    // % from left
-  y: number;    // % from top
+  x: number;
+  y: number;
   opacity: number;
   rotation: number;
 }
@@ -97,21 +154,18 @@ export function GhostingCode() {
   const rafRef = useRef<number>(0);
   const elementRefs = useRef<(HTMLPreElement | null)[]>([]);
 
-  // Randomise positions once on mount
   const snippets: SnippetDef[] = useMemo(
     () =>
       CODE_SNIPPETS.map((code, i) => ({
         code,
-        // Spread across the full viewport avoiding centre cluster
-        x: 2 + (i % 3) * 32 + Math.random() * 8,
-        y: 4 + Math.floor(i / 3) * 30 + Math.random() * 10,
-        opacity: 0.032 + Math.random() * 0.036,
-        rotation: (Math.random() - 0.5) * 4,
+        x: 1 + (i % 4) * 24 + Math.random() * 6,
+        y: 2 + Math.floor(i / 4) * 42 + Math.random() * 8,
+        opacity: 0.025 + Math.random() * 0.03,
+        rotation: (Math.random() - 0.5) * 3.5,
       })),
-    [] // eslint-disable-line react-hooks/exhaustive-deps
+    []
   );
 
-  // Mouse tracking
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
       mouseRef.current.x = e.clientX;
@@ -121,15 +175,14 @@ export function GhostingCode() {
     return () => window.removeEventListener('mousemove', onMove);
   }, []);
 
-  // RAF loop — direct DOM transform for maximum perf
   useEffect(() => {
     if (atmosphere !== 'engine-room') {
       cancelAnimationFrame(rafRef.current);
       return;
     }
 
-    const REPEL_RADIUS = 220; // px
-    const REPEL_STRENGTH = 24; // px max push
+    const REPEL_RADIUS = 240;
+    const REPEL_STRENGTH = 28;
 
     const update = () => {
       const mx = mouseRef.current.x;
@@ -162,7 +215,6 @@ export function GhostingCode() {
     return () => cancelAnimationFrame(rafRef.current);
   }, [atmosphere, snippets]);
 
-  // Reset transforms when leaving engine room
   useEffect(() => {
     if (atmosphere !== 'engine-room') {
       elementRefs.current.forEach((el, i) => {
@@ -195,10 +247,10 @@ export function GhostingCode() {
             left: `${s.x}%`,
             top: `${s.y}%`,
             fontFamily: 'JetBrains Mono, SF Mono, monospace',
-            fontSize: '0.42rem',
-            lineHeight: 1.7,
+            fontSize: '0.38rem',
+            lineHeight: 1.65,
             letterSpacing: '0.04em',
-            color: '#aaaaaa',
+            color: '#999999',
             opacity: s.opacity,
             transform: `rotate(${s.rotation}deg)`,
             whiteSpace: 'pre',

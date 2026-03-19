@@ -6,13 +6,6 @@ import * as THREE from 'three';
 
 const MODULE_COUNT = 14;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// EngineRoomAtmosphere — Stage 3 (51–75% scroll)
-//
-// The Logic: systems, branding, high-performance code.
-// Visual signature: glass-morphism wireframe modules drifting in terminal grey.
-// The "ghosting code" lives in the HTML layer (GhostingCode.tsx).
-// ─────────────────────────────────────────────────────────────────────────────
 export function EngineRoomAtmosphere() {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
@@ -28,7 +21,6 @@ export function EngineRoomAtmosphere() {
         depth: 0.08 + Math.random() * 0.5,
         phase: Math.random() * Math.PI * 2,
         floatSpeed: 0.15 + Math.random() * 0.28,
-        // Slow Y-axis rotation for the "systemic" feel
         rotSpeed: (Math.random() - 0.5) * 0.006,
       })),
     []
@@ -53,7 +45,6 @@ export function EngineRoomAtmosphere() {
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     const progress = maxScroll > 0 ? Math.min(scrollY / maxScroll, 1) : 0;
 
-    // Visible 0.45 → fade in, 0.72 → fade out
     const visibility =
       progress < 0.45
         ? 0
@@ -89,16 +80,16 @@ export function EngineRoomAtmosphere() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HorizonAtmosphere — Stage 4 (76–100% scroll)
-//
-// The Perspective: aviation, surfing, the infinite SoCal sky.
-// Visual signature: a single thin 3D horizon line that tilts with the mouse
-// on the Z axis — an artificial horizon indicator, weightless and precise.
-// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * HorizonAtmosphere — Stage 4 (76–100% scroll)
+ *
+ * UPDATED: Two-stage mouse smoothing mimics PA-28 banking at cruise.
+ * Aileron damping 0.025 + roll damping 0.04 = ~0.8s delay.
+ */
 export function HorizonAtmosphere() {
   const groupRef = useRef<THREE.Group>(null);
   const mouseRef = useRef({ x: 0, y: 0 });
+  const smoothMouse = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const handleMouse = (e: MouseEvent) => {
@@ -109,7 +100,6 @@ export function HorizonAtmosphere() {
     return () => window.removeEventListener('mousemove', handleMouse);
   }, []);
 
-  // Main horizon line
   const horizonMat = useRef(
     new THREE.LineBasicMaterial({
       color: '#2a2a2a',
@@ -124,7 +114,6 @@ export function HorizonAtmosphere() {
     return new THREE.Line(geo, horizonMat.current);
   }, []);
 
-  // Tick marks — the HUD graduation marks
   const tickMats = useRef<THREE.LineBasicMaterial[]>([]);
   const ticks = useMemo(() => {
     const group = new THREE.Group();
@@ -142,7 +131,6 @@ export function HorizonAtmosphere() {
     return group;
   }, []);
 
-  // Outer wing lines — long thin extensions for the aviation feel
   const wingMats = useRef<THREE.LineBasicMaterial[]>([]);
   const wings = useMemo(() => {
     const group = new THREE.Group();
@@ -168,7 +156,6 @@ export function HorizonAtmosphere() {
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     const progress = maxScroll > 0 ? Math.min(scrollY / maxScroll, 1) : 0;
 
-    // Fade in during Horizon zone
     const visibility =
       progress < 0.72
         ? 0
@@ -176,10 +163,8 @@ export function HorizonAtmosphere() {
           ? (progress - 0.72) / 0.10
           : 1;
 
-    // Update opacities
     horizonMat.current.opacity = visibility * 0.65;
     tickMats.current.forEach((m, i) => {
-      // Center tick is strongest
       m.opacity = visibility * (i === 3 ? 0.5 : 0.25);
     });
     wingMats.current.forEach((m) => {
@@ -187,16 +172,20 @@ export function HorizonAtmosphere() {
     });
 
     if (groupRef.current) {
-      // Tilt on Z with mouse X — the artificial horizon roll
-      const targetRotZ = mouseRef.current.x * -0.14;
-      // Subtle pitch (Y-axis tilt) with mouse Y
-      const targetRotX = mouseRef.current.y * 0.06;
-      // Vertical drift with mouse
-      const targetY = mouseRef.current.y * -0.4;
+      // PA-28 banking: two-stage smoothing
+      const AILERON_DAMPING = 0.025;
+      smoothMouse.current.x += (mouseRef.current.x - smoothMouse.current.x) * AILERON_DAMPING;
+      smoothMouse.current.y += (mouseRef.current.y - smoothMouse.current.y) * AILERON_DAMPING;
 
-      groupRef.current.rotation.z += (targetRotZ - groupRef.current.rotation.z) * 0.04;
-      groupRef.current.rotation.x += (targetRotX - groupRef.current.rotation.x) * 0.04;
-      groupRef.current.position.y += (targetY - groupRef.current.position.y) * 0.04;
+      const ROLL_DAMPING = 0.04;
+
+      const targetRotZ = smoothMouse.current.x * -0.16;
+      const targetRotX = smoothMouse.current.y * 0.07;
+      const targetY = smoothMouse.current.y * -0.5;
+
+      groupRef.current.rotation.z += (targetRotZ - groupRef.current.rotation.z) * ROLL_DAMPING;
+      groupRef.current.rotation.x += (targetRotX - groupRef.current.rotation.x) * ROLL_DAMPING;
+      groupRef.current.position.y += (targetY - groupRef.current.position.y) * ROLL_DAMPING;
     }
   });
 
