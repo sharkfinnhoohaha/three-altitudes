@@ -41,3 +41,6 @@ next-env.d.ts
 # *.jpg
 # *.png
 .aider*
+
+# Claude Code worktrees
+.claude/worktrees/
