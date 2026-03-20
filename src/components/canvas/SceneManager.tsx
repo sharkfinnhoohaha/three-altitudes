@@ -55,17 +55,20 @@ export function SceneManager({ transitionRef, cameraRef, cameraLocked }: SceneMa
       camera.position.z += (targetZ - camera.position.z) * 0.08;
     }
 
-    if (p < 0.25) {
+    if (p < 0.20) {
       tempColor.copy(SHORELINE_COLOR);
-    } else if (p < 0.50) {
-      const t = (p - 0.25) / 0.25;
+    } else if (p < 0.40) {
+      const t = (p - 0.20) / 0.20;
       const smooth = t * t * (3 - 2 * t);
       tempColor.copy(SHORELINE_COLOR).lerp(POCKET_COLOR, smooth);
-    } else if (p < 0.75) {
-      const t = (p - 0.50) / 0.25;
+    } else if (p < 0.60) {
+      const t = (p - 0.40) / 0.20;
       tempColor.copy(POCKET_COLOR).lerp(ENGINE_COLOR, t);
+    } else if (p < 0.80) {
+      // Stage 4: Selected Work — stays engine-room dark
+      tempColor.copy(ENGINE_COLOR);
     } else {
-      const t = (p - 0.75) / 0.25;
+      const t = (p - 0.80) / 0.20;
       const smooth = t * t * (3 - 2 * t);
       tempColor.copy(ENGINE_COLOR).lerp(HORIZON_COLOR, smooth);
     }
@@ -76,8 +79,8 @@ export function SceneManager({ transitionRef, cameraRef, cameraLocked }: SceneMa
 
     if (fogRef.current) {
       fogRef.current.color.lerp(tempColor, 0.08);
-      const targetNear = p > 0.75 ? 50 : p > 0.50 ? 15 : 20;
-      const targetFar = p > 0.75 ? 200 : p > 0.50 ? 100 : 120;
+      const targetNear = p > 0.80 ? 50 : p > 0.60 ? 15 : 20;
+      const targetFar = p > 0.80 ? 200 : p > 0.60 ? 100 : 120;
       fogRef.current.near += (targetNear - fogRef.current.near) * 0.05;
       fogRef.current.far += (targetFar - fogRef.current.far) * 0.05;
     }

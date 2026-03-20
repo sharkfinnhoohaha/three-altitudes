@@ -262,6 +262,119 @@ body::after {
   opacity: 0.8 !important;
 }
 
+/* ── Browser Mockup Cards ──────────────────────────────── */
+
+.web-project-card {
+  border: 1px solid rgba(136,136,136,0.15);
+  background: rgba(0,0,0,0.40);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.web-project-card:hover {
+  border-color: rgba(136,136,136,0.35);
+  box-shadow: 0 0 24px rgba(0,255,136,0.04);
+}
+
+/* Corner brackets — matching engine-room portfolio cards */
+.web-project-card::before,
+.web-project-card::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  pointer-events: none;
+  z-index: 2;
+}
+.web-project-card::before {
+  top: -1px;
+  right: -1px;
+  border-top: 1px solid #888;
+  border-right: 1px solid #888;
+}
+.web-project-card::after {
+  bottom: -1px;
+  left: -1px;
+  border-bottom: 1px solid #888;
+  border-left: 1px solid #888;
+}
+
+/* Browser chrome bar */
+.browser-chrome {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  background: rgba(20,20,20,0.95);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  flex-shrink: 0;
+}
+
+.browser-traffic-lights {
+  display: flex;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.traffic-light {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.tl-close { background: #ff5f57; opacity: 0.85; }
+.tl-min   { background: #febc2e; opacity: 0.85; }
+.tl-max   { background: #28c840; opacity: 0.85; }
+
+.browser-url-bar {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 3px;
+  padding: 0.2rem 0.5rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.05em;
+  color: #888;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.url-protocol { opacity: 0.35; }
+.url-host { opacity: 0.7; }
+
+/* Scaled iframe viewport */
+.browser-viewport {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  position: relative;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.browser-scale-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1280px;
+  height: 860px;
+  transform-origin: top left;
+  /* scale calculated in JS via inline style — fallback here */
+  transform: scale(0.28);
+}
+
+/* Project metadata strip */
+.web-project-meta {
+  padding: 0.75rem 1rem;
+  flex: 1;
+}
+
 /* ── Gauge instrument ──────────────────────────────────── */
 .flight-gauge {
   border: 1px solid rgba(68,68,68,0.4);

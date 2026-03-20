@@ -82,6 +82,39 @@ const PROJECTS = [
   },
 ];
 
+const WEB_PROJECTS = [
+  {
+    id: 'johnson-aviation',
+    name: 'Johnson Aviation Consulting',
+    domain: 'johnson-aviation.vercel.app',
+    url: 'https://johnson-aviation.vercel.app',
+    desc: 'Strategic airport planning firm — land use, facilities & financial advisory',
+    tech: ['Next.js', 'Three.js', 'GSAP', 'Tailwind'],
+    role: 'DESIGN + DEV',
+    type: 'AGENCY SITE',
+  },
+  {
+    id: 'overlook-audio',
+    name: 'Overlook Audio',
+    domain: 'overlookaudio.com',
+    url: 'https://overlookaudio.com',
+    desc: 'Recording studio & live sound production — Ventura, CA',
+    tech: ['Next.js', 'Framer Motion', 'Tailwind'],
+    role: 'DESIGN + DEV',
+    type: 'STUDIO SITE',
+  },
+  {
+    id: 'overlook-strategy',
+    name: 'Overlook Strategy',
+    domain: 'overlookstrategy.com',
+    url: 'https://overlookstrategy.com',
+    desc: 'Brand identity & digital systems agency',
+    tech: ['Next.js', 'Three.js', 'GSAP'],
+    role: 'DESIGN + DEV',
+    type: 'AGENCY SITE',
+  },
+];
+
 const DATA_COLUMNS = [
   '01001101\n11010010\n00110101\n10100110\n01101001',
   'const x =\n  await fetch\n  ("/api")\nreturn res\n  .json()',
@@ -94,6 +127,114 @@ const DATA_COLUMNS = [
   '10110011\n01101100\n11001011\n00110110\n10011001',
   'SELECT *\nFROM sys\nWHERE id\nIN (1,2)\nLIMIT 8',
 ];
+
+// ── Browser Mockup Card ──────────────────────────────────────────────────────
+// ResizeObserver scales the iframe so it exactly fills the card width.
+function BrowserMockupCard({ project }: { project: typeof WEB_PROJECTS[0] }) {
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const [iframeScale, setIframeScale] = useState(0.34);
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setIframeScale(entry.contentRect.width / 1280);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
+    <div className="web-project-card">
+      {/* Browser chrome */}
+      <div className="browser-chrome">
+        <div className="browser-traffic-lights">
+          <span className="traffic-light tl-close" />
+          <span className="traffic-light tl-min" />
+          <span className="traffic-light tl-max" />
+        </div>
+        <div className="browser-url-bar">
+          <span className="url-protocol">https://</span>
+          <span className="url-host">{project.domain}</span>
+        </div>
+      </div>
+
+      {/* Scaled iframe viewport */}
+      <div ref={viewportRef} className="browser-viewport">
+        <div
+          className="browser-scale-wrapper"
+          style={{ transform: `scale(${iframeScale})` }}
+        >
+          <iframe
+            src={project.url}
+            title={project.name}
+            scrolling="no"
+            loading="lazy"
+            style={{ border: 'none', width: '1280px', height: '860px', pointerEvents: 'none' }}
+          />
+        </div>
+      </div>
+
+      {/* Project metadata */}
+      <div className="web-project-meta">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <h3
+            className="serif-text"
+            style={{ fontSize: '1rem', fontWeight: 400, color: '#ccc', letterSpacing: '0.05em' }}
+          >
+            {project.name}
+          </h3>
+          <a
+            href={project.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hud-text"
+            style={{
+              fontSize: '0.3rem',
+              letterSpacing: '0.3em',
+              color: '#00ff88',
+              opacity: 0.6,
+              textDecoration: 'none',
+              transition: 'opacity 0.2s ease',
+              flexShrink: 0,
+              marginLeft: '0.75rem',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.6')}
+          >
+            VISIT →
+          </a>
+        </div>
+
+        <p
+          className="hud-text"
+          style={{ fontSize: '0.3rem', letterSpacing: '0.08em', color: '#555', lineHeight: 1.7, marginTop: '0.3rem' }}
+        >
+          {project.desc}
+        </p>
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.5rem' }}>
+          {project.tech.map((t) => (
+            <span
+              key={t}
+              className="hud-text tech-tag"
+              style={{
+                fontSize: '0.26rem',
+                letterSpacing: '0.15em',
+                color: '#555',
+                opacity: 0.8,
+                padding: '0.08rem 0.3rem',
+                border: '1px solid rgba(85,85,85,0.3)',
+              }}
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function ScrollSections() {
   const { atmosphere, velocity } = useScroll();
@@ -143,7 +284,7 @@ export function ScrollSections() {
   const show = (zone: typeof atmosphere) => atmosphere === zone;
 
   return (
-    <div className="scroll-content" style={{ height: '800vh' }}>
+    <div className="scroll-content" style={{ height: '1000vh' }}>
 
       {/* ─── Stage 1: The Shoreline — Identity ────────────────────────── */}
       <section style={{ height: '200vh', position: 'relative' }}>
@@ -426,7 +567,69 @@ export function ScrollSections() {
         </div>
       </section>
 
-      {/* ─── Stage 4: The Horizon — Aviation ──────────────────────────── */}
+      {/* ─── Stage 4: Selected Work — Web Projects ─────────────────────── */}
+      <section style={{ height: '200vh', position: 'relative' }}>
+        <div
+          style={{
+            position: 'sticky',
+            top: 0,
+            height: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: show('selected-work') ? 1 : 0,
+            transition: 'opacity 0.9s ease',
+            pointerEvents: show('selected-work') ? 'all' : 'none',
+            gap: '1.5rem',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Section header */}
+          <p
+            className="hud-text"
+            style={{ fontSize: '0.45rem', letterSpacing: '0.4em', color: '#888', opacity: 0.4 }}
+          >
+            SELECTED WORK  //  WEB
+          </p>
+
+          <h2
+            className="serif-text"
+            style={{
+              fontSize: 'clamp(1.6rem, 3.5vw, 2.8rem)',
+              fontWeight: 300,
+              color: '#ccc',
+              letterSpacing: '0.08em',
+              textAlign: 'center',
+              lineHeight: 1.2,
+            }}
+          >
+            Sites Built
+          </h2>
+
+          {/* Browser mockup grid */}
+          <div
+            style={{
+              display: 'grid',
+              // auto-fit collapses empty tracks → single card centers nicely
+              gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 520px))',
+              justifyContent: 'center',
+              gap: '1.5rem',
+              width: 'clamp(380px, 82vw, 1100px)',
+              maxHeight: '62vh',
+              overflowY: 'auto',
+              scrollbarWidth: 'none',
+              padding: '0.25rem',
+            }}
+          >
+            {WEB_PROJECTS.map((project) => (
+              <BrowserMockupCard key={project.id} project={project} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Stage 5: The Horizon — Aviation ──────────────────────────── */}
       <section style={{ height: '200vh', position: 'relative' }}>
         <div
           style={{

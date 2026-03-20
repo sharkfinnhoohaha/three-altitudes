@@ -24,6 +24,11 @@ const ATMOSPHERE_CONFIG: Record<Atmosphere, AtmosphereConfig> = {
     secondaryLabel: 'SYSTEMS // DEVELOPMENT',
     color: '#888888',
   },
+  'selected-work': {
+    primaryLabel: 'FINN BENNETT',
+    secondaryLabel: 'WEB // DESIGN + DEV',
+    color: '#888888',
+  },
   horizon: {
     primaryLabel: 'MSL +5,200 FT',
     secondaryLabel: 'KCMA → KVTA // IFR CLR',
