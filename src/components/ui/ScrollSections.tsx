@@ -110,6 +110,18 @@ const DATA_COLUMNS = [
   'SELECT *\nFROM sys\nWHERE id\nIN (1,2)\nLIMIT 8',
 ];
 
+// ── Waveform decoration data (static, generated once) ────────────────────────
+const WAVEFORM_BARS = Array.from({ length: 120 }, (_, i) => {
+  const t = i / 119;
+  const envelope = Math.sin(t * Math.PI) * 0.85 + 0.15;
+  const w1 = Math.sin(i * 0.63);
+  const w2 = Math.sin(i * 1.78 + 1.2);
+  const w3 = Math.sin(i * 4.1 + 0.5);
+  const w4 = Math.sin(i * 9.3 + 2.1);
+  const raw = Math.abs(w1 * 0.4 + w2 * 0.3 + w3 * 0.2 + w4 * 0.1);
+  return Math.max(0.04, raw * envelope);
+});
+
 // ── Selected Work Browser ─────────────────────────────────────────────────────
 // Single macOS-style browser mockup with three stacked iframe panels,
 // crossfade transitions, tab selector, and auto-rotation.
@@ -320,6 +332,7 @@ export function ScrollSections() {
   const { atmosphere, velocity } = useScroll();
   const [identityIndex, setIdentityIndex] = useState(0);
   const [cascadeActive, setCascadeActive] = useState(false);
+  const [pocketEntered, setPocketEntered] = useState(false);
   const pocketTextRef = useRef<HTMLDivElement>(null);
   const prevAtmosphere = useRef(atmosphere);
 
@@ -351,6 +364,11 @@ export function ScrollSections() {
     prevAtmosphere.current = atmosphere;
   }, [atmosphere]);
 
+  // Pocket section entrance — triggers once on first visit
+  useEffect(() => {
+    if (atmosphere === 'pocket') setPocketEntered(true);
+  }, [atmosphere]);
+
   // Hide default cursor in horizon section — AirplaneCursor renders the SVG replacement
   useEffect(() => {
     if (atmosphere === 'horizon') {
@@ -362,6 +380,13 @@ export function ScrollSections() {
   }, [atmosphere]);
 
   const show = (zone: typeof atmosphere) => atmosphere === zone;
+
+  // Staggered entrance animation helper — opacity + lift-in with delay
+  const pocketAnim = (delay: number) => ({
+    opacity: pocketEntered ? 1 : 0,
+    transform: pocketEntered ? 'translateY(0px)' : 'translateY(16px)',
+    transition: `opacity 0.75s ease ${delay}s, transform 0.85s cubic-bezier(0.16,1,0.3,1) ${delay}s`,
+  });
 
   return (
     <div className="scroll-content" style={{ height: '1000vh' }}>
@@ -462,175 +487,164 @@ export function ScrollSections() {
               willChange: 'transform',
               transition: 'transform 0.05s linear',
               width: '100%',
-              maxWidth: '1060px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1.25rem',
+              maxWidth: '1100px',
             }}
           >
-            {/* ── Section header ── */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <p
-                className="hud-text"
-                style={{ fontSize: '0.45rem', letterSpacing: '0.4em', color: '#ff8c00', opacity: 0.5, whiteSpace: 'nowrap' }}
-              >
+
+            {/* ── Header strip ── */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                marginBottom: '0.9rem',
+                ...pocketAnim(0),
+              }}
+            >
+              <p className="hud-text" style={{ fontSize: '0.38rem', letterSpacing: '0.42em', color: '#ff8c00', opacity: 0.45, whiteSpace: 'nowrap' }}>
                 OVERLOOK AUDIO
               </p>
-              <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(255,140,0,0.2) 0%, transparent 100%)' }} />
-              <p
-                className="hud-text"
-                style={{ fontSize: '0.35rem', letterSpacing: '0.35em', color: '#ff8c00', opacity: 0.3, whiteSpace: 'nowrap' }}
-              >
-                8M+ STREAMS
+              <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(255,140,0,0.22) 0%, rgba(255,140,0,0.04) 70%, transparent 100%)' }} />
+              <p className="hud-text" style={{ fontSize: '0.28rem', letterSpacing: '0.38em', color: '#ff8c00', opacity: 0.2, whiteSpace: 'nowrap' }}>
+                SIGNAL FLOW
               </p>
             </div>
 
-            <h2
-              className="serif-text"
+            {/* ── Title + Waveform row ── */}
+            <div
               style={{
-                fontSize: 'clamp(2.2rem, 4.5vw, 3.8rem)',
-                fontWeight: 300,
-                color: '#f5e6d0',
-                letterSpacing: '0.06em',
-                lineHeight: 1,
+                display: 'flex',
+                alignItems: 'flex-end',
+                gap: '1.5rem',
+                marginBottom: '1.6rem',
+                ...pocketAnim(0.08),
               }}
             >
-              The Work
-            </h2>
+              <h2
+                className="serif-text"
+                style={{
+                  fontSize: 'clamp(2.4rem, 5vw, 4rem)',
+                  fontWeight: 300,
+                  color: '#f5e6d0',
+                  letterSpacing: '0.05em',
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+              >
+                Sonic Work
+              </h2>
 
-            {/* ── Two-column body ── */}
+              {/* Decorative waveform — fills remaining title row width */}
+              <div style={{ flex: 1, overflow: 'hidden', paddingBottom: '0.5rem' }}>
+                <svg
+                  viewBox="0 0 120 32"
+                  preserveAspectRatio="none"
+                  width="100%"
+                  height="28"
+                  style={{ display: 'block' }}
+                >
+                  {WAVEFORM_BARS.map((h, i) => {
+                    const halfH = h * 13;
+                    return (
+                      <rect
+                        key={i}
+                        x={i + 0.15}
+                        y={16 - halfH}
+                        width={0.7}
+                        height={halfH * 2}
+                        fill={`rgba(255,140,0,${(0.1 + h * 0.38).toFixed(3)})`}
+                      />
+                    );
+                  })}
+                </svg>
+              </div>
+
+              <p className="hud-text" style={{ fontSize: '0.28rem', letterSpacing: '0.38em', color: '#ff8c00', opacity: 0.2, paddingBottom: '0.5rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                12+ YRS
+              </p>
+            </div>
+
+            {/* ── Three-column body ── */}
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: '1fr 1.5fr',
-                gap: 'clamp(1.5rem, 4vw, 3rem)',
+                gridTemplateColumns: '165px 1fr 200px',
+                gap: 'clamp(1.25rem, 3vw, 2.5rem)',
                 alignItems: 'start',
               }}
             >
-              {/* Left: Credentials panel */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.4rem' }}>
 
-                {/* Stats row */}
-                <div style={{ display: 'flex' }}>
+              {/* Left col: Stats + Disciplines */}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+
+                {/* Stat readouts */}
+                <div style={{ ...pocketAnim(0.15) }}>
+                  <p className="hud-text" style={{ fontSize: '0.26rem', letterSpacing: '0.44em', color: '#ff8c00', opacity: 0.22, marginBottom: '0.65rem' }}>
+                    CREDENTIALS
+                  </p>
                   {[
-                    { value: '8M+', label: 'STREAMS' },
-                    { value: '12', label: 'YRS EXP' },
-                    { value: 'FOH', label: 'LIVE AUDIO' },
-                  ].map(({ value, label }, idx) => (
+                    { value: '8M+',  label: 'STREAMS',  sub: 'catalog total' },
+                    { value: '12+',  label: 'YEARS',    sub: 'in the field'  },
+                    { value: '50+',  label: 'PROJECTS', sub: 'delivered'     },
+                  ].map(({ value, label, sub }, i) => (
                     <div
                       key={label}
                       style={{
-                        flex: 1,
-                        borderLeft: `1px solid rgba(255,140,0,${idx === 0 ? 0.3 : 0.12})`,
-                        paddingLeft: '0.75rem',
-                        paddingRight: '0.75rem',
+                        paddingLeft: '0.65rem',
+                        paddingTop: '0.5rem',
+                        paddingBottom: '0.5rem',
+                        borderLeft: `1px solid rgba(255,140,0,${i === 0 ? 0.32 : 0.1})`,
+                        marginBottom: '0.08rem',
                       }}
                     >
                       <p
                         className="serif-text"
                         style={{
-                          fontSize: 'clamp(1.3rem, 2.2vw, 1.9rem)',
+                          fontSize: 'clamp(1.3rem, 2.2vw, 1.8rem)',
                           fontWeight: 300,
                           color: '#ff8c00',
                           lineHeight: 1,
-                          opacity: idx === 0 ? 1 : 0.6,
+                          opacity: 1 - i * 0.18,
                         }}
                       >
                         {value}
                       </p>
-                      <p
-                        className="hud-text"
-                        style={{ fontSize: '0.28rem', letterSpacing: '0.3em', color: '#ff8c00', opacity: 0.35, marginTop: '0.2rem' }}
-                      >
+                      <p className="hud-text" style={{ fontSize: '0.23rem', letterSpacing: '0.34em', color: '#ff8c00', opacity: 0.28, marginTop: '0.07rem' }}>
                         {label}
+                      </p>
+                      <p className="hud-text" style={{ fontSize: '0.21rem', letterSpacing: '0.1em', color: '#f5e6d0', opacity: 0.12, marginTop: '0.04rem' }}>
+                        {sub}
                       </p>
                     </div>
                   ))}
                 </div>
 
-                {/* Touring credits */}
-                <div>
-                  <p
-                    className="hud-text"
-                    style={{ fontSize: '0.3rem', letterSpacing: '0.4em', color: '#ff8c00', opacity: 0.3, marginBottom: '0.5rem' }}
-                  >
-                    TOURING CREDITS
-                  </p>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    {[
-                      { name: 'MINERAL KING', role: 'FOH · Touring' },
-                      { name: 'SUBLIME', role: 'FOH · Touring' },
-                      { name: 'STRANGE CASE', role: 'Studio Engineering' },
-                    ].map(({ name, role }) => (
-                      <div
-                        key={name}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'baseline',
-                          justifyContent: 'space-between',
-                          padding: '0.4rem 0',
-                          borderBottom: '1px solid rgba(255,140,0,0.07)',
-                        }}
-                      >
-                        <span
-                          className="serif-text"
-                          style={{
-                            fontSize: 'clamp(0.75rem, 1.2vw, 1rem)',
-                            fontWeight: 400,
-                            color: '#f5e6d0',
-                            letterSpacing: '0.04em',
-                            opacity: 0.9,
-                          }}
-                        >
-                          {name}
-                        </span>
-                        <span
-                          className="hud-text"
-                          style={{ fontSize: '0.28rem', letterSpacing: '0.2em', color: '#ff8c00', opacity: 0.3 }}
-                        >
-                          {role}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Disciplines */}
-                <div>
-                  <p
-                    className="hud-text"
-                    style={{ fontSize: '0.3rem', letterSpacing: '0.4em', color: '#ff8c00', opacity: 0.3, marginBottom: '0.4rem' }}
-                  >
+                {/* Signal-chain disciplines */}
+                <div style={{ marginTop: '1.3rem', ...pocketAnim(0.35) }}>
+                  <p className="hud-text" style={{ fontSize: '0.26rem', letterSpacing: '0.44em', color: '#ff8c00', opacity: 0.22, marginBottom: '0.5rem' }}>
                     DISCIPLINES
                   </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                    {[
-                      { code: 'LIVE FOH', desc: 'Touring front-of-house' },
-                      { code: 'STUDIO', desc: 'Recording & mix engineering' },
-                      { code: 'PRODUCTION', desc: 'Composition & synthesis' },
-                    ].map(({ code, desc }) => (
-                      <div key={code} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.28rem' }}>
+                    {['LIVE FOH', 'STUDIO', 'PRODUCTION'].map((d, i) => (
+                      <div key={d} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                         <span
                           className="hud-text"
                           style={{
-                            fontSize: '0.3rem',
-                            letterSpacing: '0.25em',
+                            fontSize: '0.24rem',
+                            letterSpacing: '0.22em',
                             color: '#ff8c00',
-                            opacity: 0.6,
-                            padding: '0.15rem 0.4rem',
-                            border: '1px solid rgba(255,140,0,0.2)',
-                            background: 'rgba(255,140,0,0.04)',
+                            opacity: 0.48,
+                            padding: '0.1rem 0.3rem',
+                            border: '1px solid rgba(255,140,0,0.16)',
+                            background: 'rgba(255,140,0,0.03)',
                             whiteSpace: 'nowrap',
                           }}
                         >
-                          {code}
+                          {d}
                         </span>
-                        <span
-                          className="hud-text"
-                          style={{ fontSize: '0.28rem', letterSpacing: '0.08em', color: '#f5e6d0', opacity: 0.25 }}
-                        >
-                          {desc}
-                        </span>
+                        {i < 2 && (
+                          <span className="hud-text" style={{ fontSize: '0.22rem', color: '#ff8c00', opacity: 0.16 }}>→</span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -638,46 +652,112 @@ export function ScrollSections() {
 
               </div>
 
-              {/* Right: Spotify embed */}
-              <div style={{ position: 'relative' }}>
-                {/* Ambient glow behind player */}
+              {/* Center col: Spotify embed */}
+              <div style={{ position: 'relative', ...pocketAnim(0.22) }}>
+
+                {/* Corner brackets */}
+                <div style={{ position: 'absolute', top: -9, left: -9, width: 16, height: 16, borderTop: '1px solid rgba(255,140,0,0.22)', borderLeft: '1px solid rgba(255,140,0,0.22)', zIndex: 2, pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', top: -9, right: -9, width: 16, height: 16, borderTop: '1px solid rgba(255,140,0,0.22)', borderRight: '1px solid rgba(255,140,0,0.22)', zIndex: 2, pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', bottom: -9, left: -9, width: 16, height: 16, borderBottom: '1px solid rgba(255,140,0,0.22)', borderLeft: '1px solid rgba(255,140,0,0.22)', zIndex: 2, pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', bottom: -9, right: -9, width: 16, height: 16, borderBottom: '1px solid rgba(255,140,0,0.22)', borderRight: '1px solid rgba(255,140,0,0.22)', zIndex: 2, pointerEvents: 'none' }} />
+
+                {/* Ambient glow */}
                 <div
                   style={{
                     position: 'absolute',
-                    inset: '-30px -20px',
-                    background: 'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(255,140,0,0.07) 0%, transparent 70%)',
+                    inset: '-50px -35px',
+                    background: 'radial-gradient(ellipse 70% 55% at 50% 50%, rgba(255,140,0,0.055) 0%, transparent 70%)',
                     pointerEvents: 'none',
-                    zIndex: 0,
                   }}
                 />
-                <div style={{ position: 'relative', zIndex: 1 }}>
-                  <iframe
-                    title="Overlook Audio — Selected Works"
-                    src="https://open.spotify.com/embed/playlist/7x8qaRT5L4UVebsbvzRtzE?utm_source=generator&theme=0"
-                    width="100%"
-                    style={{
-                      height: 'clamp(280px, 38vh, 352px)',
-                      border: 'none',
-                      borderRadius: '12px',
-                      display: 'block',
-                    }}
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy"
-                  />
-                  <p
-                    className="hud-text"
-                    style={{
-                      fontSize: '0.28rem',
-                      letterSpacing: '0.3em',
-                      color: '#ff8c00',
-                      opacity: 0.2,
-                      textAlign: 'center',
-                      marginTop: '0.6rem',
-                    }}
-                  >
-                    OVERLOOK AUDIO — SELECTED WORKS  //  SPOTIFY
+
+                <iframe
+                  title="Overlook Audio — Selected Works"
+                  src="https://open.spotify.com/embed/playlist/7x8qaRT5L4UVebsbvzRtzE?utm_source=generator&theme=0"
+                  width="100%"
+                  style={{
+                    height: 'clamp(280px, 38vh, 352px)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    display: 'block',
+                    position: 'relative',
+                    zIndex: 1,
+                  }}
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                  loading="lazy"
+                />
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.55rem', padding: '0 0.2rem' }}>
+                  <p className="hud-text" style={{ fontSize: '0.23rem', letterSpacing: '0.28em', color: '#ff8c00', opacity: 0.16 }}>
+                    SELECTED WORKS
+                  </p>
+                  <p className="hud-text" style={{ fontSize: '0.23rem', letterSpacing: '0.28em', color: '#ff8c00', opacity: 0.16 }}>
+                    SPOTIFY
                   </p>
                 </div>
+
+              </div>
+
+              {/* Right col: Touring credits + Specialties */}
+              <div style={{ ...pocketAnim(0.30) }}>
+
+                <p className="hud-text" style={{ fontSize: '0.26rem', letterSpacing: '0.44em', color: '#ff8c00', opacity: 0.22, marginBottom: '0.65rem' }}>
+                  TOURING CREDITS
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {[
+                    { artist: 'Mineral King',       role: 'Live Production', ctx: 'Touring'      },
+                    { artist: 'Sublime Strange Case', role: 'Front of House', ctx: 'Engineering'  },
+                  ].map(({ artist, role, ctx }, i) => (
+                    <div
+                      key={artist}
+                      style={{
+                        padding: '0.65rem 0',
+                        borderBottom: `1px solid rgba(255,140,0,${i === 0 ? 0.1 : 0.04})`,
+                      }}
+                    >
+                      <p className="hud-text" style={{ fontSize: '0.21rem', letterSpacing: '0.34em', color: '#ff8c00', opacity: 0.18, marginBottom: '0.25rem' }}>
+                        {String(i + 1).padStart(2, '0')}
+                      </p>
+                      <p
+                        className="serif-text"
+                        style={{
+                          fontSize: 'clamp(0.85rem, 1.3vw, 1.05rem)',
+                          fontWeight: 400,
+                          color: '#f5e6d0',
+                          letterSpacing: '0.04em',
+                          lineHeight: 1.15,
+                          marginBottom: '0.25rem',
+                          opacity: 0.88,
+                        }}
+                      >
+                        {artist}
+                      </p>
+                      <p className="hud-text" style={{ fontSize: '0.23rem', letterSpacing: '0.18em', color: '#ff8c00', opacity: 0.32 }}>
+                        {role}  //  {ctx}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Specialties */}
+                <div style={{ marginTop: '1.2rem' }}>
+                  <p className="hud-text" style={{ fontSize: '0.26rem', letterSpacing: '0.44em', color: '#ff8c00', opacity: 0.22, marginBottom: '0.5rem' }}>
+                    SPECIALTIES
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                    {['FRONT OF HOUSE', 'MIX ENGINEERING', 'LIVE PRODUCTION'].map((s) => (
+                      <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <div style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,140,0,0.32)', flexShrink: 0 }} />
+                        <span className="hud-text" style={{ fontSize: '0.23rem', letterSpacing: '0.2em', color: '#ff8c00', opacity: 0.28 }}>
+                          {s}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
               </div>
 
             </div>
