@@ -46,14 +46,15 @@ export function EngineRoomAtmosphere() {
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     const progress = maxScroll > 0 ? Math.min(scrollY / maxScroll, 1) : 0;
 
+    // Visible across engine-room AND selected-work stages (0.40–0.80)
     const visibility =
-      progress < 0.45
+      progress < 0.36
         ? 0
-        : progress < 0.53
-          ? (progress - 0.45) / 0.08
-          : progress < 0.70
-            ? 1
-            : Math.max(0, 1 - (progress - 0.70) / 0.08);
+        : progress < 0.44
+          ? (progress - 0.36) / 0.08   // fade in
+          : progress < 0.74
+            ? 1                          // full — engine room + selected work
+            : Math.max(0, 1 - (progress - 0.74) / 0.08); // fade out before horizon
 
     mat.opacity = visibility * 0.45;
 
@@ -185,11 +186,12 @@ export function HorizonAtmosphere() {
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     const progress = maxScroll > 0 ? Math.min(scrollY / maxScroll, 1) : 0;
 
+    // Horizon stage starts at 0.80
     const visibility =
-      progress < 0.72
+      progress < 0.78
         ? 0
-        : progress < 0.82
-          ? (progress - 0.72) / 0.10
+        : progress < 0.88
+          ? (progress - 0.78) / 0.10
           : 1;
 
     horizonMat.current.opacity = visibility * 0.65;
