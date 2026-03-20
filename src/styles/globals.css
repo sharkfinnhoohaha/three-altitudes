@@ -1,0 +1,275 @@
+@import "tailwindcss";
+
+:root {
+  /* Stage 1: Shoreline — Ventura Teal */
+  --shoreline-bg: #002b2b;
+  --shoreline-accent: #3dd9c4;
+  --shoreline-deep: #001a1a;
+
+  /* Stage 2: Pocket — Vacuum Void + Amber */
+  --pocket-bg: #0a0609;
+  --pocket-accent: #ff8c00;
+  --pocket-glow: #ff6b35;
+
+  /* Stage 3: Engine Room — Terminal Grey */
+  --engine-bg: #141414;
+  --engine-accent: #888888;
+  --engine-grid: #2a2a2a;
+
+  /* Stage 4: Horizon — Hangar White */
+  --horizon-bg: #f5f5f7;
+  --horizon-accent: #444444;
+  --horizon-line: #cccccc;
+
+  /* Global */
+  --transition-speed: 0.08;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  overflow-x: hidden;
+  background: var(--shoreline-bg);
+  color: #fff;
+  font-family: 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Lenis smooth scroll overrides */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Canvas layer */
+.canvas-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.canvas-container canvas {
+  pointer-events: all;
+}
+
+/* Scroll spacer */
+.scroll-content {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.scroll-content > * {
+  pointer-events: all;
+}
+
+/* ── Typography ───────────────────────────────────────── */
+
+/* Technical / HUD data */
+.hud-text {
+  font-family: 'DM Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Cinematic identity / title cards */
+.serif-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+}
+
+/* ── Film Grain Overlay ───────────────────────────────── */
+
+/* SVG noise grain — fixed layer, blended multiply */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  mix-blend-mode: overlay;
+  animation: grain-shift 0.08s steps(1) infinite;
+}
+
+@keyframes grain-shift {
+  0%   { background-position: 0 0; }
+  10%  { background-position: -5% -10%; }
+  20%  { background-position: -15% 5%; }
+  30%  { background-position: 7% -25%; }
+  40%  { background-position: -5% 25%; }
+  50%  { background-position: -15% 10%; }
+  60%  { background-position: 15% 0%; }
+  70%  { background-position: 0% 15%; }
+  80%  { background-position: 3% 35%; }
+  90%  { background-position: -10% 10%; }
+  100% { background-position: 0 0; }
+}
+
+/* ── Identity Cycling Animation ──────────────────────── */
+
+@keyframes identity-fade {
+  0%, 28%   { opacity: 1; transform: translateY(0); }
+  33%, 95%  { opacity: 0; transform: translateY(-8px); }
+  100%      { opacity: 0; }
+}
+
+.identity-tag {
+  display: inline-block;
+  animation: identity-fade 3s ease-in-out infinite;
+}
+
+.identity-tag:nth-child(2) { animation-delay: 1s; }
+.identity-tag:nth-child(3) { animation-delay: 2s; }
+
+/* ── Identity enter animation ─────────────────────────── */
+@keyframes identity-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Horizon stage — invert text contrast ─────────────── */
+.horizon-active .hud-text {
+  color: #333333;
+}
+
+/* ── Airplane cursor (Horizon section) ──────────────────── */
+.cursor-airplane {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg transform='translate(16,16)'%3E%3Cpolygon points='0,-12 3,-2 0,0 -3,-2' fill='%23222' opacity='0.9'/%3E%3Cpolygon points='-10,2 0,-1 10,2 0,4' fill='%23222' opacity='0.85'/%3E%3Cpolygon points='-4,6 0,4 4,6 0,8' fill='%23222' opacity='0.8'/%3E%3C/g%3E%3C/svg%3E") 16 16, crosshair;
+}
+
+/* ── Cloud drift animation ───────────────────────────────── */
+@keyframes cloud-drift-1 {
+  from { transform: translateX(110vw); }
+  to   { transform: translateX(-110vw); }
+}
+@keyframes cloud-drift-2 {
+  from { transform: translateX(115vw); }
+  to   { transform: translateX(-115vw); }
+}
+@keyframes cloud-drift-3 {
+  from { transform: translateX(105vw); }
+  to   { transform: translateX(-105vw); }
+}
+@keyframes cloud-drift-4 {
+  from { transform: translateX(120vw); }
+  to   { transform: translateX(-120vw); }
+}
+
+.cloud-layer {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+/* ── Cyberspace data cascade ────────────────────────────── */
+@keyframes data-fall {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 0.8; }
+  100% { transform: translateY(110vh); opacity: 0; }
+}
+
+.data-cascade-column {
+  position: absolute;
+  top: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.05em;
+  color: #00ff88;
+  opacity: 0;
+  white-space: pre;
+  line-height: 1.4;
+  pointer-events: none;
+  animation: data-fall 1.6s ease-in forwards;
+}
+
+/* ── Social link beacon glow ────────────────────────────── */
+@keyframes beacon-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.0); }
+  50%       { box-shadow: 0 0 12px 3px rgba(255,255,255,0.15); }
+}
+
+.beacon-link {
+  animation: beacon-pulse 3s ease-in-out infinite;
+}
+
+.beacon-link:hover {
+  animation: none;
+  box-shadow: 0 0 16px 4px rgba(255,255,255,0.25) !important;
+}
+
+/* ── Portfolio card hover ───────────────────────────────── */
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(20, 30, 60, 0.05);
+  perspective: 800px;
+  transform-style: preserve-3d;
+}
+
+.card:hover {
+  transform: rotateY(0deg) scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.spotify-playlist {
+  backdrop-filter: blur(20px);
+  opacity: 0.4;
+  transition: opacity 0.3s ease;
+}
+
+.spotify-playlist:hover {
+  opacity: 1;
+}
+
+.portfolio-card:hover .tech-tag {
+  color: #00ff88 !important;
+  opacity: 0.8 !important;
+}
+
+/* ── Gauge instrument ──────────────────────────────────── */
+.flight-gauge {
+  border: 1px solid rgba(68,68,68,0.4);
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(255,255,255,0.06), inset 0 0 8px rgba(0,0,0,0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.flight-gauge:hover {
+  box-shadow: 0 0 20px rgba(255,255,255,0.12), inset 0 0 8px rgba(0,0,0,0.1);
+}
