@@ -6,26 +6,9 @@ import * as THREE from 'three';
 
 const MODULE_COUNT = 14;
 
-// ── Aviation Cloud ShaderMaterial GLSL ──────────────────────────────────────
+// ── Shared Simplex Noise GLSL (Ashima / McEwan, BSD licensed) ───────────────
 
-const CLOUD_VERT = /* glsl */ `
-  varying vec2 vUv;
-  varying vec3 vWorldPos;
-  void main() {
-    vUv = uv;
-    vec4 wp = modelMatrix * vec4(position, 1.0);
-    vWorldPos = wp.xyz;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-
-const CLOUD_FRAG = /* glsl */ `
-  varying vec2 vUv;
-  varying vec3 vWorldPos;
-  uniform float uTime;
-  uniform float uVisibility;
-
-  // Ashima / McEwan 3-D Simplex Noise (BSD licensed)
+const SIMPLEX_GLSL = /* glsl */ `
   vec3 _m3(vec3 x) { return x - floor(x * (1./289.)) * 289.; }
   vec4 _m4(vec4 x) { return x - floor(x * (1./289.)) * 289.; }
   vec4 _pm(vec4 x) { return _m4(((x * 34.) + 10.) * x); }
@@ -73,34 +56,113 @@ const CLOUD_FRAG = /* glsl */ `
     m = m * m;
     return 105. * dot(m * m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
   }
+`;
 
+// ── Aviation Cloud ShaderMaterial GLSL ──────────────────────────────────────
+
+const CLOUD_VERT = /* glsl */ `
+  varying vec2 vUv;
+  varying vec3 vWorldPos;
   void main() {
-    // World XY shapes the cloud; Z differentiates each layer; time drifts slowly
-    vec3 coord = vec3(vWorldPos.xy * .045, vWorldPos.z * .12 + uTime * .014);
-    float n1 = snoise(coord);
-    float n2 = snoise(coord * 2.1 + 17.3) * .5;
-    float n3 = snoise(coord * 4.3 + 38.6) * .25;
-    float noise = (n1 + n2 + n3) / 1.75 * .5 + .5; // remap [0,1]
-    float cloud = smoothstep(.40, .68, noise);
-    // Radial fade so plane edges never produce a hard cut
-    float uvDist = length(vUv - .5) * 2.;
-    float edge = 1. - smoothstep(.50, 1.0, uvDist);
-    gl_FragColor = vec4(1., 1., 1., cloud * edge * uVisibility * .60);
+    vUv = uv;
+    vec4 wp = modelMatrix * vec4(position, 1.0);
+    vWorldPos = wp.xyz;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
 
-// Camera traverses z ≈ -72.5 → -100 during the aviation section (75–100 % scroll).
-// Layer z-positions are distributed through that range so the camera flies through them.
-const CLOUD_LAYERS = [
-  { x:  0.0, y:  1.5, z: -73, rx:  0.08, ry:  0.04 },
-  { x:  7.0, y: -2.0, z: -77, rx: -0.05, ry: -0.06 },
-  { x: -5.0, y:  3.0, z: -81, rx:  0.10, ry:  0.05 },
-  { x:  3.0, y: -1.5, z: -85, rx: -0.07, ry: -0.03 },
-  { x: -6.0, y:  2.0, z: -88, rx:  0.06, ry:  0.07 },
-  { x:  4.0, y:  1.0, z: -91, rx:  0.04, ry:  0.04 },
-  { x: -2.0, y: -2.5, z: -95, rx: -0.09, ry: -0.05 },
-  { x:  1.0, y:  0.5, z: -98, rx:  0.05, ry:  0.03 },
+const CLOUD_FRAG = /* glsl */ `
+  varying vec2 vUv;
+  varying vec3 vWorldPos;
+  uniform float uTime;
+  uniform float uVisibility;
+
+  // Per-layer variation uniforms
+  uniform float uFrequency;    // noise scale (unique per layer)
+  uniform vec3  uNoiseOffset;  // seed offset (unique per layer)
+  uniform float uMaxOpacity;   // opacity cap (unique per layer)
+  uniform float uDensityBias;  // cloud coverage threshold (unique per layer)
+
+  ${SIMPLEX_GLSL}
+
+  void main() {
+    // World-space noise coord — each layer samples a different region of noise space
+    vec3 coord = vec3(
+      vWorldPos.xy * uFrequency + uNoiseOffset.xy,
+      uNoiseOffset.z + uTime * 0.009
+    );
+
+    // 4-octave fBm — more natural cloud shapes than 3-octave
+    float n  = snoise(coord)               * 0.5000;
+    n       += snoise(coord * 2.1 + 7.3)   * 0.2500;
+    n       += snoise(coord * 4.3 + 15.7)  * 0.1250;
+    n       += snoise(coord * 8.7 + 31.4)  * 0.0625;
+    n = n * (1.0 / 0.9375);   // normalise amplitude sum
+    n = n * 0.5 + 0.5;        // remap [-1,1] → [0,1]
+
+    // Adjustable cloud density threshold per layer
+    float cloud = smoothstep(uDensityBias, uDensityBias + 0.26, n);
+
+    // Elliptical vignette — clouds are wider than tall
+    vec2 uvc = vUv - 0.5;
+    float edgeDist = length(uvc * vec2(0.80, 1.10)) * 2.0;
+    float edge = 1.0 - smoothstep(0.52, 1.02, edgeDist);
+
+    // Wispy irregular edges via secondary noise — breaks up the ellipse silhouette
+    float edgeNoise = snoise(vec3(
+      vUv * 4.8 + uNoiseOffset.xy * 0.25,
+      uNoiseOffset.z * 0.18 + uTime * 0.004
+    ));
+    edge *= 0.78 + edgeNoise * 0.22;
+    edge = clamp(edge, 0.0, 1.0);
+
+    // Vertical colour gradient — lit from above
+    // Bottom: warm cream (shadow underside)  →  Mid: bright white  →  Top: cool blue-white
+    float yFac = clamp(vUv.y, 0.0, 1.0);
+    vec3 bottomColor = vec3(0.978, 0.950, 0.915); // warm cream underside
+    vec3 midColor    = vec3(1.000, 0.998, 0.996); // near-white core
+    vec3 topColor    = vec3(0.955, 0.968, 1.000); // cool blue-white lit top
+    vec3 cloudColor  = mix(bottomColor, midColor, smoothstep(0.0, 0.55, yFac));
+    cloudColor       = mix(cloudColor,  topColor,  smoothstep(0.5,  1.0,  yFac));
+
+    // Self-shadowing: denser mass = brighter (scatters more light)
+    cloudColor *= mix(0.90, 1.0, cloud);
+
+    float alpha = cloud * edge * uVisibility * uMaxOpacity;
+    gl_FragColor = vec4(cloudColor, clamp(alpha, 0.0, 1.0));
+  }
+`;
+
+// ── Per-layer cloud configuration ───────────────────────────────────────────
+// Camera travels z ≈ -72.5 → -100 during aviation (75–100% scroll).
+// 10 layers distributed through that range; each has unique noise personality.
+
+interface CloudLayer {
+  x: number; y: number; z: number;
+  rx: number; ry: number;
+  sx: number; sy: number;        // mesh scale (x, y)
+  freq: number;                  // noise frequency
+  opMax: number;                 // max opacity
+  noiseOff: [number, number, number];
+  densityBias: number;           // cloud coverage floor
+  driftX: number;                // lateral drift speed (world units/sec)
+  driftY: number;                // vertical drift speed
+}
+
+const CLOUD_LAYERS: CloudLayer[] = [
+  { x:  2.0, y:  2.5, z: -71, rx:  0.06, ry:  0.03, sx: 1.3, sy: 0.90, freq: 0.038, opMax: 0.42, noiseOff: [ 0.0,  0.0,  0.0], densityBias: 0.44, driftX:  0.014, driftY:  0.003 },
+  { x: -8.0, y: -1.5, z: -74, rx: -0.04, ry: -0.05, sx: 1.1, sy: 1.00, freq: 0.051, opMax: 0.60, noiseOff: [ 5.7,  3.2, 11.4], densityBias: 0.40, driftX: -0.009, driftY:  0.005 },
+  { x:  6.0, y:  4.0, z: -77, rx:  0.09, ry:  0.04, sx: 1.5, sy: 0.85, freq: 0.041, opMax: 0.68, noiseOff: [12.3,  7.8, 24.7], densityBias: 0.38, driftX:  0.016, driftY: -0.004 },
+  { x: -4.0, y: -2.0, z: -80, rx: -0.06, ry: -0.03, sx: 0.9, sy: 1.10, freq: 0.046, opMax: 0.54, noiseOff: [ 8.1, 15.6,  6.3], densityBias: 0.42, driftX: -0.011, driftY:  0.002 },
+  { x:  9.5, y:  1.5, z: -83, rx:  0.07, ry:  0.06, sx: 1.2, sy: 0.95, freq: 0.035, opMax: 0.66, noiseOff: [17.4,  2.1, 33.5], densityBias: 0.36, driftX:  0.008, driftY:  0.006 },
+  { x: -6.5, y:  2.8, z: -86, rx: -0.08, ry:  0.05, sx: 1.0, sy: 0.80, freq: 0.058, opMax: 0.40, noiseOff: [ 3.9, 20.3, 15.8], densityBias: 0.46, driftX: -0.013, driftY: -0.003 },
+  { x:  4.0, y: -3.0, z: -89, rx:  0.05, ry: -0.04, sx: 1.4, sy: 1.00, freq: 0.043, opMax: 0.72, noiseOff: [22.6,  8.9, 41.2], densityBias: 0.39, driftX:  0.010, driftY:  0.004 },
+  { x: -2.5, y:  1.5, z: -92, rx: -0.03, ry:  0.07, sx: 1.1, sy: 0.90, freq: 0.048, opMax: 0.56, noiseOff: [ 9.2, 26.4, 19.7], densityBias: 0.43, driftX: -0.012, driftY: -0.002 },
+  { x:  7.0, y: -1.0, z: -95, rx:  0.06, ry: -0.03, sx: 0.85, sy: 1.05, freq: 0.040, opMax: 0.60, noiseOff: [31.5, 13.7,  8.4], densityBias: 0.41, driftX:  0.007, driftY:  0.005 },
+  { x: -5.0, y:  2.5, z: -97, rx: -0.07, ry:  0.04, sx: 1.3, sy: 0.90, freq: 0.053, opMax: 0.48, noiseOff: [14.8, 33.2, 26.1], densityBias: 0.44, driftX: -0.009, driftY:  0.003 },
 ];
+
+// ── Engine-room atmosphere (unchanged) ──────────────────────────────────────
 
 export function EngineRoomAtmosphere() {
   const meshRef = useRef<THREE.InstancedMesh>(null);
@@ -141,15 +203,14 @@ export function EngineRoomAtmosphere() {
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     const progress = maxScroll > 0 ? Math.min(scrollY / maxScroll, 1) : 0;
 
-    // Visible across engine-room AND selected-work stages (0.40–0.80)
     const visibility =
       progress < 0.36
         ? 0
         : progress < 0.44
-          ? (progress - 0.36) / 0.08   // fade in
+          ? (progress - 0.36) / 0.08
           : progress < 0.74
-            ? 1                          // full — engine room + selected work
-            : Math.max(0, 1 - (progress - 0.74) / 0.08); // fade out before horizon
+            ? 1
+            : Math.max(0, 1 - (progress - 0.74) / 0.08);
 
     mat.opacity = visibility * 0.45;
 
@@ -178,44 +239,52 @@ export function EngineRoomAtmosphere() {
 }
 
 /**
- * HorizonAtmosphere — Stage 4 (75–100 % scroll)
+ * HorizonAtmosphere — Stage 5 (75–100% scroll)
  *
- * Aviation: Procedural Simplex Noise cloud planes the camera flies through,
- * backed by FogExp2 atmospheric haze. PA-28 banking horizon reference line
- * remains mouse-driven. HUD data (MSL +5,200 FT, KCMA→KVTA, 270° W) is
- * preserved in the UI overlay.
+ * Procedural cloud flythrough: 10 unique Simplex fBm cloud planes the camera
+ * flies through. Each layer has its own ShaderMaterial with unique frequency,
+ * noise offset, opacity, and density bias — no two layers look the same.
+ *
+ * Parallax depth: farther layers drift more slowly; nearby layers have faster
+ * lateral drift, selling the depth separation during the flythrough.
+ *
+ * Colour: warm cream underside → bright white core → cool blue-white top,
+ * matching the look of sunlit cumulonimbus from a cockpit window.
  */
 export function HorizonAtmosphere() {
   const groupRef = useRef<THREE.Group>(null);
   const mouseRef = useRef({ x: 0, y: 0 });
   const smoothMouse = useRef({ x: 0, y: 0 });
+  const cloudMeshRefs = useRef<(THREE.Mesh | null)[]>(
+    Array(CLOUD_LAYERS.length).fill(null)
+  );
 
-  useEffect(() => {
-    const handleMouse = (e: MouseEvent) => {
-      mouseRef.current.x = (e.clientX / window.innerWidth - 0.5) * 2;
-      mouseRef.current.y = (e.clientY / window.innerHeight - 0.5) * 2;
-    };
-    window.addEventListener('mousemove', handleMouse, { passive: true });
-    return () => window.removeEventListener('mousemove', handleMouse);
-  }, []);
-
-  // ── Procedural cloud planes ────────────────────────────────────────────────
-  const cloudPlaneGeo = useMemo(() => new THREE.PlaneGeometry(80, 40), []);
-  const cloudPlaneMat = useMemo(
+  // ── Per-layer materials (each unique — no shared state) ───────────────────
+  const cloudMaterials = useMemo(
     () =>
-      new THREE.ShaderMaterial({
-        vertexShader: CLOUD_VERT,
-        fragmentShader: CLOUD_FRAG,
-        uniforms: {
-          uTime: { value: 0 },
-          uVisibility: { value: 0 },
-        },
-        transparent: true,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-      }),
+      CLOUD_LAYERS.map(
+        (layer) =>
+          new THREE.ShaderMaterial({
+            vertexShader: CLOUD_VERT,
+            fragmentShader: CLOUD_FRAG,
+            uniforms: {
+              uTime:        { value: 0 },
+              uVisibility:  { value: 0 },
+              uFrequency:   { value: layer.freq },
+              uNoiseOffset: { value: new THREE.Vector3(...layer.noiseOff) },
+              uMaxOpacity:  { value: layer.opMax },
+              uDensityBias: { value: layer.densityBias },
+            },
+            transparent: true,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+          })
+      ),
     []
   );
+
+  // ── Shared plane geometry (scaled per-mesh via mesh.scale) ────────────────
+  const cloudPlaneGeo = useMemo(() => new THREE.PlaneGeometry(80, 40, 1, 1), []);
 
   // ── Horizon reference lines ────────────────────────────────────────────────
   const horizonMat = useRef(
@@ -224,7 +293,10 @@ export function HorizonAtmosphere() {
 
   const horizonLine = useMemo(() => {
     const pts = [new THREE.Vector3(-22, 0, 0), new THREE.Vector3(22, 0, 0)];
-    return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), horizonMat.current);
+    return new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(pts),
+      horizonMat.current
+    );
   }, []);
 
   const tickMats = useRef<THREE.LineBasicMaterial[]>([]);
@@ -232,12 +304,18 @@ export function HorizonAtmosphere() {
     const group = new THREE.Group();
     const positions = [-12, -8, -4, 0, 4, 8, 12];
     tickMats.current = positions.map(
-      () => new THREE.LineBasicMaterial({ color: '#2a2a2a', transparent: true, opacity: 0 })
+      () =>
+        new THREE.LineBasicMaterial({ color: '#2a2a2a', transparent: true, opacity: 0 })
     );
     positions.forEach((x, i) => {
       const h = x === 0 ? 0.5 : 0.28;
       const pts = [new THREE.Vector3(x, -h, 0), new THREE.Vector3(x, h, 0)];
-      group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), tickMats.current[i]));
+      group.add(
+        new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints(pts),
+          tickMats.current[i]
+        )
+      );
     });
     return group;
   }, []);
@@ -247,64 +325,109 @@ export function HorizonAtmosphere() {
     const group = new THREE.Group();
     [
       { from: new THREE.Vector3(-22, 0, 0), to: new THREE.Vector3(-30, 0, 0) },
-      { from: new THREE.Vector3(22, 0, 0), to: new THREE.Vector3(30, 0, 0) },
+      { from: new THREE.Vector3(22,  0, 0), to: new THREE.Vector3( 30, 0, 0) },
     ].forEach(({ from, to }, i) => {
-      const mat = new THREE.LineBasicMaterial({ color: '#2a2a2a', transparent: true, opacity: 0 });
+      const mat = new THREE.LineBasicMaterial({
+        color: '#2a2a2a',
+        transparent: true,
+        opacity: 0,
+      });
       wingMats.current[i] = mat;
-      group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([from, to]), mat));
+      group.add(
+        new THREE.Line(new THREE.BufferGeometry().setFromPoints([from, to]), mat)
+      );
     });
     return group;
   }, []);
 
+  // ── Mouse handler ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      mouseRef.current.x = (e.clientX / window.innerWidth - 0.5) * 2;
+      mouseRef.current.y = (e.clientY / window.innerHeight - 0.5) * 2;
+    };
+    window.addEventListener('mousemove', onMove, { passive: true });
+    return () => window.removeEventListener('mousemove', onMove);
+  }, []);
+
   useFrame((state) => {
+
     const scrollY = window.scrollY || 0;
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     const progress = maxScroll > 0 ? Math.min(scrollY / maxScroll, 1) : 0;
+    const time = state.clock.elapsedTime;
 
-    // Horizon stage starts at 0.80; fade-in window 0.78 → 0.88
+    // Clouds: start fading in at 0.80 (background already ~20% lightened by then),
+    // full coverage at 0.91 — gives a slow immersive build rather than a sudden pop
     const visibility =
-      progress < 0.78
+      progress < 0.80
         ? 0
-        : progress < 0.88
-          ? (progress - 0.78) / 0.10
+        : progress < 0.91
+          ? (progress - 0.80) / 0.11
           : 1;
 
-    // Cloud shader uniforms — shared across all cloud plane instances
-    cloudPlaneMat.uniforms.uTime.value = state.clock.elapsedTime;
-    cloudPlaneMat.uniforms.uVisibility.value = visibility;
+    // ── Per-layer material + drift updates ────────────────────────────────
+    CLOUD_LAYERS.forEach((layer, i) => {
+      const mat = cloudMaterials[i];
+      mat.uniforms.uTime.value = time;
+      mat.uniforms.uVisibility.value = visibility;
 
-    // Horizon reference line opacities
+      // Parallax drift — depth-scaled so distant layers move more slowly
+      // giving the cockpit window depth separation feel
+      const depthFactor = 1.0 + (Math.abs(layer.z) - 71) / 26.0; // 1.0 → 2.0
+      const mesh = cloudMeshRefs.current[i];
+      if (mesh) {
+        mesh.position.x = layer.x + time * layer.driftX / depthFactor;
+        mesh.position.y =
+          layer.y +
+          Math.sin(time * 0.07 + i * 1.13) * 0.4 +
+          time * layer.driftY / depthFactor;
+      }
+    });
+
+    // ── Horizon reference line opacities ──────────────────────────────────
     horizonMat.current.opacity = visibility * 0.65;
-    tickMats.current.forEach((m, i) => { m.opacity = visibility * (i === 3 ? 0.5 : 0.25); });
-    wingMats.current.forEach((m) => { m.opacity = visibility * 0.18; });
+    tickMats.current.forEach((m, i) => {
+      m.opacity = visibility * (i === 3 ? 0.50 : 0.25);
+    });
+    wingMats.current.forEach((m) => {
+      m.opacity = visibility * 0.18;
+    });
 
-    // PA-28 banking: two-stage mouse smoothing
+    // ── PA-28 banking: two-stage mouse smoothing ───────────────────────────
     if (groupRef.current) {
       const AILERON_DAMPING = 0.025;
-      smoothMouse.current.x += (mouseRef.current.x - smoothMouse.current.x) * AILERON_DAMPING;
-      smoothMouse.current.y += (mouseRef.current.y - smoothMouse.current.y) * AILERON_DAMPING;
+      smoothMouse.current.x +=
+        (mouseRef.current.x - smoothMouse.current.x) * AILERON_DAMPING;
+      smoothMouse.current.y +=
+        (mouseRef.current.y - smoothMouse.current.y) * AILERON_DAMPING;
 
       const ROLL_DAMPING = 0.04;
       const targetRotZ = smoothMouse.current.x * -0.16;
       const targetRotX = smoothMouse.current.y * 0.07;
       const targetY    = smoothMouse.current.y * -0.5;
 
-      groupRef.current.rotation.z += (targetRotZ - groupRef.current.rotation.z) * ROLL_DAMPING;
-      groupRef.current.rotation.x += (targetRotX - groupRef.current.rotation.x) * ROLL_DAMPING;
-      groupRef.current.position.y += (targetY    - groupRef.current.position.y) * ROLL_DAMPING;
+      groupRef.current.rotation.z +=
+        (targetRotZ - groupRef.current.rotation.z) * ROLL_DAMPING;
+      groupRef.current.rotation.x +=
+        (targetRotX - groupRef.current.rotation.x) * ROLL_DAMPING;
+      groupRef.current.position.y +=
+        (targetY - groupRef.current.position.y) * ROLL_DAMPING;
     }
   });
 
   return (
     <>
-      {/* Noise-driven cloud planes — camera flies through as scroll progresses */}
+      {/* Cloud planes — each with its own unique ShaderMaterial */}
       {CLOUD_LAYERS.map((layer, i) => (
         <mesh
           key={i}
+          ref={(el) => { cloudMeshRefs.current[i] = el; }}
           geometry={cloudPlaneGeo}
-          material={cloudPlaneMat}
+          material={cloudMaterials[i]}
           position={[layer.x, layer.y, layer.z]}
           rotation={[layer.rx, layer.ry, 0]}
+          scale={[layer.sx, layer.sy, 1]}
           frustumCulled={false}
         />
       ))}
