@@ -30,11 +30,17 @@ export function SceneManager({ transitionRef, cameraRef, cameraLocked }: SceneMa
   const smoothProgress = useRef(0);
   const smoothVelocity = useRef(0);
   const fogRef = useRef<THREE.Fog | null>(null);
+  const fogExpRef = useRef<THREE.FogExp2 | null>(null);
+  // 'linear' | 'exp' — tracks which fog type is currently active
+  const fogTypeRef = useRef<'linear' | 'exp'>('linear');
 
   useEffect(() => {
     scene.background = SHORELINE_COLOR.clone();
-    scene.fog = new THREE.Fog('#003838', 25, 130);
-    fogRef.current = scene.fog as THREE.Fog;
+    const fog = new THREE.Fog('#003838', 25, 130);
+    scene.fog = fog;
+    fogRef.current = fog;
+    fogTypeRef.current = 'linear';
+    return () => { scene.fog = null; };
   }, [scene]);
 
   useFrame((_state, delta) => {
@@ -74,12 +80,38 @@ export function SceneManager({ transitionRef, cameraRef, cameraLocked }: SceneMa
       scene.background.lerp(tempColor, 0.08);
     }
 
-    if (fogRef.current) {
-      fogRef.current.color.lerp(tempColor, 0.08);
-      const targetNear = p > 0.75 ? 50 : p > 0.50 ? 15 : 20;
-      const targetFar = p > 0.75 ? 200 : p > 0.50 ? 100 : 120;
-      fogRef.current.near += (targetNear - fogRef.current.near) * 0.05;
-      fogRef.current.far += (targetFar - fogRef.current.far) * 0.05;
+    if (p >= 0.75) {
+      // ── Aviation section: switch to FogExp2 for immersive cloud haze ──────
+      if (fogTypeRef.current !== 'exp') {
+        const exp = new THREE.FogExp2(tempColor.getHex(), 0.005);
+        scene.fog = exp;
+        fogRef.current = null;
+        fogExpRef.current = exp;
+        fogTypeRef.current = 'exp';
+      }
+      if (fogExpRef.current) {
+        fogExpRef.current.color.lerp(tempColor, 0.06);
+        // Density ramps from 0.005 (entry) → 0.018 (full scroll)
+        const t = (p - 0.75) / 0.25;
+        const targetDensity = 0.005 + t * 0.013;
+        fogExpRef.current.density += (targetDensity - fogExpRef.current.density) * 0.04;
+      }
+    } else {
+      // ── Other sections: standard linear fog ───────────────────────────────
+      if (fogTypeRef.current !== 'linear') {
+        const fog = new THREE.Fog(tempColor.getHex(), 20, 120);
+        scene.fog = fog;
+        fogRef.current = fog;
+        fogExpRef.current = null;
+        fogTypeRef.current = 'linear';
+      }
+      if (fogRef.current) {
+        fogRef.current.color.lerp(tempColor, 0.08);
+        const targetNear = p > 0.50 ? 15 : 20;
+        const targetFar  = p > 0.50 ? 100 : 120;
+        fogRef.current.near += (targetNear - fogRef.current.near) * 0.05;
+        fogRef.current.far  += (targetFar  - fogRef.current.far)  * 0.05;
+      }
     }
 
     if (transitionRef?.current) {
