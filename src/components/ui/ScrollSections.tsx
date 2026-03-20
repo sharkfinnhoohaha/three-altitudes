@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useScroll } from '@/contexts/ScrollContext';
+import { AirplaneCursor } from './AirplaneCursor';
 
 const IDENTITIES = ['PILOT', 'PRODUCER', 'DEVELOPER'];
 
@@ -252,14 +253,14 @@ export function ScrollSections() {
     prevAtmosphere.current = atmosphere;
   }, [atmosphere]);
 
-  // Airplane cursor on body for horizon
+  // Hide default cursor in horizon section — AirplaneCursor renders the SVG replacement
   useEffect(() => {
     if (atmosphere === 'horizon') {
-      document.body.classList.add('cursor-airplane');
+      document.body.classList.add('cursor-none');
     } else {
-      document.body.classList.remove('cursor-airplane');
+      document.body.classList.remove('cursor-none');
     }
-    return () => document.body.classList.remove('cursor-airplane');
+    return () => document.body.classList.remove('cursor-none');
   }, [atmosphere]);
 
   const show = (zone: typeof atmosphere) => atmosphere === zone;
@@ -773,52 +774,6 @@ export function ScrollSections() {
             overflow: 'hidden',
           }}
         >
-          {/* CSS cloud layers */}
-          <div
-            className="cloud-layer"
-            style={{
-              width: '30vw', height: '12vw',
-              top: '15%', opacity: 0.07,
-              background: 'radial-gradient(ellipse at 50% 50%, #fff 0%, transparent 70%)',
-              filter: 'blur(18px)',
-              animation: 'cloud-drift-1 70s linear infinite',
-              animationDelay: '-10s',
-            }}
-          />
-          <div
-            className="cloud-layer"
-            style={{
-              width: '22vw', height: '9vw',
-              top: '28%', opacity: 0.10,
-              background: 'radial-gradient(ellipse at 50% 50%, #fff 0%, transparent 70%)',
-              filter: 'blur(12px)',
-              animation: 'cloud-drift-2 45s linear infinite',
-              animationDelay: '-20s',
-            }}
-          />
-          <div
-            className="cloud-layer"
-            style={{
-              width: '40vw', height: '14vw',
-              top: '55%', opacity: 0.12,
-              background: 'radial-gradient(ellipse at 50% 50%, #fff 0%, transparent 70%)',
-              filter: 'blur(22px)',
-              animation: 'cloud-drift-3 30s linear infinite',
-              animationDelay: '-5s',
-            }}
-          />
-          <div
-            className="cloud-layer"
-            style={{
-              width: '18vw', height: '8vw',
-              top: '68%', opacity: 0.08,
-              background: 'radial-gradient(ellipse at 50% 50%, #fff 0%, transparent 70%)',
-              filter: 'blur(8px)',
-              animation: 'cloud-drift-4 20s linear infinite',
-              animationDelay: '-8s',
-            }}
-          />
-
           {/* la-altitude.jpg as background */}
           <div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden' }}>
             <img
@@ -941,6 +896,9 @@ export function ScrollSections() {
           </div>
         </div>
       </section>
+
+      {/* SVG airplane cursor — only active in the horizon/aviation section */}
+      <AirplaneCursor />
 
     </div>
   );

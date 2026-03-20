@@ -167,34 +167,10 @@ body::after {
   color: #333333;
 }
 
-/* ── Airplane cursor (Horizon section) ──────────────────── */
-.cursor-airplane {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg transform='translate(16,16)'%3E%3Cpolygon points='0,-12 3,-2 0,0 -3,-2' fill='%23222' opacity='0.9'/%3E%3Cpolygon points='-10,2 0,-1 10,2 0,4' fill='%23222' opacity='0.85'/%3E%3Cpolygon points='-4,6 0,4 4,6 0,8' fill='%23222' opacity='0.8'/%3E%3C/g%3E%3C/svg%3E") 16 16, crosshair;
-}
-
-/* ── Cloud drift animation ───────────────────────────────── */
-@keyframes cloud-drift-1 {
-  from { transform: translateX(110vw); }
-  to   { transform: translateX(-110vw); }
-}
-@keyframes cloud-drift-2 {
-  from { transform: translateX(115vw); }
-  to   { transform: translateX(-115vw); }
-}
-@keyframes cloud-drift-3 {
-  from { transform: translateX(105vw); }
-  to   { transform: translateX(-105vw); }
-}
-@keyframes cloud-drift-4 {
-  from { transform: translateX(120vw); }
-  to   { transform: translateX(-120vw); }
-}
-
-.cloud-layer {
-  position: absolute;
-  pointer-events: none;
-  border-radius: 50%;
-  will-change: transform;
+/* ── Horizon section: hide OS cursor, AirplaneCursor renders the SVG replacement */
+.cursor-none,
+.cursor-none * {
+  cursor: none !important;
 }
 
 /* ── Cyberspace data cascade ────────────────────────────── */
