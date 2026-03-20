@@ -5,25 +5,6 @@ import { useScroll } from '@/contexts/ScrollContext';
 
 const IDENTITIES = ['PILOT', 'PRODUCER', 'DEVELOPER'];
 
-// Spotify playlist: https://open.spotify.com/playlist/7x8qaRT5L4UVebsbvzRtzE
-// Update this list with actual tracks from the playlist
-const TRACKS = [
-  { artist: 'MINERAL KING', title: 'Featherweight', role: 'Live Mix' },
-  { artist: 'MINERAL KING', title: 'High Country', role: 'Live Mix' },
-  { artist: 'MINERAL KING', title: 'Sequoia', role: 'Front of House' },
-  { artist: 'MINERAL KING', title: 'Glass Pass', role: 'Live Mix' },
-  { artist: 'STRANGE CASE', title: 'Palm Reader', role: 'Engineering' },
-  { artist: 'STRANGE CASE', title: 'Sunken Weight', role: 'Engineering' },
-  { artist: 'STRANGE CASE', title: 'Riptide', role: 'Studio' },
-  { artist: 'SUBLIME', title: 'What I Got', role: 'FOH' },
-  { artist: 'SUBLIME', title: 'Santeria', role: 'FOH' },
-  { artist: 'SUBLIME', title: 'Wrong Way', role: 'FOH' },
-  { artist: 'SUBLIME', title: 'Date Rape', role: 'FOH' },
-  { artist: 'VARIOUS', title: 'The Pocket Sessions Vol. I', role: 'Mixing' },
-  { artist: 'VARIOUS', title: 'The Pocket Sessions Vol. II', role: 'Mixing' },
-  { artist: 'OVERLOOK AUDIO', title: 'Signal Chain', role: 'Production' },
-  { artist: 'OVERLOOK AUDIO', title: 'Headroom', role: 'Production' },
-];
 
 const PROJECTS = [
   {
@@ -373,88 +354,233 @@ export function ScrollSections() {
             opacity: show('pocket') ? 1 : 0,
             transition: 'opacity 0.9s ease',
             pointerEvents: show('pocket') ? 'all' : 'none',
-            gap: '0.5rem',
+            padding: '0 clamp(1.5rem, 5vw, 4rem)',
           }}
         >
-          <div ref={pocketTextRef} style={{ willChange: 'transform', transition: 'transform 0.05s linear', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-            <p
-              className="hud-text"
-              style={{
-                fontSize: '0.5rem',
-                letterSpacing: '0.4em',
-                color: '#ff8c00',
-                opacity: 0.5,
-                marginBottom: '0.5rem',
-                textAlign: 'center',
-              }}
-            >
-              OVERLOOK AUDIO
-            </p>
+          <div
+            ref={pocketTextRef}
+            style={{
+              willChange: 'transform',
+              transition: 'transform 0.05s linear',
+              width: '100%',
+              maxWidth: '1060px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.25rem',
+            }}
+          >
+            {/* ── Section header ── */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <p
+                className="hud-text"
+                style={{ fontSize: '0.45rem', letterSpacing: '0.4em', color: '#ff8c00', opacity: 0.5, whiteSpace: 'nowrap' }}
+              >
+                OVERLOOK AUDIO
+              </p>
+              <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(255,140,0,0.2) 0%, transparent 100%)' }} />
+              <p
+                className="hud-text"
+                style={{ fontSize: '0.35rem', letterSpacing: '0.35em', color: '#ff8c00', opacity: 0.3, whiteSpace: 'nowrap' }}
+              >
+                8M+ STREAMS
+              </p>
+            </div>
 
             <h2
               className="serif-text"
               style={{
-                fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+                fontSize: 'clamp(2.2rem, 4.5vw, 3.8rem)',
                 fontWeight: 300,
                 color: '#f5e6d0',
-                letterSpacing: '0.08em',
-                textAlign: 'center',
-                lineHeight: 1.2,
-                marginBottom: '2rem',
+                letterSpacing: '0.06em',
+                lineHeight: 1,
               }}
             >
-              Sonic Work
+              The Work
             </h2>
 
-            {/* Tracklist */}
+            {/* ── Two-column body ── */}
             <div
               style={{
-                maxHeight: '38vh',
-                overflowY: 'auto',
-                width: 'clamp(280px, 40vw, 520px)',
-                scrollbarWidth: 'none',
+                display: 'grid',
+                gridTemplateColumns: '1fr 1.5fr',
+                gap: 'clamp(1.5rem, 4vw, 3rem)',
+                alignItems: 'start',
               }}
             >
-              <style>{`.tracklist::-webkit-scrollbar { display: none; }`}</style>
-              <div className="tracklist">
-                {TRACKS.map((track, i) => (
-                  <div
-                    key={i}
+              {/* Left: Credentials panel */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.4rem' }}>
+
+                {/* Stats row */}
+                <div style={{ display: 'flex' }}>
+                  {[
+                    { value: '8M+', label: 'STREAMS' },
+                    { value: '12', label: 'YRS EXP' },
+                    { value: 'FOH', label: 'LIVE AUDIO' },
+                  ].map(({ value, label }, idx) => (
+                    <div
+                      key={label}
+                      style={{
+                        flex: 1,
+                        borderLeft: `1px solid rgba(255,140,0,${idx === 0 ? 0.3 : 0.12})`,
+                        paddingLeft: '0.75rem',
+                        paddingRight: '0.75rem',
+                      }}
+                    >
+                      <p
+                        className="serif-text"
+                        style={{
+                          fontSize: 'clamp(1.3rem, 2.2vw, 1.9rem)',
+                          fontWeight: 300,
+                          color: '#ff8c00',
+                          lineHeight: 1,
+                          opacity: idx === 0 ? 1 : 0.6,
+                        }}
+                      >
+                        {value}
+                      </p>
+                      <p
+                        className="hud-text"
+                        style={{ fontSize: '0.28rem', letterSpacing: '0.3em', color: '#ff8c00', opacity: 0.35, marginTop: '0.2rem' }}
+                      >
+                        {label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Touring credits */}
+                <div>
+                  <p
+                    className="hud-text"
+                    style={{ fontSize: '0.3rem', letterSpacing: '0.4em', color: '#ff8c00', opacity: 0.3, marginBottom: '0.5rem' }}
+                  >
+                    TOURING CREDITS
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    {[
+                      { name: 'MINERAL KING', role: 'FOH · Touring' },
+                      { name: 'SUBLIME', role: 'FOH · Touring' },
+                      { name: 'STRANGE CASE', role: 'Studio Engineering' },
+                    ].map(({ name, role }) => (
+                      <div
+                        key={name}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'baseline',
+                          justifyContent: 'space-between',
+                          padding: '0.4rem 0',
+                          borderBottom: '1px solid rgba(255,140,0,0.07)',
+                        }}
+                      >
+                        <span
+                          className="serif-text"
+                          style={{
+                            fontSize: 'clamp(0.75rem, 1.2vw, 1rem)',
+                            fontWeight: 400,
+                            color: '#f5e6d0',
+                            letterSpacing: '0.04em',
+                            opacity: 0.9,
+                          }}
+                        >
+                          {name}
+                        </span>
+                        <span
+                          className="hud-text"
+                          style={{ fontSize: '0.28rem', letterSpacing: '0.2em', color: '#ff8c00', opacity: 0.3 }}
+                        >
+                          {role}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Disciplines */}
+                <div>
+                  <p
+                    className="hud-text"
+                    style={{ fontSize: '0.3rem', letterSpacing: '0.4em', color: '#ff8c00', opacity: 0.3, marginBottom: '0.4rem' }}
+                  >
+                    DISCIPLINES
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    {[
+                      { code: 'LIVE FOH', desc: 'Touring front-of-house' },
+                      { code: 'STUDIO', desc: 'Recording & mix engineering' },
+                      { code: 'PRODUCTION', desc: 'Composition & synthesis' },
+                    ].map(({ code, desc }) => (
+                      <div key={code} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <span
+                          className="hud-text"
+                          style={{
+                            fontSize: '0.3rem',
+                            letterSpacing: '0.25em',
+                            color: '#ff8c00',
+                            opacity: 0.6,
+                            padding: '0.15rem 0.4rem',
+                            border: '1px solid rgba(255,140,0,0.2)',
+                            background: 'rgba(255,140,0,0.04)',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {code}
+                        </span>
+                        <span
+                          className="hud-text"
+                          style={{ fontSize: '0.28rem', letterSpacing: '0.08em', color: '#f5e6d0', opacity: 0.25 }}
+                        >
+                          {desc}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right: Spotify embed */}
+              <div style={{ position: 'relative' }}>
+                {/* Ambient glow behind player */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: '-30px -20px',
+                    background: 'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(255,140,0,0.07) 0%, transparent 70%)',
+                    pointerEvents: 'none',
+                    zIndex: 0,
+                  }}
+                />
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <iframe
+                    title="Overlook Audio — Selected Works"
+                    src="https://open.spotify.com/embed/playlist/7x8qaRT5L4UVebsbvzRtzE?utm_source=generator&theme=0"
+                    width="100%"
                     style={{
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      gap: '0.75rem',
-                      padding: '0.35rem 0',
-                      borderBottom: '1px solid rgba(255,140,0,0.06)',
+                      height: 'clamp(280px, 38vh, 352px)',
+                      border: 'none',
+                      borderRadius: '12px',
+                      display: 'block',
+                    }}
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy"
+                  />
+                  <p
+                    className="hud-text"
+                    style={{
+                      fontSize: '0.28rem',
+                      letterSpacing: '0.3em',
+                      color: '#ff8c00',
+                      opacity: 0.2,
+                      textAlign: 'center',
+                      marginTop: '0.6rem',
                     }}
                   >
-                    <span
-                      className="hud-text"
-                      style={{ fontSize: '0.32rem', color: '#ff8c00', opacity: 0.25, minWidth: '1.4rem' }}
-                    >
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                    <span
-                      className="hud-text"
-                      style={{ fontSize: '0.44rem', letterSpacing: '0.25em', color: '#ff8c00', opacity: 0.85, flex: 1 }}
-                    >
-                      {track.artist}
-                    </span>
-                    <span
-                      className="hud-text"
-                      style={{ fontSize: '0.38rem', letterSpacing: '0.1em', color: '#f5e6d0', opacity: 0.45 }}
-                    >
-                      {track.title}
-                    </span>
-                    <span
-                      className="hud-text"
-                      style={{ fontSize: '0.28rem', letterSpacing: '0.2em', color: '#ff8c00', opacity: 0.2 }}
-                    >
-                      {track.role}
-                    </span>
-                  </div>
-                ))}
+                    OVERLOOK AUDIO — SELECTED WORKS  //  SPOTIFY
+                  </p>
+                </div>
               </div>
+
             </div>
           </div>
         </div>
