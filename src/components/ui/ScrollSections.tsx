@@ -110,109 +110,207 @@ const DATA_COLUMNS = [
   'SELECT *\nFROM sys\nWHERE id\nIN (1,2)\nLIMIT 8',
 ];
 
-// ── Browser Mockup Card ──────────────────────────────────────────────────────
-// ResizeObserver scales the iframe so it exactly fills the card width.
-function BrowserMockupCard({ project }: { project: typeof WEB_PROJECTS[0] }) {
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const [iframeScale, setIframeScale] = useState(0.34);
+// ── Selected Work Browser ─────────────────────────────────────────────────────
+// Single macOS-style browser mockup with three stacked iframe panels,
+// crossfade transitions, tab selector, and auto-rotation.
+function SelectedWorkBrowser() {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const resumeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Scroll entrance via IntersectionObserver
   useEffect(() => {
-    const el = viewportRef.current;
+    const el = containerRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(([entry]) => {
-      setIframeScale(entry.contentRect.width / 1280);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setIsVisible(true); },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
-  return (
-    <div className="web-project-card">
-      {/* Browser chrome */}
-      <div className="browser-chrome">
-        <div className="browser-traffic-lights">
-          <span className="traffic-light tl-close" />
-          <span className="traffic-light tl-min" />
-          <span className="traffic-light tl-max" />
-        </div>
-        <div className="browser-url-bar">
-          <span className="url-protocol">https://</span>
-          <span className="url-host">{project.domain}</span>
-        </div>
-      </div>
+  // Auto-rotation — pauses on user interaction, resumes after 8 s
+  useEffect(() => {
+    if (paused) return;
+    const id = setInterval(() => {
+      setActiveIdx((i) => (i + 1) % WEB_PROJECTS.length);
+    }, 4500);
+    return () => clearInterval(id);
+  }, [paused]);
 
-      {/* Scaled iframe viewport */}
-      <div ref={viewportRef} className="browser-viewport">
+  const handleTabClick = (idx: number) => {
+    setActiveIdx(idx);
+    setPaused(true);
+    if (resumeRef.current) clearTimeout(resumeRef.current);
+    resumeRef.current = setTimeout(() => setPaused(false), 8000);
+  };
+
+  const activeProject = WEB_PROJECTS[activeIdx];
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        width: 'clamp(360px, 72vw, 900px)',
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? 'translateY(0)' : 'translateY(24px)',
+        transition: 'opacity 0.8s ease, transform 0.8s ease',
+      }}
+    >
+      {/* ── Browser frame ── */}
+      <div
+        style={{
+          borderRadius: 16,
+          overflow: 'hidden',
+          background: 'rgb(26,26,26)',
+          boxShadow: 'rgba(0,0,0,0.15) 0px 25px 50px',
+          border: '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
+        {/* Title bar */}
         <div
-          className="browser-scale-wrapper"
-          style={{ transform: `scale(${iframeScale})` }}
+          style={{
+            background: 'rgb(20,20,20)',
+            padding: '12px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            borderBottom: '1px solid rgba(255,255,255,0.05)',
+          }}
         >
-          <iframe
-            src={project.url}
-            title={project.name}
-            scrolling="no"
-            loading="lazy"
-            style={{ border: 'none', width: '1280px', height: '860px', pointerEvents: 'none' }}
+          {/* Traffic lights */}
+          <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+            <span style={{ display: 'block', width: 12, height: 12, borderRadius: '50%', background: 'rgb(255,95,87)' }} />
+            <span style={{ display: 'block', width: 12, height: 12, borderRadius: '50%', background: 'rgb(254,188,46)' }} />
+            <span style={{ display: 'block', width: 12, height: 12, borderRadius: '50%', background: 'rgb(40,200,64)' }} />
+          </div>
+
+          {/* URL bar — dynamically updates on tab switch */}
+          <div
+            style={{
+              flex: 1,
+              background: 'rgb(10,10,10)',
+              borderRadius: 6,
+              padding: '5px 12px',
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: '0.6rem',
+              letterSpacing: '0.04em',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            <span style={{ color: '#444' }}>https://</span>
+            <span style={{ color: '#888' }}>{activeProject.domain}</span>
+          </div>
+        </div>
+
+        {/* Panel area — all three panels exist in DOM, stacked absolutely */}
+        <div
+          data-lenis-prevent
+          style={{
+            position: 'relative',
+            width: '100%',
+            aspectRatio: '16 / 10',
+            background: '#0a0a0a',
+            overflow: 'hidden',
+          }}
+        >
+          {WEB_PROJECTS.map((project, idx) => (
+            <div
+              key={project.id}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                opacity: idx === activeIdx ? 1 : 0,
+                transform: idx === activeIdx ? 'scale(1)' : 'scale(0.98)',
+                zIndex: idx === activeIdx ? 10 : 0,
+                pointerEvents: idx === activeIdx ? 'auto' : 'none',
+                transition: 'opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
+              }}
+            >
+              <iframe
+                src={project.url}
+                title={project.name}
+                loading="lazy"
+                style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+              />
+            </div>
+          ))}
+
+          {/* Bottom fade — softens the iframe content edge */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 48,
+              background: 'linear-gradient(transparent, rgb(26,26,26))',
+              pointerEvents: 'none',
+              zIndex: 20,
+            }}
           />
         </div>
       </div>
 
-      {/* Project metadata */}
-      <div className="web-project-meta">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <h3
-            className="serif-text"
-            style={{ fontSize: '1rem', fontWeight: 400, color: '#ccc', letterSpacing: '0.05em' }}
-          >
-            {project.name}
-          </h3>
-          <a
-            href={project.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hud-text"
-            style={{
-              fontSize: '0.3rem',
-              letterSpacing: '0.3em',
-              color: '#00ff88',
-              opacity: 0.6,
-              textDecoration: 'none',
-              transition: 'opacity 0.2s ease',
-              flexShrink: 0,
-              marginLeft: '0.75rem',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.6')}
-          >
-            VISIT →
-          </a>
-        </div>
-
-        <p
-          className="hud-text"
-          style={{ fontSize: '0.3rem', letterSpacing: '0.08em', color: '#555', lineHeight: 1.7, marginTop: '0.3rem' }}
-        >
-          {project.desc}
-        </p>
-
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.5rem' }}>
-          {project.tech.map((t) => (
-            <span
-              key={t}
-              className="hud-text tech-tag"
+      {/* ── Tab selector ── */}
+      <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+        {WEB_PROJECTS.map((project, idx) => {
+          const isActive = idx === activeIdx;
+          return (
+            <button
+              key={project.id}
+              onClick={() => handleTabClick(idx)}
               style={{
-                fontSize: '0.26rem',
-                letterSpacing: '0.15em',
-                color: '#555',
-                opacity: 0.8,
-                padding: '0.08rem 0.3rem',
-                border: '1px solid rgba(85,85,85,0.3)',
+                flex: 1,
+                borderRadius: 12,
+                padding: '16px 20px',
+                height: 68,
+                cursor: 'pointer',
+                border: `1px solid ${isActive ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)'}`,
+                background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',
+                textAlign: 'left',
+                transition: 'background 0.3s ease, border-color 0.3s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                gap: 4,
+                outline: 'none',
               }}
             >
-              {t}
-            </span>
-          ))}
-        </div>
+              <span
+                className="serif-text"
+                style={{
+                  fontSize: 'clamp(0.7rem, 1.1vw, 0.9rem)',
+                  fontWeight: 400,
+                  color: isActive ? '#ccc' : '#444',
+                  letterSpacing: '0.05em',
+                  lineHeight: 1,
+                  transition: 'color 0.3s ease',
+                  display: 'block',
+                }}
+              >
+                {project.name}
+              </span>
+              <span
+                className="hud-text"
+                style={{
+                  fontSize: '0.28rem',
+                  letterSpacing: '0.3em',
+                  color: isActive ? '#00ff88' : '#333',
+                  transition: 'color 0.3s ease',
+                  display: 'block',
+                }}
+              >
+                {project.type}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -709,7 +807,6 @@ export function ScrollSections() {
             transition: 'opacity 0.9s ease',
             pointerEvents: show('selected-work') ? 'all' : 'none',
             gap: '1.5rem',
-            overflow: 'hidden',
           }}
         >
           {/* Section header */}
@@ -720,39 +817,8 @@ export function ScrollSections() {
             SELECTED WORK  //  WEB
           </p>
 
-          <h2
-            className="serif-text"
-            style={{
-              fontSize: 'clamp(1.6rem, 3.5vw, 2.8rem)',
-              fontWeight: 300,
-              color: '#ccc',
-              letterSpacing: '0.08em',
-              textAlign: 'center',
-              lineHeight: 1.2,
-            }}
-          >
-            Sites Built
-          </h2>
-
-          {/* Browser mockup grid */}
-          <div
-            style={{
-              display: 'grid',
-              // auto-fit collapses empty tracks → single card centers nicely
-              gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 520px))',
-              justifyContent: 'center',
-              gap: '1.5rem',
-              width: 'clamp(380px, 82vw, 1100px)',
-              maxHeight: '62vh',
-              overflowY: 'auto',
-              scrollbarWidth: 'none',
-              padding: '0.25rem',
-            }}
-          >
-            {WEB_PROJECTS.map((project) => (
-              <BrowserMockupCard key={project.id} project={project} />
-            ))}
-          </div>
+          {/* Single browser mockup with tab switcher */}
+          <SelectedWorkBrowser />
         </div>
       </section>
 
