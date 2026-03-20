@@ -25,7 +25,14 @@
     "paths": {
       "@/*": [
         "./src/*"
-      ]
+      ],
+      "sanity": ["./node_modules/sanity/lib/index.d.ts"],
+      "sanity/*": ["./node_modules/sanity/*"],
+      "@sanity/types": ["./node_modules/@sanity/types/lib/index.d.ts"],
+      "@sanity/vision": ["./node_modules/@sanity/vision"],
+      "@sanity/vision/*": ["./node_modules/@sanity/vision/*"],
+      "next-sanity": ["./node_modules/next-sanity"],
+      "next-sanity/*": ["./node_modules/next-sanity/*"]
     }
   },
   "include": [

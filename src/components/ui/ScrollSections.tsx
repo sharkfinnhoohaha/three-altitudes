@@ -3,9 +3,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { useScroll } from '@/contexts/ScrollContext';
 import { AirplaneCursor } from './AirplaneCursor';
+import type {
+  SanityWebProject,
+  SanityDevProject,
+  SanityHero,
+  SanityAudioWork,
+  SanityAviation,
+} from '@/lib/sanity/types';
 
-const IDENTITIES = ['PILOT', 'PRODUCER', 'DEVELOPER'];
+// ── Hardcoded fallback data ───────────────────────────────────────────────────
 
+const DEFAULT_IDENTITIES = ['PILOT', 'PRODUCER', 'DEVELOPER'];
 
 const PROJECTS = [
   {
@@ -110,9 +118,21 @@ const DATA_COLUMNS = [
   'SELECT *\nFROM sys\nWHERE id\nIN (1,2)\nLIMIT 8',
 ];
 
-// ── Browser Mockup Card ──────────────────────────────────────────────────────
-// ResizeObserver scales the iframe so it exactly fills the card width.
-function BrowserMockupCard({ project }: { project: typeof WEB_PROJECTS[0] }) {
+// ── Browser Mockup Card ───────────────────────────────────────────────────────
+
+type WebProjectItem = {
+  id?: string;
+  _id?: string;
+  name: string;
+  domain: string;
+  url: string;
+  desc: string;
+  tech: string[];
+  role: string;
+  type: string;
+};
+
+function BrowserMockupCard({ project }: { project: WebProjectItem }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const [iframeScale, setIframeScale] = useState(0.34);
 
@@ -218,19 +238,124 @@ function BrowserMockupCard({ project }: { project: typeof WEB_PROJECTS[0] }) {
   );
 }
 
-export function ScrollSections() {
+// ── Props ─────────────────────────────────────────────────────────────────────
+
+interface ScrollSectionsProps {
+  sanityWebProjects?: SanityWebProject[];
+  sanityDevProjects?: SanityDevProject[];
+  sanityHero?: SanityHero;
+  sanityAudioWork?: SanityAudioWork;
+  sanityAviation?: SanityAviation;
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
+export function ScrollSections({
+  sanityWebProjects,
+  sanityDevProjects,
+  sanityHero,
+  sanityAudioWork,
+  sanityAviation,
+}: ScrollSectionsProps) {
   const { atmosphere, velocity } = useScroll();
   const [identityIndex, setIdentityIndex] = useState(0);
   const [cascadeActive, setCascadeActive] = useState(false);
   const pocketTextRef = useRef<HTMLDivElement>(null);
   const prevAtmosphere = useRef(atmosphere);
 
+  // ── Resolve data: Sanity first, hardcoded fallback ──────────────────────────
+
+  const identities = sanityHero?.identities?.length
+    ? sanityHero.identities
+    : DEFAULT_IDENTITIES;
+
+  const heroName = sanityHero?.name ?? 'FINN BENNETT';
+  const heroLocation = sanityHero?.locationLabel
+    ? `${sanityHero.locationLabel}  //  ${sanityHero.coordinates}`
+    : 'VENTURA, CALIFORNIA  //  34.2746° N  119.2290° W';
+
+  const audioHeadline = sanityAudioWork?.headline ?? 'OVERLOOK AUDIO';
+  const audioTitle = sanityAudioWork?.sectionTitle ?? 'The Work';
+  const spotifyId = sanityAudioWork?.spotifyPlaylistId ?? '7x8qaRT5L4UVebsbvzRtzE';
+
+  const audioStats = sanityAudioWork?.stats?.length
+    ? sanityAudioWork.stats
+    : [
+        { value: '8M+', label: 'STREAMS' },
+        { value: '12', label: 'YRS EXP' },
+        { value: 'FOH', label: 'LIVE AUDIO' },
+      ];
+
+  const touringCredits = sanityAudioWork?.touringCredits?.length
+    ? sanityAudioWork.touringCredits.map((c) => ({ name: c.artistName, role: c.role }))
+    : [
+        { name: 'MINERAL KING', role: 'FOH · Touring' },
+        { name: 'SUBLIME', role: 'FOH · Touring' },
+        { name: 'STRANGE CASE', role: 'Studio Engineering' },
+      ];
+
+  const disciplines = sanityAudioWork?.disciplines?.length
+    ? sanityAudioWork.disciplines.map((d) => ({ code: d.code, desc: d.description }))
+    : [
+        { code: 'LIVE FOH', desc: 'Touring front-of-house' },
+        { code: 'STUDIO', desc: 'Recording & mix engineering' },
+        { code: 'PRODUCTION', desc: 'Composition & synthesis' },
+      ];
+
+  const activeProjects: typeof PROJECTS = sanityDevProjects?.length
+    ? sanityDevProjects.map((p) => ({
+        id: p._id,
+        num: p.num,
+        name: p.name,
+        desc: p.desc,
+        tech: p.tech,
+        role: p.role,
+        status: p.status,
+      }))
+    : PROJECTS;
+
+  const activeWebProjects: WebProjectItem[] = sanityWebProjects?.length
+    ? sanityWebProjects.map((p) => ({
+        _id: p._id,
+        name: p.name,
+        domain: p.domain,
+        url: p.url,
+        desc: p.desc,
+        tech: p.tech,
+        role: p.role,
+        type: p.type,
+      }))
+    : WEB_PROJECTS;
+
+  const aviationCallsign = sanityAviation?.callsign ?? 'N12345';
+  const aviationCert = sanityAviation?.certLabel ?? 'COMMERCIAL PILOT';
+  const aviationCoords = sanityAviation?.coordinates ?? '34°12′48″N  //  119°05′39″W';
+  const aviationTagline = sanityAviation?.tagline ?? 'From altitude, everything is pattern.';
+
+  const gauges = sanityAviation?.gauges?.length
+    ? sanityAviation.gauges
+    : [
+        { label: 'ALTITUDE', value: '+5,200 FT' },
+        { label: 'HEADING', value: '270° W' },
+        { label: 'ORIGIN', value: 'KCMA' },
+      ];
+
+  const beaconLinks = sanityAviation?.beaconLinks?.length
+    ? sanityAviation.beaconLinks
+    : [
+        { label: '@FINN.BENNETT', href: 'https://instagram.com/finn.bennett', sub: 'INSTAGRAM' },
+        { label: 'OVERLOOK STRATEGY', href: 'https://overlookstrategy.com', sub: 'AGENCY' },
+        { label: 'OVERLOOK AUDIO', href: 'https://overlookaudio.com', sub: 'STUDIO' },
+      ];
+
+  // ── Effects ────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     const id = setInterval(() => {
-      setIdentityIndex((i) => (i + 1) % IDENTITIES.length);
+      setIdentityIndex((i) => (i + 1) % identities.length);
     }, 2200);
     return () => clearInterval(id);
-  }, []);
+  }, [identities.length]);
 
   // Pocket text vibration — linked to scroll velocity
   useEffect(() => {
@@ -253,7 +378,7 @@ export function ScrollSections() {
     prevAtmosphere.current = atmosphere;
   }, [atmosphere]);
 
-  // Hide default cursor in horizon section — AirplaneCursor renders the SVG replacement
+  // Hide default cursor in horizon section
   useEffect(() => {
     if (atmosphere === 'horizon') {
       document.body.classList.add('cursor-none');
@@ -297,7 +422,7 @@ export function ScrollSections() {
               zIndex: 1,
             }}
           >
-            FINN BENNETT
+            {heroName}
           </h1>
 
           <div
@@ -317,12 +442,12 @@ export function ScrollSections() {
             }}
           >
             <span key={identityIndex} style={{ animation: 'identity-enter 0.5s ease forwards' }}>
-              {IDENTITIES[identityIndex]}
+              {identities[identityIndex]}
             </span>
             <span style={{ opacity: 0.3 }}>//</span>
-            <span style={{ opacity: 0.3 }}>{IDENTITIES[(identityIndex + 1) % 3]}</span>
+            <span style={{ opacity: 0.3 }}>{identities[(identityIndex + 1) % identities.length]}</span>
             <span style={{ opacity: 0.15 }}>//</span>
-            <span style={{ opacity: 0.15 }}>{IDENTITIES[(identityIndex + 2) % 3]}</span>
+            <span style={{ opacity: 0.15 }}>{identities[(identityIndex + 2) % identities.length]}</span>
           </div>
 
           <p
@@ -336,7 +461,7 @@ export function ScrollSections() {
               zIndex: 1,
             }}
           >
-            VENTURA, CALIFORNIA  //  34.2746° N  119.2290° W
+            {heroLocation}
           </p>
         </div>
       </section>
@@ -376,14 +501,14 @@ export function ScrollSections() {
                 className="hud-text"
                 style={{ fontSize: '0.45rem', letterSpacing: '0.4em', color: '#ff8c00', opacity: 0.5, whiteSpace: 'nowrap' }}
               >
-                OVERLOOK AUDIO
+                {audioHeadline}
               </p>
               <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(255,140,0,0.2) 0%, transparent 100%)' }} />
               <p
                 className="hud-text"
                 style={{ fontSize: '0.35rem', letterSpacing: '0.35em', color: '#ff8c00', opacity: 0.3, whiteSpace: 'nowrap' }}
               >
-                8M+ STREAMS
+                {audioStats[0]?.value} {audioStats[0]?.label}
               </p>
             </div>
 
@@ -397,7 +522,7 @@ export function ScrollSections() {
                 lineHeight: 1,
               }}
             >
-              The Work
+              {audioTitle}
             </h2>
 
             {/* ── Two-column body ── */}
@@ -414,11 +539,7 @@ export function ScrollSections() {
 
                 {/* Stats row */}
                 <div style={{ display: 'flex' }}>
-                  {[
-                    { value: '8M+', label: 'STREAMS' },
-                    { value: '12', label: 'YRS EXP' },
-                    { value: 'FOH', label: 'LIVE AUDIO' },
-                  ].map(({ value, label }, idx) => (
+                  {audioStats.map(({ value, label }, idx) => (
                     <div
                       key={label}
                       style={{
@@ -459,11 +580,7 @@ export function ScrollSections() {
                     TOURING CREDITS
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    {[
-                      { name: 'MINERAL KING', role: 'FOH · Touring' },
-                      { name: 'SUBLIME', role: 'FOH · Touring' },
-                      { name: 'STRANGE CASE', role: 'Studio Engineering' },
-                    ].map(({ name, role }) => (
+                    {touringCredits.map(({ name, role }) => (
                       <div
                         key={name}
                         style={{
@@ -506,11 +623,7 @@ export function ScrollSections() {
                     DISCIPLINES
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                    {[
-                      { code: 'LIVE FOH', desc: 'Touring front-of-house' },
-                      { code: 'STUDIO', desc: 'Recording & mix engineering' },
-                      { code: 'PRODUCTION', desc: 'Composition & synthesis' },
-                    ].map(({ code, desc }) => (
+                    {disciplines.map(({ code, desc }) => (
                       <div key={code} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                         <span
                           className="hud-text"
@@ -555,7 +668,7 @@ export function ScrollSections() {
                 <div style={{ position: 'relative', zIndex: 1 }}>
                   <iframe
                     title="Overlook Audio — Selected Works"
-                    src="https://open.spotify.com/embed/playlist/7x8qaRT5L4UVebsbvzRtzE?utm_source=generator&theme=0"
+                    src={`https://open.spotify.com/embed/playlist/${spotifyId}?utm_source=generator&theme=0`}
                     width="100%"
                     style={{
                       height: 'clamp(280px, 38vh, 352px)',
@@ -577,7 +690,7 @@ export function ScrollSections() {
                       marginTop: '0.6rem',
                     }}
                   >
-                    OVERLOOK AUDIO — SELECTED WORKS  //  SPOTIFY
+                    {audioHeadline} — SELECTED WORKS  //  SPOTIFY
                   </p>
                 </div>
               </div>
@@ -640,7 +753,7 @@ export function ScrollSections() {
               padding: '0.25rem',
             }}
           >
-            {PROJECTS.map((p) => (
+            {activeProjects.map((p) => (
               <div
                 key={p.id}
                 className="portfolio-card"
@@ -738,7 +851,6 @@ export function ScrollSections() {
           <div
             style={{
               display: 'grid',
-              // auto-fit collapses empty tracks → single card centers nicely
               gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 520px))',
               justifyContent: 'center',
               gap: '1.5rem',
@@ -749,8 +861,11 @@ export function ScrollSections() {
               padding: '0.25rem',
             }}
           >
-            {WEB_PROJECTS.map((project) => (
-              <BrowserMockupCard key={project.id} project={project} />
+            {activeWebProjects.map((project) => (
+              <BrowserMockupCard
+                key={project._id ?? project.id ?? project.name}
+                project={project}
+              />
             ))}
           </div>
         </div>
@@ -797,7 +912,7 @@ export function ScrollSections() {
               className="hud-text"
               style={{ fontSize: '0.35rem', letterSpacing: '0.5em', color: '#aaa', opacity: 0.4 }}
             >
-              N12345  //  COMMERCIAL PILOT
+              {aviationCallsign}  //  {aviationCert}
             </p>
 
             <div style={{ width: '80px', height: '1px', background: 'rgba(68,68,68,0.3)', margin: '0.5rem 0' }} />
@@ -806,7 +921,7 @@ export function ScrollSections() {
               className="hud-text"
               style={{ fontSize: '0.35rem', letterSpacing: '0.5em', color: '#333', opacity: 0.3 }}
             >
-              34°12′48″N  //  119°05′39″W
+              {aviationCoords}
             </p>
 
             <h2
@@ -822,16 +937,12 @@ export function ScrollSections() {
                 marginBottom: '0.5rem',
               }}
             >
-              From altitude, everything is pattern.
+              {aviationTagline}
             </h2>
 
             {/* Flight instruments */}
             <div style={{ display: 'flex', gap: '2rem', marginTop: '1rem' }}>
-              {[
-                { label: 'ALTITUDE', value: '+5,200 FT' },
-                { label: 'HEADING', value: '270° W' },
-                { label: 'ORIGIN', value: 'KCMA' },
-              ].map(({ label, value }) => (
+              {gauges.map(({ label, value }) => (
                 <div
                   key={label}
                   className="flight-gauge"
@@ -860,11 +971,7 @@ export function ScrollSections() {
 
             {/* Social / company links */}
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '0.5rem' }}>
-              {[
-                { label: '@FINN.BENNETT', href: 'https://instagram.com/finn.bennett', sub: 'INSTAGRAM' },
-                { label: 'OVERLOOK STRATEGY', href: 'https://overlookstrategy.com', sub: 'AGENCY' },
-                { label: 'OVERLOOK AUDIO', href: 'https://overlookaudio.com', sub: 'STUDIO' },
-              ].map(({ label, href, sub }) => (
+              {beaconLinks.map(({ label, href, sub }) => (
                 <a
                   key={label}
                   href={href}
