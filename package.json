@@ -17,6 +17,7 @@
     "@react-three/fiber": "^9.5.0",
     "@react-three/postprocessing": "^3.0.4",
     "@sanity/image-url": "^2.0.3",
+    "@sanity/vision": "^5.17.1",
     "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
     "gsap": "^3.14.2",
