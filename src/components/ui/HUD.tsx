@@ -37,10 +37,15 @@ const ATMOSPHERE_CONFIG: Record<Atmosphere, AtmosphereConfig> = {
 };
 
 export function HUD() {
-  const { progress, atmosphere } = useScroll();
+  const { progress, atmosphere, scrollY, maxScroll } = useScroll();
 
   const config = ATMOSPHERE_CONFIG[atmosphere];
   const { primaryLabel, secondaryLabel, color } = config;
+
+  // ── Altimeter — maps scrollY to simulated altitude (0 – 5 200 ft MSL) ───────
+  const altitudeRaw = Math.round((scrollY / Math.max(maxScroll, 1)) * 5200);
+  const altitudeFt = Math.round(altitudeRaw / 100) * 100;
+  const altDisplay = altitudeFt.toLocaleString('en-US');
 
   return (
     <>
@@ -79,6 +84,53 @@ export function HUD() {
         >
           {secondaryLabel}
         </span>
+
+        {/* Altimeter — scrollY → altitude */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            gap: '0.4em',
+            marginTop: '0.6rem',
+            paddingTop: '0.5rem',
+            borderTop: `1px solid ${color}22`,
+          }}
+        >
+          <span
+            style={{
+              fontSize: '0.35rem',
+              letterSpacing: '0.3em',
+              color,
+              opacity: 0.35,
+              transition: 'color 0.8s ease',
+            }}
+          >
+            ALT
+          </span>
+          <span
+            style={{
+              fontSize: '0.65rem',
+              letterSpacing: '0.12em',
+              color,
+              opacity: 0.8,
+              fontVariantNumeric: 'tabular-nums',
+              transition: 'color 0.8s ease',
+            }}
+          >
+            {altDisplay}
+          </span>
+          <span
+            style={{
+              fontSize: '0.32rem',
+              letterSpacing: '0.25em',
+              color,
+              opacity: 0.35,
+              transition: 'color 0.8s ease',
+            }}
+          >
+            FT MSL
+          </span>
+        </div>
       </div>
 
       <div

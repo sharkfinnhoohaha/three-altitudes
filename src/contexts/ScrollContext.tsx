@@ -76,6 +76,10 @@ export function ScrollProvider({ children }: ScrollProviderProps) {
   useEffect(() => {
     // Dynamic import Lenis to avoid SSR issues
     let lenis: any = null;
+    let snapDebounceId: ReturnType<typeof setTimeout> | null = null;
+
+    // Section snap points — normalized scroll positions (0–1) for each atmosphere boundary
+    const SNAP_POINTS = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
 
     async function initLenis() {
       try {
@@ -102,6 +106,31 @@ export function ScrollProvider({ children }: ScrollProviderProps) {
         lenis.on('scroll', () => {
           ScrollTrigger.update();
           onScroll();
+
+          // Debounced snap — snap to nearest section boundary 350 ms after scrolling stops
+          if (snapDebounceId) clearTimeout(snapDebounceId);
+          snapDebounceId = setTimeout(() => {
+            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+            if (maxScroll <= 0) return;
+            const progress = Math.min((window.scrollY || window.pageYOffset) / maxScroll, 1);
+
+            // Find closest snap point
+            let closest = SNAP_POINTS[0];
+            let minDist = Math.abs(progress - closest);
+            for (const point of SNAP_POINTS) {
+              const dist = Math.abs(progress - point);
+              if (dist < minDist) {
+                minDist = dist;
+                closest = point;
+              }
+            }
+
+            // Only snap if within 6% of a boundary (avoid forced jumps mid-section)
+            if (minDist < 0.06 && minDist > 0.005) {
+              const targetY = closest * maxScroll;
+              lenis.scrollTo(targetY, { duration: 0.6, easing: (t: number) => 1 - Math.pow(1 - t, 3) });
+            }
+          }, 350);
         });
 
         function raf(time: number) {
@@ -119,6 +148,7 @@ export function ScrollProvider({ children }: ScrollProviderProps) {
     initLenis();
 
     return () => {
+      if (snapDebounceId) clearTimeout(snapDebounceId);
       if (rafId.current) cancelAnimationFrame(rafId.current);
       if (lenisRef.current) lenisRef.current.destroy();
       window.removeEventListener('scroll', onScroll);
