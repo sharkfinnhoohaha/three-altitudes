@@ -1,4 +1,5 @@
-import { client, isSanityConfigured } from './client';
+import { isSanityConfigured } from './client';
+import { sanityFetch } from './live';
 import type {
   SanityWebProject,
   SanityDevProject,
@@ -23,11 +24,10 @@ const webProjectsQuery = `
 `;
 
 export async function getWebProjects(): Promise<SanityWebProject[]> {
-  if (!client || !isSanityConfigured) return [];
+  if (!isSanityConfigured) return [];
   try {
-    return await client.fetch<SanityWebProject[]>(webProjectsQuery, {}, {
-      next: { tags: ['webProject'] },
-    });
+    const { data } = await sanityFetch({ query: webProjectsQuery, tags: ['webProject'] });
+    return (data as SanityWebProject[]) ?? [];
   } catch {
     return [];
   }
@@ -48,11 +48,10 @@ const devProjectsQuery = `
 `;
 
 export async function getDevProjects(): Promise<SanityDevProject[]> {
-  if (!client || !isSanityConfigured) return [];
+  if (!isSanityConfigured) return [];
   try {
-    return await client.fetch<SanityDevProject[]>(devProjectsQuery, {}, {
-      next: { tags: ['devProject'] },
-    });
+    const { data } = await sanityFetch({ query: devProjectsQuery, tags: ['devProject'] });
+    return (data as SanityDevProject[]) ?? [];
   } catch {
     return [];
   }
@@ -70,11 +69,10 @@ const heroQuery = `
 `;
 
 export async function getHero(): Promise<SanityHero | null> {
-  if (!client || !isSanityConfigured) return null;
+  if (!isSanityConfigured) return null;
   try {
-    return await client.fetch<SanityHero | null>(heroQuery, {}, {
-      next: { tags: ['hero'] },
-    });
+    const { data } = await sanityFetch({ query: heroQuery, tags: ['hero'] });
+    return (data as SanityHero | null) ?? null;
   } catch {
     return null;
   }
@@ -97,11 +95,10 @@ const audioWorkQuery = `
 `;
 
 export async function getAudioWork(): Promise<SanityAudioWork | null> {
-  if (!client || !isSanityConfigured) return null;
+  if (!isSanityConfigured) return null;
   try {
-    return await client.fetch<SanityAudioWork | null>(audioWorkQuery, {}, {
-      next: { tags: ['audioWork'] },
-    });
+    const { data } = await sanityFetch({ query: audioWorkQuery, tags: ['audioWork'] });
+    return (data as SanityAudioWork | null) ?? null;
   } catch {
     return null;
   }
@@ -121,11 +118,10 @@ const aviationQuery = `
 `;
 
 export async function getAviation(): Promise<SanityAviation | null> {
-  if (!client || !isSanityConfigured) return null;
+  if (!isSanityConfigured) return null;
   try {
-    return await client.fetch<SanityAviation | null>(aviationQuery, {}, {
-      next: { tags: ['aviation'] },
-    });
+    const { data } = await sanityFetch({ query: aviationQuery, tags: ['aviation'] });
+    return (data as SanityAviation | null) ?? null;
   } catch {
     return null;
   }

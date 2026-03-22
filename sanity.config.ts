@@ -1,7 +1,12 @@
 import { defineConfig } from 'sanity';
 import { structureTool } from 'sanity/structure';
+import { presentationTool, defineLocations } from 'sanity/presentation';
 import { visionTool } from '@sanity/vision';
 import { schemaTypes } from './src/sanity/schemas';
+
+const singletonLocation = defineLocations({
+  locations: [{ title: 'Home', href: '/' }],
+});
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? 'hzmbpiur';
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? 'production';
@@ -14,6 +19,23 @@ export default defineConfig({
   dataset,
 
   plugins: [
+    presentationTool({
+      resolve: {
+        locations: {
+          hero: singletonLocation,
+          audioWork: singletonLocation,
+          aviation: singletonLocation,
+          siteSettings: singletonLocation,
+          webProject: singletonLocation,
+          devProject: singletonLocation,
+        },
+      },
+      previewUrl: {
+        previewMode: {
+          enable: '/api/draft-mode/enable',
+        },
+      },
+    }),
     structureTool({
       structure: (S) =>
         S.list()

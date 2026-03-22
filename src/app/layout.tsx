@@ -1,5 +1,9 @@
 import type { Metadata, Viewport } from 'next';
+import { draftMode } from 'next/headers';
+import { VisualEditing } from 'next-sanity/visual-editing';
 import { ScrollProvider } from '@/contexts/ScrollContext';
+import { SanityLive } from '@/lib/sanity/live';
+import { DisableDraftMode } from '@/components/ui/DisableDraftMode';
 import '@/styles/globals.css';
 
 export const metadata: Metadata = {
@@ -12,7 +16,7 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -31,6 +35,13 @@ export default function RootLayout({
       </head>
       <body>
         <ScrollProvider>{children}</ScrollProvider>
+        <SanityLive />
+        {(await draftMode()).isEnabled && (
+          <>
+            <DisableDraftMode />
+            <VisualEditing />
+          </>
+        )}
       </body>
     </html>
   );
