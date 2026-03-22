@@ -16,6 +16,7 @@ const PROJECTS = [
     tech: ['Web Audio API', 'WASM', 'React'],
     role: 'SOLO BUILD',
     status: 'DEPLOYED',
+    url: 'https://overlookstrategy.com',
   },
   {
     id: 'stem-engine',
@@ -25,6 +26,7 @@ const PROJECTS = [
     tech: ['PyTorch', 'FFmpeg', 'Next.js'],
     role: 'FULL STACK',
     status: 'DEPLOYED',
+    url: 'https://overlookstrategy.com',
   },
   {
     id: 'fleet-ops',
@@ -34,6 +36,7 @@ const PROJECTS = [
     tech: ['Next.js', 'Redis', 'Mapbox'],
     role: 'LEAD DEV',
     status: 'LIVE',
+    url: 'https://johnson-aviation.vercel.app',
   },
   {
     id: 'wx-brief',
@@ -43,6 +46,7 @@ const PROJECTS = [
     tech: ['Python', 'GOES API', 'React'],
     role: 'FULL STACK',
     status: 'LIVE',
+    url: 'https://johnson-aviation.vercel.app',
   },
   {
     id: 'tidal-forecast',
@@ -52,6 +56,7 @@ const PROJECTS = [
     tech: ['TensorFlow', 'MapboxGL', 'D3'],
     role: 'SOLO BUILD',
     status: 'BETA',
+    url: 'https://overlookaudio.com',
   },
   {
     id: 'overlook-strategy',
@@ -61,6 +66,7 @@ const PROJECTS = [
     tech: ['Next.js', 'Three.js', 'GSAP'],
     role: 'DESIGN + DEV',
     status: 'LIVE',
+    url: 'https://overlookstrategy.com',
   },
 ];
 
@@ -819,21 +825,29 @@ export function ScrollSections() {
             }}
           >
             {PROJECTS.map((p) => (
-              <div
+              <a
                 key={p.id}
-                className="portfolio-card"
+                href={p.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="targeting-card"
                 style={{
                   border: '1px solid rgba(136,136,136,0.15)',
                   padding: '1.25rem 1.5rem',
                   position: 'relative',
-                  backdropFilter: 'blur(8px)',
-                  background: 'rgba(0,0,0,0.35)',
-                  cursor: 'default',
+                  backdropFilter: 'blur(12px)',
+                  background: 'rgba(0,0,0,0.45)',
+                  cursor: 'crosshair',
+                  display: 'block',
+                  textDecoration: 'none',
+                  color: 'inherit',
                 }}
               >
-                {/* Corner brackets */}
-                <div style={{ position: 'absolute', top: -1, right: -1, width: 8, height: 8, borderTop: '1px solid #888', borderRight: '1px solid #888' }} />
-                <div style={{ position: 'absolute', bottom: -1, left: -1, width: 8, height: 8, borderBottom: '1px solid #888', borderLeft: '1px solid #888' }} />
+                {/* Targeting corners — animated on hover via CSS */}
+                <div className="target-corner target-corner--tr" />
+                <div className="target-corner target-corner--bl" />
+                <div className="target-corner target-corner--tl" />
+                <div className="target-corner target-corner--br" />
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
                   <p className="hud-text" style={{ fontSize: '0.32rem', letterSpacing: '0.3em', color: '#888', opacity: 0.35 }}>
@@ -866,7 +880,12 @@ export function ScrollSections() {
                     </span>
                   ))}
                 </div>
-              </div>
+
+                {/* Lock-on label — revealed on hover */}
+                <div className="lock-on-label hud-text">
+                  LOCKED ▶
+                </div>
+              </a>
             ))}
           </div>
         </div>

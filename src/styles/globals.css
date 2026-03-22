@@ -362,3 +362,59 @@ body::after {
 .flight-gauge:hover {
   box-shadow: 0 0 20px rgba(255,255,255,0.12), inset 0 0 8px rgba(0,0,0,0.1);
 }
+
+/* ── Targeting Cards — HUD lock-on system ──────────────── */
+
+.targeting-card {
+  transition:
+    border-color 0.25s ease,
+    background 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.targeting-card:hover {
+  border-color: rgba(0, 255, 136, 0.45) !important;
+  background: rgba(0, 255, 136, 0.04) !important;
+  box-shadow: 0 0 28px rgba(0, 255, 136, 0.08), inset 0 0 20px rgba(0, 255, 136, 0.03);
+  transform: scale(1.015);
+}
+
+/* Targeting corner brackets — 4 corners */
+.target-corner {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  transition: width 0.25s ease, height 0.25s ease, border-color 0.25s ease;
+  z-index: 2;
+}
+
+.target-corner--tl { top: -1px;    left: -1px;   border-top: 1px solid #666;    border-left: 1px solid #666;   }
+.target-corner--tr { top: -1px;    right: -1px;  border-top: 1px solid #666;    border-right: 1px solid #666;  }
+.target-corner--bl { bottom: -1px; left: -1px;   border-bottom: 1px solid #666; border-left: 1px solid #666;   }
+.target-corner--br { bottom: -1px; right: -1px;  border-bottom: 1px solid #666; border-right: 1px solid #666;  }
+
+.targeting-card:hover .target-corner {
+  width: 14px;
+  height: 14px;
+  border-color: #00ff88;
+}
+
+/* Lock-on label — slides up on hover */
+.lock-on-label {
+  position: absolute;
+  bottom: 0.6rem;
+  right: 0.8rem;
+  font-size: 0.5rem;
+  letter-spacing: 0.3em;
+  color: #00ff88;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.targeting-card:hover .lock-on-label {
+  opacity: 0.7;
+  transform: translateY(0);
+}
