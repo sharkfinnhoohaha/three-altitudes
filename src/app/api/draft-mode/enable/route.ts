@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const secret = searchParams.get('secret');
+  const secret = searchParams.get('sanity-preview-secret');
 
   if (!secret || secret !== process.env.SANITY_PREVIEW_SECRET) {
     return new Response('Invalid secret', { status: 401 });
