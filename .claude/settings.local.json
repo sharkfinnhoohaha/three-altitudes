@@ -5,6 +5,10 @@
       "Bash(git checkout:*)",
       "Bash(git merge:*)",
       "Bash(git push:*)"
+      "Bash(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)"
     ]
   }
 }
