@@ -14,6 +14,7 @@ const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? 'production';
 export default defineConfig({
   name: 'three-altitudes',
   title: 'Three Altitudes',
+  basePath: '/studio',
 
   projectId,
   dataset,
