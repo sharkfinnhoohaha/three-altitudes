@@ -87,8 +87,8 @@ const audioWorkQuery = `
     sectionTitle,
     spotifyPlaylistId,
     "stats": coalesce(stats[] {
-      value,
-      label,
+      "value": coalesce(value, ""),
+      "label": coalesce(label, ""),
       "sub": coalesce(sub, ""),
     }, []),
     "touringCredits": coalesce(touringCredits[] {
