@@ -20,6 +20,7 @@ export interface SanityDevProject {
   tech: string[];
   role: string;
   status: string;
+  url?: string;
 }
 
 export interface SanityHero {
@@ -39,11 +40,13 @@ export interface SanityMediaItem {
 export interface SanityAudioStat {
   value: string;
   label: string;
+  sub?: string;
 }
 
 export interface SanityTouringCredit {
   artistName: string;
   role: string;
+  context?: string;
 }
 
 export interface SanityDiscipline {
@@ -58,6 +61,7 @@ export interface SanityAudioWork {
   stats: SanityAudioStat[];
   touringCredits: SanityTouringCredit[];
   disciplines: SanityDiscipline[];
+  specialties: string[];
   photos: SanityMediaItem[];
 }
 

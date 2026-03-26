@@ -44,6 +44,7 @@ const devProjectsQuery = `
     "tech": coalesce(tech, []),
     "role": coalesce(role, ""),
     "status": coalesce(status, ""),
+    "url": coalesce(url, ""),
   }
 `;
 
@@ -85,12 +86,21 @@ const audioWorkQuery = `
     headline,
     sectionTitle,
     spotifyPlaylistId,
-    "stats": coalesce(stats, []),
-    "touringCredits": coalesce(touringCredits, []),
+    "stats": coalesce(stats[] {
+      value,
+      label,
+      "sub": coalesce(sub, ""),
+    }, []),
+    "touringCredits": coalesce(touringCredits[] {
+      artistName,
+      role,
+      "context": coalesce(context, ""),
+    }, []),
     "disciplines": coalesce(disciplines[] {
       code,
       "description": description,
     }, []),
+    "specialties": coalesce(specialties, []),
     "photos": coalesce(photos[] {
       "_key": _key,
       "_type": _type,

@@ -3,13 +3,21 @@
 import { useState, useEffect, useRef } from 'react';
 import { useScroll } from '@/contexts/ScrollContext';
 import { AirplaneCursor } from './AirplaneCursor';
+import type {
+  SanityHero,
+  SanityAudioWork,
+  SanityWebProject,
+  SanityDevProject,
+  SanityAviation,
+} from '@/lib/sanity/types';
 
-const IDENTITIES = ['PILOT', 'PRODUCER', 'DEVELOPER'];
+// ── Fallback data (used when Sanity is not configured) ────────────────────────
 
+const FALLBACK_IDENTITIES = ['PILOT', 'PRODUCER', 'DEVELOPER'];
 
-const PROJECTS = [
+const FALLBACK_PROJECTS: SanityDevProject[] = [
   {
-    id: 'spatial-mixer',
+    _id: 'spatial-mixer',
     num: '01',
     name: 'Spatial Mixer',
     desc: 'Browser-based spatial audio mixing environment',
@@ -19,7 +27,7 @@ const PROJECTS = [
     url: 'https://overlookstrategy.com',
   },
   {
-    id: 'stem-engine',
+    _id: 'stem-engine',
     num: '02',
     name: 'Stem Engine',
     desc: 'AI-powered stem separation and mastering pipeline',
@@ -29,7 +37,7 @@ const PROJECTS = [
     url: 'https://overlookstrategy.com',
   },
   {
-    id: 'fleet-ops',
+    _id: 'fleet-ops',
     num: '03',
     name: 'Fleet Ops',
     desc: 'Real-time aviation fleet operations dashboard',
@@ -39,7 +47,7 @@ const PROJECTS = [
     url: 'https://johnson-aviation.vercel.app',
   },
   {
-    id: 'wx-brief',
+    _id: 'wx-brief',
     num: '04',
     name: 'WX Brief',
     desc: 'GOES satellite weather briefing for pilots',
@@ -49,7 +57,7 @@ const PROJECTS = [
     url: 'https://johnson-aviation.vercel.app',
   },
   {
-    id: 'tidal-forecast',
+    _id: 'tidal-forecast',
     num: '05',
     name: 'Tidal Forecast',
     desc: 'ML-driven coastal tidal pattern visualization',
@@ -59,7 +67,7 @@ const PROJECTS = [
     url: 'https://overlookaudio.com',
   },
   {
-    id: 'overlook-strategy',
+    _id: 'overlook-strategy',
     num: '06',
     name: 'Overlook Strategy',
     desc: 'Brand identity and digital systems agency site',
@@ -70,9 +78,9 @@ const PROJECTS = [
   },
 ];
 
-const WEB_PROJECTS = [
+const FALLBACK_WEB_PROJECTS = [
   {
-    id: 'johnson-aviation',
+    _id: 'johnson-aviation',
     name: 'Johnson Aviation Consulting',
     domain: 'johnson-aviation.vercel.app',
     url: 'https://johnson-aviation.vercel.app',
@@ -82,7 +90,7 @@ const WEB_PROJECTS = [
     type: 'AGENCY SITE',
   },
   {
-    id: 'overlook-audio',
+    _id: 'overlook-audio',
     name: 'Overlook Audio',
     domain: 'overlookaudio.com',
     url: 'https://overlookaudio.com',
@@ -92,7 +100,7 @@ const WEB_PROJECTS = [
     type: 'STUDIO SITE',
   },
   {
-    id: 'overlook-strategy',
+    _id: 'overlook-strategy',
     name: 'Overlook Strategy',
     domain: 'overlookstrategy.com',
     url: 'https://overlookstrategy.com',
@@ -131,7 +139,7 @@ const WAVEFORM_BARS = Array.from({ length: 120 }, (_, i) => {
 // ── Selected Work Browser ─────────────────────────────────────────────────────
 // Single macOS-style browser mockup with three stacked iframe panels,
 // crossfade transitions, tab selector, and auto-rotation.
-function SelectedWorkBrowser() {
+function SelectedWorkBrowser({ projects }: { projects: SanityWebProject[] }) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -154,10 +162,10 @@ function SelectedWorkBrowser() {
   useEffect(() => {
     if (paused) return;
     const id = setInterval(() => {
-      setActiveIdx((i) => (i + 1) % WEB_PROJECTS.length);
+      setActiveIdx((i) => (i + 1) % projects.length);
     }, 4500);
     return () => clearInterval(id);
-  }, [paused]);
+  }, [paused, projects.length]);
 
   const handleTabClick = (idx: number) => {
     setActiveIdx(idx);
@@ -166,7 +174,7 @@ function SelectedWorkBrowser() {
     resumeRef.current = setTimeout(() => setPaused(false), 8000);
   };
 
-  const activeProject = WEB_PROJECTS[activeIdx];
+  const activeProject = projects[activeIdx];
 
   return (
     <div
@@ -237,9 +245,9 @@ function SelectedWorkBrowser() {
             overflow: 'hidden',
           }}
         >
-          {WEB_PROJECTS.map((project, idx) => (
+          {projects.map((project, idx) => (
             <div
-              key={project.id}
+              key={project._id ?? String(idx)}
               style={{
                 position: 'absolute',
                 inset: 0,
@@ -277,11 +285,11 @@ function SelectedWorkBrowser() {
 
       {/* ── Tab selector ── */}
       <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-        {WEB_PROJECTS.map((project, idx) => {
+        {projects.map((project, idx) => {
           const isActive = idx === activeIdx;
           return (
             <button
-              key={project.id}
+              key={project._id ?? String(idx)}
               onClick={() => handleTabClick(idx)}
               style={{
                 flex: 1,
@@ -334,7 +342,21 @@ function SelectedWorkBrowser() {
   );
 }
 
-export function ScrollSections() {
+interface ScrollSectionsProps {
+  hero?: SanityHero | null;
+  audioWork?: SanityAudioWork | null;
+  webProjects?: SanityWebProject[];
+  devProjects?: SanityDevProject[];
+  aviation?: SanityAviation | null;
+}
+
+export function ScrollSections({
+  hero,
+  audioWork,
+  webProjects = [],
+  devProjects = [],
+  aviation,
+}: ScrollSectionsProps = {}) {
   const { atmosphere, velocity } = useScroll();
   const [identityIndex, setIdentityIndex] = useState(0);
   const [cascadeActive, setCascadeActive] = useState(false);
@@ -342,12 +364,67 @@ export function ScrollSections() {
   const pocketTextRef = useRef<HTMLDivElement>(null);
   const prevAtmosphere = useRef(atmosphere);
 
+  // Resolved data — Sanity values with hardcoded fallbacks
+  const identities = hero?.identities?.length ? hero.identities : FALLBACK_IDENTITIES;
+  const heroName = hero?.name ?? 'FINN BENNETT';
+  const heroLocation = hero?.locationLabel ?? 'VENTURA, CALIFORNIA';
+  const heroCoordinates = hero?.coordinates ?? '34.2746° N  119.2290° W';
+
+  const audioHeadline = audioWork?.headline ?? 'OVERLOOK AUDIO';
+  const audioSectionTitle = audioWork?.sectionTitle ?? 'Sonic Work';
+  const spotifyPlaylistId = audioWork?.spotifyPlaylistId ?? '7x8qaRT5L4UVebsbvzRtzE';
+  const audioStats = audioWork?.stats?.length
+    ? audioWork.stats
+    : [
+        { value: '8M+', label: 'STREAMS', sub: 'catalog total' },
+        { value: '12+', label: 'YEARS', sub: 'in the field' },
+        { value: '50+', label: 'PROJECTS', sub: 'delivered' },
+      ];
+  const touringCredits = audioWork?.touringCredits?.length
+    ? audioWork.touringCredits
+    : [
+        { artistName: 'Mineral King', role: 'Live Production', context: 'Touring' },
+        { artistName: 'Sublime Strange Case', role: 'Front of House', context: 'Engineering' },
+      ];
+  const disciplines = audioWork?.disciplines?.length
+    ? audioWork.disciplines
+    : [
+        { code: 'LIVE FOH', description: 'Touring front-of-house' },
+        { code: 'STUDIO', description: 'Recording & mixing' },
+        { code: 'PRODUCTION', description: 'Music production' },
+      ];
+  const specialties = audioWork?.specialties?.length
+    ? audioWork.specialties
+    : ['FRONT OF HOUSE', 'MIX ENGINEERING', 'LIVE PRODUCTION'];
+
+  const activeWebProjects = webProjects.length ? webProjects : FALLBACK_WEB_PROJECTS;
+  const activeDevProjects = devProjects.length ? devProjects : FALLBACK_PROJECTS;
+
+  const aviationCallsign = aviation?.callsign ?? 'N12345';
+  const aviationCertLabel = aviation?.certLabel ?? 'COMMERCIAL PILOT';
+  const aviationCoordinates = aviation?.coordinates ?? '34°12′48″N  //  119°05′39″W';
+  const aviationTagline = aviation?.tagline ?? 'From altitude, everything is pattern.';
+  const aviationGauges = aviation?.gauges?.length
+    ? aviation.gauges
+    : [
+        { label: 'ALTITUDE', value: '+5,200 FT' },
+        { label: 'HEADING', value: '270° W' },
+        { label: 'ORIGIN', value: 'KCMA' },
+      ];
+  const beaconLinks = aviation?.beaconLinks?.length
+    ? aviation.beaconLinks
+    : [
+        { label: '@FINN.BENNETT', href: 'https://instagram.com/finn.bennett', sub: 'INSTAGRAM' },
+        { label: 'OVERLOOK STRATEGY', href: 'https://overlookstrategy.com', sub: 'AGENCY' },
+        { label: 'OVERLOOK AUDIO', href: 'https://overlookaudio.com', sub: 'STUDIO' },
+      ];
+
   useEffect(() => {
     const id = setInterval(() => {
-      setIdentityIndex((i) => (i + 1) % IDENTITIES.length);
+      setIdentityIndex((i) => (i + 1) % identities.length);
     }, 2200);
     return () => clearInterval(id);
-  }, []);
+  }, [identities.length]);
 
   // Pocket text vibration — linked to scroll velocity
   useEffect(() => {
@@ -426,7 +503,7 @@ export function ScrollSections() {
               zIndex: 1,
             }}
           >
-            FINN BENNETT
+            {heroName}
           </h1>
 
           <div
@@ -446,12 +523,12 @@ export function ScrollSections() {
             }}
           >
             <span key={identityIndex} style={{ animation: 'identity-enter 0.5s ease forwards' }}>
-              {IDENTITIES[identityIndex]}
+              {identities[identityIndex]}
             </span>
             <span style={{ opacity: 0.3 }}>//</span>
-            <span style={{ opacity: 0.3 }}>{IDENTITIES[(identityIndex + 1) % 3]}</span>
+            <span style={{ opacity: 0.3 }}>{identities[(identityIndex + 1) % identities.length]}</span>
             <span style={{ opacity: 0.15 }}>//</span>
-            <span style={{ opacity: 0.15 }}>{IDENTITIES[(identityIndex + 2) % 3]}</span>
+            <span style={{ opacity: 0.15 }}>{identities[(identityIndex + 2) % identities.length]}</span>
           </div>
 
           <p
@@ -465,7 +542,7 @@ export function ScrollSections() {
               zIndex: 1,
             }}
           >
-            VENTURA, CALIFORNIA  //  34.2746° N  119.2290° W
+            {heroLocation}  //  {heroCoordinates}
           </p>
         </div>
       </section>
@@ -508,7 +585,7 @@ export function ScrollSections() {
               }}
             >
               <p className="hud-text" style={{ fontSize: '0.38rem', letterSpacing: '0.42em', color: '#ff8c00', opacity: 0.45, whiteSpace: 'nowrap' }}>
-                OVERLOOK AUDIO
+                {audioHeadline}
               </p>
               <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(255,140,0,0.22) 0%, rgba(255,140,0,0.04) 70%, transparent 100%)' }} />
               <p className="hud-text" style={{ fontSize: '0.28rem', letterSpacing: '0.38em', color: '#ff8c00', opacity: 0.2, whiteSpace: 'nowrap' }}>
@@ -537,7 +614,7 @@ export function ScrollSections() {
                   flexShrink: 0,
                 }}
               >
-                Sonic Work
+                {audioSectionTitle}
               </h2>
 
               {/* Decorative waveform — fills remaining title row width */}
@@ -566,7 +643,7 @@ export function ScrollSections() {
               </div>
 
               <p className="hud-text" style={{ fontSize: '0.28rem', letterSpacing: '0.38em', color: '#ff8c00', opacity: 0.2, paddingBottom: '0.5rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                12+ YRS
+                {(audioStats.find((s) => s.label.toUpperCase().includes('YEAR'))?.value ?? '12+') + ' YRS'}
               </p>
             </div>
 
@@ -588,11 +665,7 @@ export function ScrollSections() {
                   <p className="hud-text" style={{ fontSize: '0.26rem', letterSpacing: '0.44em', color: '#ff8c00', opacity: 0.22, marginBottom: '0.65rem' }}>
                     CREDENTIALS
                   </p>
-                  {[
-                    { value: '8M+',  label: 'STREAMS',  sub: 'catalog total' },
-                    { value: '12+',  label: 'YEARS',    sub: 'in the field'  },
-                    { value: '50+',  label: 'PROJECTS', sub: 'delivered'     },
-                  ].map(({ value, label, sub }, i) => (
+                  {audioStats.map(({ value, label, sub }, i) => (
                     <div
                       key={label}
                       style={{
@@ -618,9 +691,11 @@ export function ScrollSections() {
                       <p className="hud-text" style={{ fontSize: '0.23rem', letterSpacing: '0.34em', color: '#ff8c00', opacity: 0.28, marginTop: '0.07rem' }}>
                         {label}
                       </p>
-                      <p className="hud-text" style={{ fontSize: '0.21rem', letterSpacing: '0.1em', color: '#f5e6d0', opacity: 0.12, marginTop: '0.04rem' }}>
-                        {sub}
-                      </p>
+                      {sub && (
+                        <p className="hud-text" style={{ fontSize: '0.21rem', letterSpacing: '0.1em', color: '#f5e6d0', opacity: 0.12, marginTop: '0.04rem' }}>
+                          {sub}
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -631,8 +706,8 @@ export function ScrollSections() {
                     DISCIPLINES
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.28rem' }}>
-                    {['LIVE FOH', 'STUDIO', 'PRODUCTION'].map((d, i) => (
-                      <div key={d} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    {disciplines.map((d, i) => (
+                      <div key={d.code} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                         <span
                           className="hud-text"
                           style={{
@@ -646,9 +721,9 @@ export function ScrollSections() {
                             whiteSpace: 'nowrap',
                           }}
                         >
-                          {d}
+                          {d.code}
                         </span>
-                        {i < 2 && (
+                        {i < disciplines.length - 1 && (
                           <span className="hud-text" style={{ fontSize: '0.22rem', color: '#ff8c00', opacity: 0.16 }}>→</span>
                         )}
                       </div>
@@ -679,7 +754,7 @@ export function ScrollSections() {
 
                 <iframe
                   title="Overlook Audio — Selected Works"
-                  src="https://open.spotify.com/embed/playlist/7x8qaRT5L4UVebsbvzRtzE?utm_source=generator&theme=0"
+                  src={`https://open.spotify.com/embed/playlist/${spotifyPlaylistId}?utm_source=generator&theme=0`}
                   width="100%"
                   style={{
                     height: 'clamp(280px, 38vh, 352px)',
@@ -712,12 +787,9 @@ export function ScrollSections() {
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  {[
-                    { artist: 'Mineral King',       role: 'Live Production', ctx: 'Touring'      },
-                    { artist: 'Sublime Strange Case', role: 'Front of House', ctx: 'Engineering'  },
-                  ].map(({ artist, role, ctx }, i) => (
+                  {touringCredits.map(({ artistName, role, context }, i) => (
                     <div
-                      key={artist}
+                      key={artistName}
                       style={{
                         padding: '0.65rem 0',
                         borderBottom: `1px solid rgba(255,140,0,${i === 0 ? 0.1 : 0.04})`,
@@ -738,10 +810,10 @@ export function ScrollSections() {
                           opacity: 0.88,
                         }}
                       >
-                        {artist}
+                        {artistName}
                       </p>
                       <p className="hud-text" style={{ fontSize: '0.23rem', letterSpacing: '0.18em', color: '#ff8c00', opacity: 0.32 }}>
-                        {role}  //  {ctx}
+                        {role}{context ? `  //  ${context}` : ''}
                       </p>
                     </div>
                   ))}
@@ -753,7 +825,7 @@ export function ScrollSections() {
                     SPECIALTIES
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                    {['FRONT OF HOUSE', 'MIX ENGINEERING', 'LIVE PRODUCTION'].map((s) => (
+                    {specialties.map((s) => (
                       <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         <div style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,140,0,0.32)', flexShrink: 0 }} />
                         <span className="hud-text" style={{ fontSize: '0.23rem', letterSpacing: '0.2em', color: '#ff8c00', opacity: 0.28 }}>
@@ -824,69 +896,81 @@ export function ScrollSections() {
               padding: '0.25rem',
             }}
           >
-            {PROJECTS.map((p) => (
-              <a
-                key={p.id}
-                href={p.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="targeting-card"
-                style={{
-                  border: '1px solid rgba(136,136,136,0.15)',
-                  padding: '1.25rem 1.5rem',
-                  position: 'relative',
-                  backdropFilter: 'blur(12px)',
-                  background: 'rgba(0,0,0,0.45)',
-                  cursor: 'crosshair',
-                  display: 'block',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                }}
-              >
-                {/* Targeting corners — animated on hover via CSS */}
-                <div className="target-corner target-corner--tr" />
-                <div className="target-corner target-corner--bl" />
-                <div className="target-corner target-corner--tl" />
-                <div className="target-corner target-corner--br" />
+            {activeDevProjects.map((p) => {
+              const cardStyle = {
+                border: '1px solid rgba(136,136,136,0.15)',
+                padding: '1.25rem 1.5rem',
+                position: 'relative' as const,
+                backdropFilter: 'blur(12px)',
+                background: 'rgba(0,0,0,0.45)',
+                cursor: p.url ? 'crosshair' : 'default',
+                display: 'block',
+                textDecoration: 'none',
+                color: 'inherit',
+              };
+              const cardContent = (
+                <>
+                  {/* Targeting corners — animated on hover via CSS */}
+                  <div className="target-corner target-corner--tr" />
+                  <div className="target-corner target-corner--bl" />
+                  <div className="target-corner target-corner--tl" />
+                  <div className="target-corner target-corner--br" />
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                  <p className="hud-text" style={{ fontSize: '0.32rem', letterSpacing: '0.3em', color: '#888', opacity: 0.35 }}>
-                    {p.num}
-                  </p>
-                  <p className="hud-text" style={{ fontSize: '0.28rem', letterSpacing: '0.25em', color: '#00ff88', opacity: 0.5 }}>
-                    {p.status}
-                  </p>
-                </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                    <p className="hud-text" style={{ fontSize: '0.32rem', letterSpacing: '0.3em', color: '#888', opacity: 0.35 }}>
+                      {p.num}
+                    </p>
+                    <p className="hud-text" style={{ fontSize: '0.28rem', letterSpacing: '0.25em', color: '#00ff88', opacity: 0.5 }}>
+                      {p.status}
+                    </p>
+                  </div>
 
-                <h3
-                  className="serif-text"
-                  style={{ fontSize: '1.1rem', fontWeight: 400, color: '#ccc', letterSpacing: '0.05em', marginBottom: '0.4rem' }}
+                  <h3
+                    className="serif-text"
+                    style={{ fontSize: '1.1rem', fontWeight: 400, color: '#ccc', letterSpacing: '0.05em', marginBottom: '0.4rem' }}
+                  >
+                    {p.name}
+                  </h3>
+
+                  <p className="hud-text" style={{ fontSize: '0.32rem', letterSpacing: '0.08em', color: '#666', lineHeight: 1.7, marginBottom: '0.75rem' }}>
+                    {p.desc}
+                  </p>
+
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
+                    {p.tech.map((t) => (
+                      <span
+                        key={t}
+                        className="hud-text tech-tag"
+                        style={{ fontSize: '0.28rem', letterSpacing: '0.15em', color: '#555', opacity: 0.8, padding: '0.1rem 0.3rem', border: '1px solid rgba(85,85,85,0.3)' }}
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Lock-on label — revealed on hover */}
+                  <div className="lock-on-label hud-text">
+                    LOCKED ▶
+                  </div>
+                </>
+              );
+              return p.url ? (
+                <a
+                  key={p._id}
+                  href={p.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="targeting-card"
+                  style={cardStyle}
                 >
-                  {p.name}
-                </h3>
-
-                <p className="hud-text" style={{ fontSize: '0.32rem', letterSpacing: '0.08em', color: '#666', lineHeight: 1.7, marginBottom: '0.75rem' }}>
-                  {p.desc}
-                </p>
-
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
-                  {p.tech.map((t) => (
-                    <span
-                      key={t}
-                      className="hud-text tech-tag"
-                      style={{ fontSize: '0.28rem', letterSpacing: '0.15em', color: '#555', opacity: 0.8, padding: '0.1rem 0.3rem', border: '1px solid rgba(85,85,85,0.3)' }}
-                    >
-                      {t}
-                    </span>
-                  ))}
+                  {cardContent}
+                </a>
+              ) : (
+                <div key={p._id} className="targeting-card" style={cardStyle}>
+                  {cardContent}
                 </div>
-
-                {/* Lock-on label — revealed on hover */}
-                <div className="lock-on-label hud-text">
-                  LOCKED ▶
-                </div>
-              </a>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -917,7 +1001,7 @@ export function ScrollSections() {
           </p>
 
           {/* Single browser mockup with tab switcher */}
-          <SelectedWorkBrowser />
+          <SelectedWorkBrowser projects={activeWebProjects} />
         </div>
       </section>
 
@@ -962,7 +1046,7 @@ export function ScrollSections() {
               className="hud-text"
               style={{ fontSize: '0.35rem', letterSpacing: '0.5em', color: '#aaa', opacity: 0.4 }}
             >
-              N12345  //  COMMERCIAL PILOT
+              {aviationCallsign}  //  {aviationCertLabel}
             </p>
 
             <div style={{ width: '80px', height: '1px', background: 'rgba(68,68,68,0.3)', margin: '0.5rem 0' }} />
@@ -971,7 +1055,7 @@ export function ScrollSections() {
               className="hud-text"
               style={{ fontSize: '0.35rem', letterSpacing: '0.5em', color: '#333', opacity: 0.3 }}
             >
-              34°12′48″N  //  119°05′39″W
+              {aviationCoordinates}
             </p>
 
             <h2
@@ -987,16 +1071,12 @@ export function ScrollSections() {
                 marginBottom: '0.5rem',
               }}
             >
-              From altitude, everything is pattern.
+              {aviationTagline}
             </h2>
 
             {/* Flight instruments */}
             <div style={{ display: 'flex', gap: '2rem', marginTop: '1rem' }}>
-              {[
-                { label: 'ALTITUDE', value: '+5,200 FT' },
-                { label: 'HEADING', value: '270° W' },
-                { label: 'ORIGIN', value: 'KCMA' },
-              ].map(({ label, value }) => (
+              {aviationGauges.map(({ label, value }) => (
                 <div
                   key={label}
                   className="flight-gauge"
@@ -1025,11 +1105,7 @@ export function ScrollSections() {
 
             {/* Social / company links */}
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '0.5rem' }}>
-              {[
-                { label: '@FINN.BENNETT', href: 'https://instagram.com/finn.bennett', sub: 'INSTAGRAM' },
-                { label: 'OVERLOOK STRATEGY', href: 'https://overlookstrategy.com', sub: 'AGENCY' },
-                { label: 'OVERLOOK AUDIO', href: 'https://overlookaudio.com', sub: 'STUDIO' },
-              ].map(({ label, href, sub }) => (
+              {beaconLinks.map(({ label, href, sub }) => (
                 <a
                   key={label}
                   href={href}
