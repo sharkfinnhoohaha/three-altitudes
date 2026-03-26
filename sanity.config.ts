@@ -21,7 +21,6 @@ export default defineConfig({
 
   plugins: [
     presentationTool({
-      navigate: { tool: 'structure' },
       resolve: {
         locations: {
           hero: singletonLocation,
