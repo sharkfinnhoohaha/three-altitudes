@@ -37,6 +37,12 @@ export const devProject = defineType({
       of: [{ type: 'string' }],
     }),
     defineField({
+      name: 'url',
+      title: 'Project URL',
+      type: 'url',
+      description: 'Link opened when the project card is clicked.',
+    }),
+    defineField({
       name: 'role',
       title: 'Role',
       type: 'string',

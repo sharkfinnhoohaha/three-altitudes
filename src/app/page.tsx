@@ -26,7 +26,13 @@ export default async function HomePage() {
       <MediaLayers photos={audioWork?.photos ?? []} />
       <GhostingCode />
       <HUD />
-      <ScrollSections />
+      <ScrollSections
+        hero={hero}
+        audioWork={audioWork}
+        webProjects={webProjects}
+        devProjects={devProjects}
+        aviation={aviation}
+      />
     </>
   );
 }
