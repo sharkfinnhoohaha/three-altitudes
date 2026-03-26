@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useRef, useEffect } from 'react';
 import { useScroll } from '@/contexts/ScrollContext';
+import type { SanityMediaItem } from '@/lib/sanity/types';
 
 /**
  * MediaLayers — fixed atmospheric media layers.
@@ -12,11 +13,60 @@ import { useScroll } from '@/contexts/ScrollContext';
  * Layer 2  — Shoreline surf bg 2 (finn-surf.jpg, full-bleed)
  * Layer 3  — Shoreline wave texture overlay (wave-teal.png)
  * Layer 4  — Shoreline wave vivid accent (wave-vivid.png)
- * Layer 5  — Pocket drums bg (finn-drums-mint.jpg, full-bleed)
- * Layer 6  — Pocket drums bg 2 (finn-drums-live.jpg, full-bleed)
+ * Layer 5  — Pocket drums bg (Sanity photo[0] or finn-drums-mint.jpg fallback)
+ * Layer 6  — Pocket drums bg 2 (Sanity photo[1] or finn-drums-live.jpg fallback)
  * Layer 7  — Code background video (Engine Room)
  */
-export function MediaLayers() {
+
+interface MediaLayersProps {
+  /** Optional photos/videos uploaded via Sanity for the Pocket section. */
+  photos?: SanityMediaItem[];
+}
+
+/** Render a single Sanity media item as either an <Image> or a <video>. */
+function SanityMedia({
+  item,
+  objectPosition = 'center',
+}: {
+  item: SanityMediaItem;
+  objectPosition?: string;
+}) {
+  const isVideo =
+    item._type === 'file' ||
+    (item.mimeType != null && item.mimeType.startsWith('video/'));
+
+  if (isVideo) {
+    return (
+      <video
+        src={item.url}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        aria-hidden="true"
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          objectPosition,
+        }}
+      />
+    );
+  }
+
+  return (
+    <Image
+      src={item.url}
+      alt=""
+      fill
+      style={{ objectFit: 'cover', objectPosition }}
+      sizes="100vw"
+    />
+  );
+}
+
+export function MediaLayers({ photos = [] }: MediaLayersProps) {
   const { progress, atmosphere } = useScroll();
   const heroVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -226,7 +276,7 @@ export function MediaLayers() {
         />
       </div>
 
-      {/* Pocket: drums mint bg */}
+      {/* Pocket: drums mint bg — Sanity photo[0] or static fallback */}
       <div
         style={{
           position: 'fixed',
@@ -238,16 +288,20 @@ export function MediaLayers() {
           mixBlendMode: 'screen',
         }}
       >
-        <Image
-          src="/images/finn-drums-mint.jpg"
-          alt=""
-          fill
-          style={{ objectFit: 'cover', objectPosition: 'center top' }}
-          sizes="100vw"
-        />
+        {photos[0] ? (
+          <SanityMedia item={photos[0]} objectPosition="center top" />
+        ) : (
+          <Image
+            src="/images/finn-drums-mint.jpg"
+            alt=""
+            fill
+            style={{ objectFit: 'cover', objectPosition: 'center top' }}
+            sizes="100vw"
+          />
+        )}
       </div>
 
-      {/* Pocket: drums live bg */}
+      {/* Pocket: drums live bg — Sanity photo[1] or static fallback */}
       <div
         style={{
           position: 'fixed',
@@ -259,13 +313,17 @@ export function MediaLayers() {
           mixBlendMode: 'screen',
         }}
       >
-        <Image
-          src="/images/finn-drums-live.jpg"
-          alt=""
-          fill
-          style={{ objectFit: 'cover', objectPosition: 'center' }}
-          sizes="100vw"
-        />
+        {photos[1] ? (
+          <SanityMedia item={photos[1]} objectPosition="center" />
+        ) : (
+          <Image
+            src="/images/finn-drums-live.jpg"
+            alt=""
+            fill
+            style={{ objectFit: 'cover', objectPosition: 'center' }}
+            sizes="100vw"
+          />
+        )}
       </div>
 
       {/* Engine Room: code background video */}

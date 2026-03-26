@@ -23,7 +23,7 @@ export default async function HomePage() {
   return (
     <>
       <MainCanvasClient />
-      <MediaLayers />
+      <MediaLayers photos={audioWork?.photos ?? []} />
       <GhostingCode />
       <HUD />
       <ScrollSections />

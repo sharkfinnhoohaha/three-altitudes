@@ -69,6 +69,24 @@ export const audioWork = defineType({
         },
       ],
     }),
+    defineField({
+      name: 'photos',
+      title: 'Photos / Videos',
+      type: 'array',
+      description: 'Background media for the Pocket section. Each item can be an image or a video file. Upload a video file (MP4/WebM) to replace a photo.',
+      of: [
+        {
+          type: 'image',
+          title: 'Image',
+          options: { hotspot: true },
+        },
+        {
+          type: 'file',
+          title: 'Video',
+          options: { accept: 'video/*' },
+        },
+      ],
+    }),
   ],
   preview: {
     select: { title: 'headline' },

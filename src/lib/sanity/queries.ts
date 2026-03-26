@@ -91,6 +91,12 @@ const audioWorkQuery = `
       code,
       "description": description,
     }, []),
+    "photos": coalesce(photos[] {
+      "_key": _key,
+      "_type": _type,
+      "url": asset->url,
+      "mimeType": asset->mimeType,
+    }, []),
   }
 `;
 

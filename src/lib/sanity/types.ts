@@ -29,6 +29,13 @@ export interface SanityHero {
   coordinates: string;
 }
 
+export interface SanityMediaItem {
+  _key: string;
+  _type: 'image' | 'file';
+  url: string;
+  mimeType?: string;
+}
+
 export interface SanityAudioStat {
   value: string;
   label: string;
@@ -51,6 +58,7 @@ export interface SanityAudioWork {
   stats: SanityAudioStat[];
   touringCredits: SanityTouringCredit[];
   disciplines: SanityDiscipline[];
+  photos: SanityMediaItem[];
 }
 
 export interface SanityGauge {
