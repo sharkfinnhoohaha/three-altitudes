@@ -6,6 +6,7 @@ import type {
   SanityHero,
   SanityAudioWork,
   SanityAviation,
+  SanitySettings,
 } from './types';
 
 // ─── Web Projects ────────────────────────────────────────────────────────────
@@ -66,6 +67,12 @@ const heroQuery = `
     "identities": coalesce(identities, []),
     "locationLabel": coalesce(locationLabel, ""),
     "coordinates": coalesce(coordinates, ""),
+    "photos": coalesce(photos[] {
+      "_key": _key,
+      "_type": _type,
+      "url": asset->url,
+      "mimeType": asset->mimeType,
+    }, []),
   }
 `;
 
@@ -131,8 +138,36 @@ const aviationQuery = `
     tagline,
     "gauges": coalesce(gauges, []),
     "beaconLinks": coalesce(beaconLinks, []),
+    "photos": coalesce(photos[] {
+      "_key": _key,
+      "_type": _type,
+      "url": asset->url,
+      "mimeType": asset->mimeType,
+    }, []),
   }
 `;
+
+// ─── Site Settings ─────────────────────────────────────────────────────────────
+
+const siteSettingsQuery = `
+  *[_type == "siteSettings" && _id == "siteSettings"][0] {
+    siteName,
+    email,
+    "engineRoomVideo": engineRoomVideo.asset->{
+      "url": url,
+    },
+  }
+`;
+
+export async function getSiteSettings(): Promise<SanitySettings | null> {
+  if (!isSanityConfigured) return null;
+  try {
+    const { data } = await sanityFetch({ query: siteSettingsQuery, tags: ['siteSettings'] });
+    return (data as SanitySettings | null) ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export async function getAviation(): Promise<SanityAviation | null> {
   if (!isSanityConfigured) return null;

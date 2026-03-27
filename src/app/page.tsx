@@ -9,21 +9,28 @@ import {
   getHero,
   getAudioWork,
   getAviation,
+  getSiteSettings,
 } from '@/lib/sanity/queries';
 
 export default async function HomePage() {
-  const [webProjects, devProjects, hero, audioWork, aviation] = await Promise.all([
+  const [webProjects, devProjects, hero, audioWork, aviation, siteSettings] = await Promise.all([
     getWebProjects(),
     getDevProjects(),
     getHero(),
     getAudioWork(),
     getAviation(),
+    getSiteSettings(),
   ]);
 
   return (
     <>
       <MainCanvasClient />
-      <MediaLayers photos={audioWork?.photos ?? []} />
+      <MediaLayers
+        photos={audioWork?.photos ?? []}
+        shorelinePhotos={hero?.photos ?? []}
+        aviationPhotos={aviation?.photos ?? []}
+        engineRoomVideoUrl={siteSettings?.engineRoomVideo?.url}
+      />
       <GhostingCode />
       <HUD />
       <ScrollSections

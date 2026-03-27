@@ -28,6 +28,7 @@ export interface SanityHero {
   identities: string[];
   locationLabel: string;
   coordinates: string;
+  photos: SanityMediaItem[];
 }
 
 export interface SanityMediaItem {
@@ -83,9 +84,11 @@ export interface SanityAviation {
   tagline: string;
   gauges: SanityGauge[];
   beaconLinks: SanityBeaconLink[];
+  photos: SanityMediaItem[];
 }
 
 export interface SanitySettings {
   siteName: string;
   email: string;
+  engineRoomVideo?: { url: string };
 }

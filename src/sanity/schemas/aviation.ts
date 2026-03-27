@@ -60,6 +60,17 @@ export const aviation = defineType({
         },
       ],
     }),
+    defineField({
+      name: 'photos',
+      title: 'Background Media',
+      type: 'array',
+      description:
+        'Background images/videos for the Aviation section. Slot 1 = primary, Slot 2 = secondary layered accent.',
+      of: [
+        { type: 'image', title: 'Image', options: { hotspot: true } },
+        { type: 'file', title: 'Video', options: { accept: 'video/*' } },
+      ],
+    }),
   ],
   preview: {
     select: { title: 'callsign', subtitle: 'tagline' },

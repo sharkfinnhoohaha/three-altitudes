@@ -16,6 +16,13 @@ export const siteSettings = defineType({
       type: 'string',
     }),
     defineField({
+      name: 'engineRoomVideo',
+      title: 'Engine Room Background Video',
+      type: 'file',
+      description: 'Background video for the Engine Room (dev/code) section. Falls back to built-in code-bg.mp4 if not set.',
+      options: { accept: 'video/*' },
+    }),
+    defineField({
       name: 'socialLinks',
       title: 'Social Links',
       type: 'array',

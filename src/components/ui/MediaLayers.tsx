@@ -19,8 +19,14 @@ import type { SanityMediaItem } from '@/lib/sanity/types';
  */
 
 interface MediaLayersProps {
-  /** Optional photos/videos uploaded via Sanity for the Pocket section. */
+  /** Pocket/audio section background media (audioWork.photos). */
   photos?: SanityMediaItem[];
+  /** Shoreline/hero section background media (hero.photos). Slot 0 = primary, 1 = secondary. */
+  shorelinePhotos?: SanityMediaItem[];
+  /** Aviation section background media (aviation.photos). Slot 0 = primary, 1 = accent. */
+  aviationPhotos?: SanityMediaItem[];
+  /** Engine Room background video URL (siteSettings.engineRoomVideo). */
+  engineRoomVideoUrl?: string;
 }
 
 /** Render a single Sanity media item as either an <Image> or a <video>. */
@@ -66,7 +72,12 @@ function SanityMedia({
   );
 }
 
-export function MediaLayers({ photos = [] }: MediaLayersProps) {
+export function MediaLayers({
+  photos = [],
+  shorelinePhotos = [],
+  aviationPhotos = [],
+  engineRoomVideoUrl,
+}: MediaLayersProps) {
   const { progress, atmosphere } = useScroll();
   const heroVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -189,7 +200,7 @@ export function MediaLayers({ photos = [] }: MediaLayersProps) {
         />
       </div>
 
-      {/* Shoreline: surf paddle bg */}
+      {/* Shoreline: surf paddle bg — Sanity shorelinePhotos[0] or static fallback */}
       <div
         style={{
           position: 'fixed',
@@ -201,17 +212,21 @@ export function MediaLayers({ photos = [] }: MediaLayersProps) {
           mixBlendMode: 'screen',
         }}
       >
-        <Image
-          src="/images/finn-surf-paddle-bw.jpg"
-          alt=""
-          fill
-          style={{ objectFit: 'cover', objectPosition: 'center top' }}
-          sizes="100vw"
-          priority
-        />
+        {shorelinePhotos[0] ? (
+          <SanityMedia item={shorelinePhotos[0]} objectPosition="center top" />
+        ) : (
+          <Image
+            src="/images/finn-surf-paddle-bw.jpg"
+            alt=""
+            fill
+            style={{ objectFit: 'cover', objectPosition: 'center top' }}
+            sizes="100vw"
+            priority
+          />
+        )}
       </div>
 
-      {/* Shoreline: surf ride bg */}
+      {/* Shoreline: surf ride bg — Sanity shorelinePhotos[1] or static fallback */}
       <div
         style={{
           position: 'fixed',
@@ -223,13 +238,17 @@ export function MediaLayers({ photos = [] }: MediaLayersProps) {
           mixBlendMode: 'screen',
         }}
       >
-        <Image
-          src="/images/finn-surf.jpg"
-          alt=""
-          fill
-          style={{ objectFit: 'cover', objectPosition: 'center 30%' }}
-          sizes="100vw"
-        />
+        {shorelinePhotos[1] ? (
+          <SanityMedia item={shorelinePhotos[1]} objectPosition="center 30%" />
+        ) : (
+          <Image
+            src="/images/finn-surf.jpg"
+            alt=""
+            fill
+            style={{ objectFit: 'cover', objectPosition: 'center 30%' }}
+            sizes="100vw"
+          />
+        )}
       </div>
 
       {/* Shoreline: wave-teal texture overlay */}
@@ -326,7 +345,7 @@ export function MediaLayers({ photos = [] }: MediaLayersProps) {
         )}
       </div>
 
-      {/* Engine Room: code background video */}
+      {/* Engine Room: code background video — Sanity engineRoomVideoUrl or static fallback */}
       <div
         style={{
           position: 'fixed',
@@ -340,7 +359,7 @@ export function MediaLayers({ photos = [] }: MediaLayersProps) {
         }}
       >
         <video
-          src="/videos/code-bg.mp4"
+          src={engineRoomVideoUrl ?? '/videos/code-bg.mp4'}
           autoPlay
           muted
           loop
@@ -353,6 +372,50 @@ export function MediaLayers({ photos = [] }: MediaLayersProps) {
           }}
         />
       </div>
+
+      {/* Aviation: primary bg — Sanity aviationPhotos[0] */}
+      {aviationPhotos[0] && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1,
+            pointerEvents: 'none',
+            opacity:
+              progress < 0.72
+                ? 0
+                : progress < 0.80
+                  ? ((progress - 0.72) / 0.08) * 0.22
+                  : 0.22,
+            willChange: 'opacity',
+            mixBlendMode: 'screen',
+          }}
+        >
+          <SanityMedia item={aviationPhotos[0]} objectPosition="center" />
+        </div>
+      )}
+
+      {/* Aviation: secondary accent — Sanity aviationPhotos[1] */}
+      {aviationPhotos[1] && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1,
+            pointerEvents: 'none',
+            opacity:
+              progress < 0.76
+                ? 0
+                : progress < 0.84
+                  ? ((progress - 0.76) / 0.08) * 0.15
+                  : 0.15,
+            willChange: 'opacity',
+            mixBlendMode: 'screen',
+          }}
+        >
+          <SanityMedia item={aviationPhotos[1]} objectPosition="center" />
+        </div>
+      )}
     </>
   );
 }
