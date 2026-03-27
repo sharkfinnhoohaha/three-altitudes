@@ -643,7 +643,7 @@ export function ScrollSections({
               </div>
 
               <p className="hud-text" style={{ fontSize: '0.28rem', letterSpacing: '0.38em', color: '#ff8c00', opacity: 0.2, paddingBottom: '0.5rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                {(audioStats.find((s) => s.label.toUpperCase().includes('YEAR'))?.value ?? '12+') + ' YRS'}
+                {(audioStats.find((s) => s.label?.toUpperCase().includes('YEAR'))?.value ?? '12+') + ' YRS'}
               </p>
             </div>
 
