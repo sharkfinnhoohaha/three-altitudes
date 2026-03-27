@@ -3,6 +3,7 @@
 import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 const MODULE_COUNT = 14;
 
@@ -171,24 +172,37 @@ export function EngineRoomAtmosphere() {
   const moduleData = useMemo(
     () =>
       Array.from({ length: MODULE_COUNT }, (_, i) => ({
-        x: (Math.random() - 0.5) * 22,
-        y: (Math.random() - 0.5) * 13,
+        x: (Math.random() - 0.5) * 24,
+        y: (Math.random() - 0.5) * 14,
         z: -52 - i * 3.2,
-        width: 0.7 + Math.random() * 3.0,
-        height: 0.5 + Math.random() * 2.2,
-        depth: 0.08 + Math.random() * 0.5,
+        scale: 1.2 + Math.random() * 2.8,
         phase: Math.random() * Math.PI * 2,
-        floatSpeed: 0.15 + Math.random() * 0.28,
-        rotSpeed: (Math.random() - 0.5) * 0.006,
+        floatSpeed: 0.12 + Math.random() * 0.22,
+        heading: Math.random() * Math.PI * 2,
+        bank: (Math.random() - 0.5) * 0.35,
+        pitch: (Math.random() - 0.5) * 0.12,
+        bankDrift: 0.08 + Math.random() * 0.12,
+        yawDrift: (Math.random() - 0.5) * 0.008,
       })),
     []
   );
 
-  const geo = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
+  // Merged airplane silhouette geometry — recognisable even in wireframe
+  const geo = useMemo(() => {
+    const fuselage = new THREE.BoxGeometry(0.08, 0.06, 1.2);
+    const wings = new THREE.BoxGeometry(1.8, 0.03, 0.28);
+    wings.translate(0, 0, 0.06);
+    const tailH = new THREE.BoxGeometry(0.6, 0.03, 0.15);
+    tailH.translate(0, 0, -0.52);
+    const tailV = new THREE.BoxGeometry(0.03, 0.25, 0.15);
+    tailV.translate(0, 0.12, -0.52);
+    return mergeGeometries([fuselage, wings, tailH, tailV])!;
+  }, []);
+
   const mat = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
-        color: '#4a4a4a',
+        color: '#5a6a7a',
         wireframe: true,
         transparent: true,
         opacity: 0.45,
@@ -212,7 +226,7 @@ export function EngineRoomAtmosphere() {
             ? 1
             : Math.max(0, 1 - (progress - 0.74) / 0.08);
 
-    mat.opacity = visibility * 0.45;
+    mat.opacity = visibility * 0.50;
 
     for (let i = 0; i < MODULE_COUNT; i++) {
       const d = moduleData[i];
@@ -221,8 +235,12 @@ export function EngineRoomAtmosphere() {
         d.y + Math.sin(time * d.floatSpeed + d.phase) * 0.35,
         d.z
       );
-      dummy.scale.set(d.width, d.height, d.depth);
-      dummy.rotation.set(0, time * d.rotSpeed + d.phase, 0);
+      dummy.scale.setScalar(d.scale);
+      dummy.rotation.set(
+        d.pitch + Math.sin(time * 0.10 + d.phase) * 0.04,
+        d.heading + time * d.yawDrift,
+        d.bank + Math.sin(time * d.bankDrift + d.phase + 1.0) * 0.06
+      );
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
     }

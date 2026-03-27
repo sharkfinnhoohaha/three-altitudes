@@ -38,8 +38,8 @@ export function MainCanvas() {
         <directionalLight position={[4, 8, 6]} intensity={0.7} color="#e8f0f0" />
         {/* Shoreline accent — Ventura teal rim light */}
         <pointLight position={[-6, 4, 2]} intensity={0.6} color="#3dd9c4" />
-        {/* Pocket accent — amber vacuum-tube warmth, deeper in scene */}
-        <pointLight position={[3, -2, -40]} intensity={0.55} color="#ff8c00" />
+        {/* Pocket accent — deep ocean blue glow, deeper in scene */}
+        <pointLight position={[3, -2, -40]} intensity={0.55} color="#1a4a8a" />
         {/* Engine room — cool blue-grey, far back */}
         <pointLight position={[0, 5, -75]} intensity={0.35} color="#8899aa" />
 
