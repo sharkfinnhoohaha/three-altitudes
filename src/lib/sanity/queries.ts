@@ -89,7 +89,7 @@ const audioWorkQuery = `
     "stats": coalesce(stats[] {
       "value": coalesce(value, ""),
       "label": coalesce(label, ""),
-      "sub": coalesce(sub, ""),
+      "sub": sub,
     }, []),
     "touringCredits": coalesce(touringCredits[] {
       artistName,
