@@ -16,8 +16,8 @@ import {
 function toPhotoArray(
   primary?: SanityMediaItem | null,
   accent?: SanityMediaItem | null,
-): SanityMediaItem[] {
-  return [primary ?? undefined, accent ?? undefined] as unknown as SanityMediaItem[];
+): [SanityMediaItem | undefined, SanityMediaItem | undefined] {
+  return [primary ?? undefined, accent ?? undefined];
 }
 
 export default async function HomePage() {
