@@ -67,12 +67,18 @@ const heroQuery = `
     "identities": coalesce(identities, []),
     "locationLabel": coalesce(locationLabel, ""),
     "coordinates": coalesce(coordinates, ""),
-    "photos": coalesce(photos[] {
+    "primaryPhoto": primaryPhoto {
       "_key": _key,
       "_type": _type,
       "url": asset->url,
       "mimeType": asset->mimeType,
-    }, []),
+    },
+    "accentPhoto": accentPhoto {
+      "_key": _key,
+      "_type": _type,
+      "url": asset->url,
+      "mimeType": asset->mimeType,
+    },
   }
 `;
 
@@ -109,12 +115,18 @@ const audioWorkQuery = `
       "description": description,
     }, []),
     "specialties": coalesce(specialties, []),
-    "photos": coalesce(photos[] {
+    "primaryPhoto": primaryPhoto {
       "_key": _key,
       "_type": _type,
       "url": asset->url,
       "mimeType": asset->mimeType,
-    }, []),
+    },
+    "accentPhoto": accentPhoto {
+      "_key": _key,
+      "_type": _type,
+      "url": asset->url,
+      "mimeType": asset->mimeType,
+    },
   }
 `;
 
@@ -138,12 +150,18 @@ const aviationQuery = `
     tagline,
     "gauges": coalesce(gauges, []),
     "beaconLinks": coalesce(beaconLinks, []),
-    "photos": coalesce(photos[] {
+    "primaryPhoto": primaryPhoto {
       "_key": _key,
       "_type": _type,
       "url": asset->url,
       "mimeType": asset->mimeType,
-    }, []),
+    },
+    "accentPhoto": accentPhoto {
+      "_key": _key,
+      "_type": _type,
+      "url": asset->url,
+      "mimeType": asset->mimeType,
+    },
   }
 `;
 

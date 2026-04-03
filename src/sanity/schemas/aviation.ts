@@ -61,15 +61,20 @@ export const aviation = defineType({
       ],
     }),
     defineField({
-      name: 'photos',
-      title: 'Background Media',
-      type: 'array',
+      name: 'primaryPhoto',
+      title: 'Primary Background Photo (Aviation section — main sky/flight image)',
+      type: 'image',
       description:
-        'Background images/videos for the Aviation section. Slot 1 = primary, Slot 2 = secondary layered accent.',
-      of: [
-        { type: 'image', title: 'Image', options: { hotspot: true } },
-        { type: 'file', title: 'Video', options: { accept: 'video/*' } },
-      ],
+        'The main full-screen background photo shown in the Aviation section at the bottom of the page. Falls back to a built-in aerial photo if not set.',
+      options: { hotspot: true },
+    }),
+    defineField({
+      name: 'accentPhoto',
+      title: 'Secondary Background Photo (Aviation section — accent layer)',
+      type: 'image',
+      description:
+        'An optional second photo layered subtly on top of the primary in the Aviation section.',
+      options: { hotspot: true },
     }),
   ],
   preview: {

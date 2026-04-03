@@ -82,22 +82,20 @@ export const audioWork = defineType({
       of: [{ type: 'string' }],
     }),
     defineField({
-      name: 'photos',
-      title: 'Photos / Videos',
-      type: 'array',
-      description: 'Background media for the Pocket section. Each item can be an image or a video file. Upload a video file (MP4/WebM) to replace a photo.',
-      of: [
-        {
-          type: 'image',
-          title: 'Image',
-          options: { hotspot: true },
-        },
-        {
-          type: 'file',
-          title: 'Video',
-          options: { accept: 'video/*' },
-        },
-      ],
+      name: 'primaryPhoto',
+      title: 'Primary Background Photo (Pocket / audio section — main drums image)',
+      type: 'image',
+      description:
+        'The main full-screen background photo shown behind the Pocket (audio work) section. Falls back to the built-in drums mint photo if not set.',
+      options: { hotspot: true },
+    }),
+    defineField({
+      name: 'accentPhoto',
+      title: 'Secondary Background Photo (Pocket / audio section — accent layer)',
+      type: 'image',
+      description:
+        'An optional second photo layered subtly on top of the primary behind the Pocket section. Falls back to the built-in drums live photo if not set.',
+      options: { hotspot: true },
     }),
   ],
   preview: {
