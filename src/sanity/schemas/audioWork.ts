@@ -83,19 +83,61 @@ export const audioWork = defineType({
     }),
     defineField({
       name: 'primaryPhoto',
-      title: 'Primary Background Photo (Pocket / audio section — main drums image)',
-      type: 'image',
+      title: 'Primary Background Media (Pocket / audio section — main drums layer)',
+      type: 'object',
       description:
-        'The main full-screen background photo shown behind the Pocket (audio work) section. Falls back to the built-in drums mint photo if not set.',
-      options: { hotspot: true },
+        'The main full-screen background media shown behind the Pocket (audio work) section. Upload either an image or a video. Falls back to the built-in drums mint photo if not set.',
+      fields: [
+        defineField({
+          name: 'image',
+          title: 'Image',
+          type: 'image',
+          options: { hotspot: true },
+          hidden: ({ parent }) => Boolean(parent?.video),
+        }),
+        defineField({
+          name: 'video',
+          title: 'Video',
+          type: 'file',
+          options: { accept: 'video/*' },
+          hidden: ({ parent }) => Boolean(parent?.image),
+        }),
+      ],
+      validation: (r) =>
+        r.custom((value) => {
+          if (!value?.image && !value?.video) return true;
+          if (value?.image && value?.video) return 'Choose either an image or a video, not both.';
+          return true;
+        }),
     }),
     defineField({
       name: 'accentPhoto',
-      title: 'Secondary Background Photo (Pocket / audio section — accent layer)',
-      type: 'image',
+      title: 'Secondary Background Media (Pocket / audio section — accent layer)',
+      type: 'object',
       description:
-        'An optional second photo layered subtly on top of the primary behind the Pocket section. Falls back to the built-in drums live photo if not set.',
-      options: { hotspot: true },
+        'An optional second background media layer shown on top of the primary behind the Pocket section. Upload either an image or a video. Falls back to the built-in drums live photo if not set.',
+      fields: [
+        defineField({
+          name: 'image',
+          title: 'Image',
+          type: 'image',
+          options: { hotspot: true },
+          hidden: ({ parent }) => Boolean(parent?.video),
+        }),
+        defineField({
+          name: 'video',
+          title: 'Video',
+          type: 'file',
+          options: { accept: 'video/*' },
+          hidden: ({ parent }) => Boolean(parent?.image),
+        }),
+      ],
+      validation: (r) =>
+        r.custom((value) => {
+          if (!value?.image && !value?.video) return true;
+          if (value?.image && value?.video) return 'Choose either an image or a video, not both.';
+          return true;
+        }),
     }),
   ],
   preview: {
