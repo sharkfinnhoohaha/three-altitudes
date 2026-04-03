@@ -28,7 +28,8 @@ export interface SanityHero {
   identities: string[];
   locationLabel: string;
   coordinates: string;
-  photos: SanityMediaItem[];
+  primaryPhoto?: SanityMediaItem;
+  accentPhoto?: SanityMediaItem;
 }
 
 export interface SanityMediaItem {
@@ -63,7 +64,8 @@ export interface SanityAudioWork {
   touringCredits: SanityTouringCredit[];
   disciplines: SanityDiscipline[];
   specialties: string[];
-  photos: SanityMediaItem[];
+  primaryPhoto?: SanityMediaItem;
+  accentPhoto?: SanityMediaItem;
 }
 
 export interface SanityGauge {
@@ -84,7 +86,8 @@ export interface SanityAviation {
   tagline: string;
   gauges: SanityGauge[];
   beaconLinks: SanityBeaconLink[];
-  photos: SanityMediaItem[];
+  primaryPhoto?: SanityMediaItem;
+  accentPhoto?: SanityMediaItem;
 }
 
 export interface SanitySettings {

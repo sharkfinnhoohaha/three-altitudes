@@ -3,6 +3,7 @@ import { ScrollSections } from '@/components/ui/ScrollSections';
 import { GhostingCode } from '@/components/ui/GhostingCode';
 import { MediaLayers } from '@/components/ui/MediaLayers';
 import { MainCanvasClient } from '@/components/canvas/MainCanvasClient';
+import type { SanityMediaItem } from '@/lib/sanity/types';
 import {
   getWebProjects,
   getDevProjects,
@@ -11,6 +12,13 @@ import {
   getAviation,
   getSiteSettings,
 } from '@/lib/sanity/queries';
+
+function toPhotoArray(
+  primary?: SanityMediaItem | null,
+  accent?: SanityMediaItem | null,
+): [SanityMediaItem | undefined, SanityMediaItem | undefined] {
+  return [primary ?? undefined, accent ?? undefined];
+}
 
 export default async function HomePage() {
   const [webProjects, devProjects, hero, audioWork, aviation, siteSettings] = await Promise.all([
@@ -26,9 +34,9 @@ export default async function HomePage() {
     <>
       <MainCanvasClient />
       <MediaLayers
-        photos={audioWork?.photos ?? []}
-        shorelinePhotos={hero?.photos ?? []}
-        aviationPhotos={aviation?.photos ?? []}
+        photos={toPhotoArray(audioWork?.primaryPhoto, audioWork?.accentPhoto)}
+        shorelinePhotos={toPhotoArray(hero?.primaryPhoto, hero?.accentPhoto)}
+        aviationPhotos={toPhotoArray(aviation?.primaryPhoto, aviation?.accentPhoto)}
         engineRoomVideoUrl={siteSettings?.engineRoomVideo?.url}
       />
       <GhostingCode />

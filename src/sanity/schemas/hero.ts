@@ -33,15 +33,20 @@ export const hero = defineType({
       description: 'e.g. 34.2746° N  119.2290° W',
     }),
     defineField({
-      name: 'photos',
-      title: 'Shoreline Background Media',
-      type: 'array',
+      name: 'primaryPhoto',
+      title: 'Primary Background Photo (Shoreline section — main hero image)',
+      type: 'image',
       description:
-        'Background media for the Shoreline (hero) section. Slot 1 = primary surf/hero image, Slot 2 = secondary surf image. Falls back to built-in images if empty.',
-      of: [
-        { type: 'image', title: 'Image', options: { hotspot: true } },
-        { type: 'file', title: 'Video', options: { accept: 'video/*' } },
-      ],
+        'The main full-screen background photo shown in the Shoreline / hero section at the top of the page. Falls back to the built-in surf paddle photo if not set.',
+      options: { hotspot: true },
+    }),
+    defineField({
+      name: 'accentPhoto',
+      title: 'Secondary Background Photo (Shoreline section — accent layer)',
+      type: 'image',
+      description:
+        'An optional second photo layered subtly on top of the primary. Falls back to the built-in surf ride photo if not set.',
+      options: { hotspot: true },
     }),
   ],
   preview: {

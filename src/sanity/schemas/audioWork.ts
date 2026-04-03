@@ -82,22 +82,62 @@ export const audioWork = defineType({
       of: [{ type: 'string' }],
     }),
     defineField({
-      name: 'photos',
-      title: 'Photos / Videos',
-      type: 'array',
-      description: 'Background media for the Pocket section. Each item can be an image or a video file. Upload a video file (MP4/WebM) to replace a photo.',
-      of: [
-        {
-          type: 'image',
+      name: 'primaryPhoto',
+      title: 'Primary Background Media (Pocket / audio section — main drums layer)',
+      type: 'object',
+      description:
+        'The main full-screen background media shown behind the Pocket (audio work) section. Upload either an image or a video. Falls back to the built-in drums mint photo if not set.',
+      fields: [
+        defineField({
+          name: 'image',
           title: 'Image',
+          type: 'image',
           options: { hotspot: true },
-        },
-        {
-          type: 'file',
+          hidden: ({ parent }) => Boolean(parent?.video),
+        }),
+        defineField({
+          name: 'video',
           title: 'Video',
+          type: 'file',
           options: { accept: 'video/*' },
-        },
+          hidden: ({ parent }) => Boolean(parent?.image),
+        }),
       ],
+      validation: (r) =>
+        r.custom((value) => {
+          if (!value?.image && !value?.video) return true;
+          if (value?.image && value?.video) return 'Choose either an image or a video, not both.';
+          return true;
+        }),
+    }),
+    defineField({
+      name: 'accentPhoto',
+      title: 'Secondary Background Media (Pocket / audio section — accent layer)',
+      type: 'object',
+      description:
+        'An optional second background media layer shown on top of the primary behind the Pocket section. Upload either an image or a video. Falls back to the built-in drums live photo if not set.',
+      fields: [
+        defineField({
+          name: 'image',
+          title: 'Image',
+          type: 'image',
+          options: { hotspot: true },
+          hidden: ({ parent }) => Boolean(parent?.video),
+        }),
+        defineField({
+          name: 'video',
+          title: 'Video',
+          type: 'file',
+          options: { accept: 'video/*' },
+          hidden: ({ parent }) => Boolean(parent?.image),
+        }),
+      ],
+      validation: (r) =>
+        r.custom((value) => {
+          if (!value?.image && !value?.video) return true;
+          if (value?.image && value?.video) return 'Choose either an image or a video, not both.';
+          return true;
+        }),
     }),
   ],
   preview: {

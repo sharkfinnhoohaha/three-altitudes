@@ -373,27 +373,35 @@ export function MediaLayers({
         />
       </div>
 
-      {/* Aviation: primary bg — Sanity aviationPhotos[0] */}
-      {aviationPhotos[0] && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1,
-            pointerEvents: 'none',
-            opacity:
-              progress < 0.72
-                ? 0
-                : progress < 0.80
-                  ? ((progress - 0.72) / 0.08) * 0.22
-                  : 0.22,
-            willChange: 'opacity',
-            mixBlendMode: 'screen',
-          }}
-        >
+      {/* Aviation: primary bg — Sanity aviationPhotos[0] or static fallback */}
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 1,
+          pointerEvents: 'none',
+          opacity:
+            progress < 0.72
+              ? 0
+              : progress < 0.80
+                ? ((progress - 0.72) / 0.08) * 0.22
+                : 0.22,
+          willChange: 'opacity',
+          mixBlendMode: 'screen',
+        }}
+      >
+        {aviationPhotos[0] ? (
           <SanityMedia item={aviationPhotos[0]} objectPosition="center" />
-        </div>
-      )}
+        ) : (
+          <Image
+            src="/images/la-altitude.jpg"
+            alt=""
+            fill
+            style={{ objectFit: 'cover', objectPosition: 'center' }}
+            sizes="100vw"
+          />
+        )}
+      </div>
 
       {/* Aviation: secondary accent — Sanity aviationPhotos[1] */}
       {aviationPhotos[1] && (
