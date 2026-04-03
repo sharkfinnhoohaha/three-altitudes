@@ -13,8 +13,11 @@ import {
   getSiteSettings,
 } from '@/lib/sanity/queries';
 
-function toPhotoArray(...items: (SanityMediaItem | null | undefined)[]): SanityMediaItem[] {
-  return items.filter((item): item is SanityMediaItem => item != null);
+function toPhotoArray(
+  primary?: SanityMediaItem | null,
+  accent?: SanityMediaItem | null,
+): SanityMediaItem[] {
+  return [primary ?? undefined, accent ?? undefined] as unknown as SanityMediaItem[];
 }
 
 export default async function HomePage() {
