@@ -1,7 +1,7 @@
 {
   "redirects": [
     {
-      "source": "/:path*",
+      "source": "/((?!studio).*)",
       "destination": "https://finn-bennett-is-working.netlify.app/:path*"
     }
   ]
