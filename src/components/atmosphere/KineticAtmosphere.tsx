@@ -20,29 +20,48 @@ export function ShorelineAtmosphere() {
   const foamRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
-  // Store original vertex positions for wave displacement
-  const origPositions = useRef<Float32Array | null>(null);
-
   const waveGeo = useMemo(() => {
-    const geo = new THREE.PlaneGeometry(60, 22, WAVE_X_SEGS, WAVE_Y_SEGS);
-    origPositions.current = new Float32Array(geo.attributes.position.array as Float32Array);
-    return geo;
+    return new THREE.PlaneGeometry(60, 22, WAVE_X_SEGS, WAVE_Y_SEGS);
   }, []);
 
-  const waveMat = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: '#003333',
-        emissive: '#001a1a',
-        emissiveIntensity: 0.7,
-        roughness: 0.15,
-        metalness: 0.6,
-        transparent: true,
-        opacity: 0.22,
-        side: THREE.DoubleSide,
-      }),
-    []
-  );
+  const waveMat = useMemo(() => {
+    const mat = new THREE.MeshStandardMaterial({
+      color: '#003333',
+      emissive: '#001a1a',
+      emissiveIntensity: 0.7,
+      roughness: 0.15,
+      metalness: 0.6,
+      transparent: true,
+      opacity: 0.22,
+      side: THREE.DoubleSide,
+    });
+
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = { value: 0 };
+      mat.userData.shader = shader;
+      
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <common>',
+        `
+        #include <common>
+        uniform float uTime;
+        `
+      );
+      
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <begin_vertex>',
+        `
+        #include <begin_vertex>
+        float ox = position.x;
+        float oy = position.y;
+        transformed.z += sin(ox * 0.09 + uTime * 0.38) * 2.0 +
+                         sin(oy * 0.13 + uTime * 0.27 + 1.3) * 1.2 +
+                         sin((ox * 0.06 + oy * 0.04) + uTime * 0.18 + 2.1) * 0.8;
+        `
+      );
+    };
+    return mat;
+  }, []);
 
   // Foam: small organic spheres drifting with the swell
   const foamData = useMemo(
@@ -83,22 +102,11 @@ export function ShorelineAtmosphere() {
     const visibility =
       progress < 0.25 ? 1.0 : Math.max(0, 1 - (progress - 0.25) / 0.07);
 
-    // --- Wave plane vertex displacement (layered sin-waves = swell physics) ---
-    if (waveRef.current && origPositions.current) {
-      const pos = waveGeo.attributes.position.array as Float32Array;
-      const orig = origPositions.current;
-      for (let i = 0; i < pos.length; i += 3) {
-        const ox = orig[i];
-        const oy = orig[i + 1];
-        pos[i + 2] =
-          Math.sin(ox * 0.09 + time * 0.38) * 2.0 +
-          Math.sin(oy * 0.13 + time * 0.27 + 1.3) * 1.2 +
-          Math.sin((ox * 0.06 + oy * 0.04) + time * 0.18 + 2.1) * 0.8;
-      }
-      waveGeo.attributes.position.needsUpdate = true;
-      waveGeo.computeVertexNormals();
-      waveMat.opacity = visibility * 0.22;
+    // --- Wave plane GPU displacement uniform ---
+    if (waveMat.userData.shader) {
+      waveMat.userData.shader.uniforms.uTime.value = time;
     }
+    waveMat.opacity = visibility * 0.22;
 
     // --- Foam particles ---
     if (foamRef.current) {
