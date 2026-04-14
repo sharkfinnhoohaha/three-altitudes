@@ -106,31 +106,6 @@ export function ScrollProvider({ children }: ScrollProviderProps) {
         lenis.on('scroll', () => {
           ScrollTrigger.update();
           onScroll();
-
-          // Debounced snap — snap to nearest section boundary 350 ms after scrolling stops
-          if (snapDebounceId) clearTimeout(snapDebounceId);
-          snapDebounceId = setTimeout(() => {
-            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-            if (maxScroll <= 0) return;
-            const progress = Math.min((window.scrollY || window.pageYOffset) / maxScroll, 1);
-
-            // Find closest snap point
-            let closest = SNAP_POINTS[0];
-            let minDist = Math.abs(progress - closest);
-            for (const point of SNAP_POINTS) {
-              const dist = Math.abs(progress - point);
-              if (dist < minDist) {
-                minDist = dist;
-                closest = point;
-              }
-            }
-
-            // Only snap if within 6% of a boundary (avoid forced jumps mid-section)
-            if (minDist < 0.06 && minDist > 0.005) {
-              const targetY = closest * maxScroll;
-              lenis.scrollTo(targetY, { duration: 0.6, easing: (t: number) => 1 - Math.pow(1 - t, 3) });
-            }
-          }, 350);
         });
 
         function raf(time: number) {

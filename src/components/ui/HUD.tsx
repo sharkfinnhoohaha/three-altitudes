@@ -49,7 +49,7 @@ export function HUD() {
 
   return (
     <>
-      {/* Premium Top Navigation Bar */}
+      {/* Premium Minimalist Navigation Bar */}
       <div
         style={{
           position: 'fixed',
@@ -62,9 +62,7 @@ export function HUD() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%)',
+          textShadow: '0 2px 10px rgba(0,0,0,0.5)'
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>

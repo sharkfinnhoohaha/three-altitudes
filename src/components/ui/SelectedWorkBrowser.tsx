@@ -53,6 +53,28 @@ export function SelectedWorkBrowser({ projects }: { projects: SanityWebProject[]
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2.5rem' }}>
         {projects.map((project, idx) => (
           <div key={project._id ?? String(idx)} className="glass-panel" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'transform 0.4s ease' }}>
+            
+            {/* Browser Frame & Live Preview */}
+            <div style={{ background: 'rgba(0,0,0,0.6)', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f57' }} />
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ffbd2e' }} />
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#28c840' }} />
+              <div style={{ flex: 1, textAlign: 'center', fontFamily: "'JetBrains Mono', monospace", fontSize: '0.6rem', color: '#666', background: 'rgba(0,0,0,0.4)', padding: '0.2rem', borderRadius: 4, margin: '0 1rem' }}>
+                {project.domain}
+              </div>
+            </div>
+            
+            <div data-lenis-prevent style={{ width: '100%', height: '320px', background: '#000', overflow: 'hidden', position: 'relative' }}>
+              <iframe 
+                src={project.url} 
+                title={project.name}
+                loading="lazy"
+                style={{ width: '100%', height: '100%', border: 'none', pointerEvents: 'auto' }}
+              />
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(transparent, rgba(20,25,30,0.95))', pointerEvents: 'none' }} />
+            </div>
+
+            {/* Project Details */}
             <div style={{ padding: '2.5rem 2.5rem 1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
                 <span className="hud-text" style={{ fontSize: '0.6rem', color: '#ff8c00', opacity: 0.7 }}>{String(idx + 1).padStart(2, '0')}</span>
@@ -89,7 +111,7 @@ export function SelectedWorkBrowser({ projects }: { projects: SanityWebProject[]
                   textDecoration: 'none'
                 }}
               >
-                Visit Live Site
+                Visit Full Site
               </a>
             </div>
           </div>
