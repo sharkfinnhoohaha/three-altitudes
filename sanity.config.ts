@@ -44,11 +44,11 @@ export default defineConfig({
     structureTool({
       structure: (S) =>
         S.list()
-          .title('Content')
+          .title('Content Library')
           .items([
             // Singletons
             S.listItem()
-              .title('Hero')
+              .title('Homepage Hero')
               .id('hero')
               .child(S.document().schemaType('hero').documentId('hero')),
             S.listItem()
@@ -64,9 +64,9 @@ export default defineConfig({
               .id('siteSettings')
               .child(S.document().schemaType('siteSettings').documentId('siteSettings')),
             S.divider(),
-            // Lists
+            // Collections
             S.documentTypeListItem('webProject').title('Web Projects'),
-            S.documentTypeListItem('devProject').title('Dev Projects'),
+            S.documentTypeListItem('devProject').title('Development Projects'),
           ]),
     }),
     visionTool(),

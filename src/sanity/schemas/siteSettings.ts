@@ -1,19 +1,38 @@
-import { defineField, defineType } from 'sanity';
+import { defineArrayMember, defineField, defineType } from 'sanity';
 
 export const siteSettings = defineType({
   name: 'siteSettings',
   title: 'Site Settings',
   type: 'document',
+  fieldsets: [
+    {
+      name: 'contact',
+      title: 'Contact Details',
+      options: { collapsible: true, collapsed: false },
+    },
+    {
+      name: 'media',
+      title: 'Media',
+      options: { collapsible: true, collapsed: false },
+    },
+    {
+      name: 'social',
+      title: 'Social Links',
+      options: { collapsible: true, collapsed: false },
+    },
+  ],
   fields: [
     defineField({
       name: 'siteName',
       title: 'Site Name',
       type: 'string',
+      fieldset: 'contact',
     }),
     defineField({
       name: 'email',
       title: 'Contact Email',
       type: 'string',
+      fieldset: 'contact',
     }),
     defineField({
       name: 'engineRoomVideo',
@@ -21,13 +40,15 @@ export const siteSettings = defineType({
       type: 'file',
       description: 'Background video for the Engine Room (dev/code) section. Falls back to built-in code-bg.mp4 if not set.',
       options: { accept: 'video/*' },
+      fieldset: 'media',
     }),
     defineField({
       name: 'socialLinks',
       title: 'Social Links',
       type: 'array',
+      fieldset: 'social',
       of: [
-        {
+        defineArrayMember({
           type: 'object',
           fields: [
             defineField({ name: 'platform', title: 'Platform', type: 'string', description: 'e.g. Instagram, GitHub' }),
@@ -35,11 +56,11 @@ export const siteSettings = defineType({
             defineField({ name: 'handle', title: 'Handle', type: 'string', description: 'e.g. @finn.bennett' }),
           ],
           preview: { select: { title: 'platform', subtitle: 'handle' } },
-        },
+        }),
       ],
     }),
   ],
   preview: {
-    select: { title: 'siteName' },
+    select: { title: 'siteName', subtitle: 'email' },
   },
 });
