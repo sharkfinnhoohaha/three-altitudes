@@ -39,7 +39,7 @@ const ATMOSPHERE_CONFIG: Record<Atmosphere, AtmosphereConfig> = {
 export function HUD() {
   const { progress, atmosphere, scrollY, maxScroll } = useScroll();
 
-  const config = ATMOSPHERE_CONFIG[atmosphere];
+  const config = ATMOSPHERE_CONFIG[atmosphere] || ATMOSPHERE_CONFIG.shoreline;
   const { primaryLabel, secondaryLabel, color } = config;
 
   // ── Altimeter — maps scrollY to simulated altitude (0 – 5 200 ft MSL) ───────

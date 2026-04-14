@@ -32,9 +32,17 @@ export function AirplaneCursor() {
 
     const onMove = (e: MouseEvent) => {
       const now = performance.now();
+      
+      // Initialize refs on first movement to avoid velocity jump from 0/-200
+      if (prevTimeRef.current === 0) {
+        prevXRef.current = e.clientX;
+        prevTimeRef.current = now;
+      }
+
       const dt  = Math.max(now - prevTimeRef.current, 1);          // ms, min 1
       const dx  = e.clientX - prevXRef.current;
       velRef.current = (dx / dt) * 1000;  // px/s (signed: + = right)
+      
       prevXRef.current  = e.clientX;
       prevTimeRef.current = now;
       posRef.current = { x: e.clientX, y: e.clientY };
@@ -49,7 +57,7 @@ export function AirplaneCursor() {
     if (!visible) return;
 
     const tick = () => {
-      if (elRef.current) {
+      if (elRef.current && posRef.current.x !== -200) {
         // Map velocity → target bank angle, clamped to ±32 °
         const targetBank = Math.max(-32, Math.min(32, velRef.current * 0.038));
         bankRef.current += (targetBank - bankRef.current) * 0.10;
