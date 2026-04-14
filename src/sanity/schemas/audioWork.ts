@@ -31,6 +31,7 @@ export const audioWork = defineType({
       description: 'Key numbers displayed in the Credentials column (e.g. 8M+ Streams).',
       of: [
         {
+          name: 'statItem',
           type: 'object',
           fields: [
             defineField({ name: 'value', title: 'Value', type: 'string', description: 'e.g. 8M+' }),
@@ -48,6 +49,7 @@ export const audioWork = defineType({
       description: 'Artists and projects listed in the Touring Credits column.',
       of: [
         {
+          name: 'creditItem',
           type: 'object',
           fields: [
             defineField({ name: 'artistName', title: 'Artist / Project Name', type: 'string' }),
@@ -65,6 +67,7 @@ export const audioWork = defineType({
       description: 'Signal-chain disciplines shown in the left column (e.g. LIVE FOH, STUDIO, PRODUCTION).',
       of: [
         {
+          name: 'disciplineItem',
           type: 'object',
           fields: [
             defineField({ name: 'code', title: 'Short Label', type: 'string', description: 'Uppercase abbreviation displayed on screen (e.g. LIVE FOH).' }),

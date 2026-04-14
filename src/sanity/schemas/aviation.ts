@@ -35,6 +35,7 @@ export const aviation = defineType({
       type: 'array',
       of: [
         {
+          name: 'gaugeItem',
           type: 'object',
           fields: [
             defineField({ name: 'label', title: 'Label', type: 'string', description: 'e.g. ALTITUDE' }),
@@ -50,6 +51,7 @@ export const aviation = defineType({
       type: 'array',
       of: [
         {
+          name: 'beaconItem',
           type: 'object',
           fields: [
             defineField({ name: 'label', title: 'Label', type: 'string', description: 'e.g. @FINN.BENNETT' }),
