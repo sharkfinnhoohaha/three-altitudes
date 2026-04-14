@@ -4,11 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import type { SanityWebProject } from '@/lib/sanity/types';
 
 export function SelectedWorkBrowser({ projects }: { projects: SanityWebProject[] }) {
-  const [activeIdx, setActiveIdx] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
-  const [paused, setPaused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const resumeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -21,178 +18,82 @@ export function SelectedWorkBrowser({ projects }: { projects: SanityWebProject[]
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    if (paused) return;
-    const id = setInterval(() => {
-      setActiveIdx((i) => (i + 1) % projects.length);
-    }, 4500);
-    return () => clearInterval(id);
-  }, [paused, projects.length]);
-
-  const handleTabClick = (idx: number) => {
-    setActiveIdx(idx);
-    setPaused(true);
-    if (resumeRef.current) clearTimeout(resumeRef.current);
-    resumeRef.current = setTimeout(() => setPaused(false), 8000);
-  };
-
-  const activeProject = projects[activeIdx];
-
   return (
     <div
       ref={containerRef}
       style={{
-        width: 'clamp(360px, 72vw, 900px)',
+        width: '100%',
+        maxWidth: '1200px',
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? 'translateY(0)' : 'translateY(24px)',
         transition: 'opacity 0.8s ease, transform 0.8s ease',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '4rem',
+        padding: '0 2rem',
+        maxHeight: '80vh',
+        overflowY: 'auto',
+        scrollbarWidth: 'none',
       }}
     >
-      {/* ── Browser frame ── */}
-      <div
+      <h2
+        className="serif-text"
         style={{
-          borderRadius: 16,
-          overflow: 'hidden',
-          background: 'rgb(26,26,26)',
-          boxShadow: 'rgba(0,0,0,0.15) 0px 25px 50px',
-          border: '1px solid rgba(255,255,255,0.06)',
+          fontSize: 'clamp(2.5rem, 6vw, 5rem)',
+          fontWeight: 300,
+          color: '#ffffff',
+          letterSpacing: '0.05em',
+          marginBottom: '1rem',
+          textAlign: 'center',
         }}
       >
-        <div
-          style={{
-            background: 'rgb(20,20,20)',
-            padding: '12px 16px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            borderBottom: '1px solid rgba(255,255,255,0.05)',
-          }}
-        >
-          <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
-            <span style={{ display: 'block', width: 12, height: 12, borderRadius: '50%', background: 'rgb(255,95,87)' }} />
-            <span style={{ display: 'block', width: 12, height: 12, borderRadius: '50%', background: 'rgb(254,188,46)' }} />
-            <span style={{ display: 'block', width: 12, height: 12, borderRadius: '50%', background: 'rgb(40,200,64)' }} />
-          </div>
+        Digital Identity
+      </h2>
 
-          <div
-            style={{
-              flex: 1,
-              background: 'rgb(10,10,10)',
-              borderRadius: 6,
-              padding: '5px 12px',
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: '0.6rem',
-              letterSpacing: '0.04em',
-              overflow: 'hidden',
-              whiteSpace: 'nowrap',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            <span style={{ color: '#444' }}>https://</span>
-            <span style={{ color: '#888' }}>{activeProject?.domain}</span>
-          </div>
-        </div>
-
-        <div
-          data-lenis-prevent
-          style={{
-            position: 'relative',
-            width: '100%',
-            aspectRatio: '16 / 10',
-            background: '#0a0a0a',
-            overflow: 'hidden',
-          }}
-        >
-          {projects.map((project, idx) => (
-            <div
-              key={project._id ?? String(idx)}
-              style={{
-                position: 'absolute',
-                inset: 0,
-                opacity: idx === activeIdx ? 1 : 0,
-                transform: idx === activeIdx ? 'scale(1)' : 'scale(0.98)',
-                zIndex: idx === activeIdx ? 10 : 0,
-                pointerEvents: idx === activeIdx ? 'auto' : 'none',
-                transition: 'opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
-              }}
-            >
-              <iframe
-                src={project.url}
-                title={project.name}
-                loading="lazy"
-                style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-              />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2.5rem' }}>
+        {projects.map((project, idx) => (
+          <div key={project._id ?? String(idx)} className="glass-panel" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'transform 0.4s ease' }}>
+            <div style={{ padding: '2.5rem 2.5rem 1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                <span className="hud-text" style={{ fontSize: '0.6rem', color: '#ff8c00', opacity: 0.7 }}>{String(idx + 1).padStart(2, '0')}</span>
+                <span className="hud-text" style={{ fontSize: '0.5rem', color: '#ff8c00', opacity: 0.7, padding: '0.3rem 0.6rem', border: '1px solid rgba(255,140,0,0.3)', borderRadius: '12px' }}>{project.type}</span>
+              </div>
+              <h3 className="serif-text" style={{ fontSize: '2.2rem', fontWeight: 300, color: '#fff', marginBottom: '1rem', lineHeight: 1.1 }}>{project.name}</h3>
+              <p className="sans-text" style={{ fontSize: '1rem', color: '#ccc', lineHeight: 1.6, opacity: 0.9 }}>{project.desc}</p>
             </div>
-          ))}
+            
+            <div style={{ padding: '0 2.5rem 1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+              {project.tech?.map((t) => (
+                <span key={t} className="sans-text" style={{ fontSize: '0.75rem', padding: '0.3rem 0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', color: '#aaa' }}>{t}</span>
+              ))}
+            </div>
 
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 48,
-              background: 'linear-gradient(transparent, rgb(26,26,26))',
-              pointerEvents: 'none',
-              zIndex: 20,
-            }}
-          />
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-        {projects.map((project, idx) => {
-          const isActive = idx === activeIdx;
-          return (
-            <button
-              key={project._id ?? String(idx)}
-              onClick={() => handleTabClick(idx)}
-              style={{
-                flex: 1,
-                borderRadius: 12,
-                padding: '16px 20px',
-                height: 68,
-                cursor: 'pointer',
-                border: `1px solid ${isActive ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)'}`,
-                background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',
-                textAlign: 'left',
-                transition: 'background 0.3s ease, border-color 0.3s ease',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                gap: 4,
-                outline: 'none',
-              }}
-            >
-              <span
-                className="serif-text"
-                style={{
-                  fontSize: 'clamp(0.7rem, 1.1vw, 0.9rem)',
-                  fontWeight: 400,
-                  color: isActive ? '#ccc' : '#444',
-                  letterSpacing: '0.05em',
-                  lineHeight: 1,
-                  transition: 'color 0.3s ease',
-                  display: 'block',
+            <div style={{ padding: '1.5rem 2.5rem 2.5rem', marginTop: 'auto' }}>
+              <a 
+                href={project.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="sans-text magnetic-btn" 
+                style={{ 
+                  display: 'inline-block',
+                  padding: '1rem 2rem', 
+                  fontSize: '0.85rem', 
+                  fontWeight: 600,
+                  letterSpacing: '0.15em', 
+                  color: '#fff', 
+                  border: '1px solid rgba(255, 140, 0, 0.3)', 
+                  borderRadius: '30px', 
+                  background: 'rgba(255, 140, 0, 0.05)', 
+                  cursor: 'pointer', 
+                  textTransform: 'uppercase',
+                  textDecoration: 'none'
                 }}
               >
-                {project.name}
-              </span>
-              <span
-                className="hud-text"
-                style={{
-                  fontSize: '0.28rem',
-                  letterSpacing: '0.3em',
-                  color: isActive ? '#00ff88' : '#333',
-                  transition: 'color 0.3s ease',
-                  display: 'block',
-                }}
-              >
-                {project.type}
-              </span>
-            </button>
-          );
-        })}
+                Visit Live Site
+              </a>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

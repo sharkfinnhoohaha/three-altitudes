@@ -49,161 +49,75 @@ export function HUD() {
 
   return (
     <>
+      {/* Premium Top Navigation Bar */}
       <div
-        className="hud-text"
         style={{
           position: 'fixed',
-          top: '2rem',
-          left: '2rem',
-          zIndex: 10,
+          top: 0,
+          left: 0,
+          right: 0,
+          padding: '2rem 3rem',
+          zIndex: 50,
           pointerEvents: 'none',
           display: 'flex',
-          flexDirection: 'column',
-          gap: '0.25rem',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%)',
         }}
       >
-        <span
-          style={{
-            fontSize: '0.55rem',
-            letterSpacing: '0.25em',
-            color,
-            opacity: 0.85,
-            transition: 'color 0.8s ease, opacity 0.8s ease',
-          }}
-        >
-          {primaryLabel}
-        </span>
-        <span
-          style={{
-            fontSize: '0.42rem',
-            letterSpacing: '0.3em',
-            color,
-            opacity: 0.35,
-            transition: 'color 0.8s ease',
-          }}
-        >
-          {secondaryLabel}
-        </span>
-
-        {/* Altimeter — scrollY → altitude */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'baseline',
-            gap: '0.4em',
-            marginTop: '0.6rem',
-            paddingTop: '0.5rem',
-            borderTop: `1px solid ${color}22`,
-          }}
-        >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
           <span
+            className="sans-text"
             style={{
-              fontSize: '0.35rem',
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              letterSpacing: '0.15em',
+              color: '#ffffff',
+              opacity: 0.9,
+            }}
+          >
+            FINN BENNETT
+          </span>
+          <span
+            className="hud-text"
+            style={{
+              fontSize: '0.5rem',
               letterSpacing: '0.3em',
               color,
-              opacity: 0.35,
+              opacity: 0.6,
               transition: 'color 0.8s ease',
             }}
           >
-            ALT
-          </span>
-          <span
-            style={{
-              fontSize: '0.65rem',
-              letterSpacing: '0.12em',
-              color,
-              opacity: 0.8,
-              fontVariantNumeric: 'tabular-nums',
-              transition: 'color 0.8s ease',
-            }}
-          >
-            {altDisplay}
-          </span>
-          <span
-            style={{
-              fontSize: '0.32rem',
-              letterSpacing: '0.25em',
-              color,
-              opacity: 0.35,
-              transition: 'color 0.8s ease',
-            }}
-          >
-            FT MSL
+            {primaryLabel}
           </span>
         </div>
-      </div>
 
-      <div
-        className="hud-text"
-        style={{
-          position: 'fixed',
-          top: '2rem',
-          right: '2rem',
-          zIndex: 10,
-          pointerEvents: 'none',
-          fontSize: '0.42rem',
-          letterSpacing: '0.35em',
-          color,
-          opacity: 0.2,
-          transition: 'color 0.8s ease',
-        }}
-      >
-        FINN BENNETT
-      </div>
-
-      <div
-        style={{
-          position: 'fixed',
-          right: '2rem',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          width: '1px',
-          height: '100px',
-          background: 'rgba(255,255,255,0.06)',
-          zIndex: 10,
-          borderRadius: '1px',
-          overflow: 'visible',
-          pointerEvents: 'none',
-        }}
-      >
-        <div
-          style={{
-            width: '100%',
-            height: `${progress * 100}%`,
-            background: color,
-            transition: 'background 0.8s ease',
-            borderRadius: '1px',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            left: '-2px',
-            top: `${progress * 100}%`,
-            width: '5px',
-            height: '1px',
-            background: color,
-            transition: 'background 0.8s ease',
-          }}
-        />
-      </div>
-
-      <div
-        className="hud-text"
-        style={{
-          position: 'fixed',
-          right: '2rem',
-          top: 'calc(50% + 62px)',
-          fontSize: '0.42rem',
-          letterSpacing: '0.2em',
-          opacity: 0.2,
-          color,
-          zIndex: 10,
-          pointerEvents: 'none',
-          transition: 'color 0.8s ease',
-        }}
-      >
-        {(progress * 100).toFixed(0).padStart(3, '0')}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+          <span
+            className="hud-text"
+            style={{
+              fontSize: '0.55rem',
+              letterSpacing: '0.25em',
+              color,
+              opacity: 0.6,
+              transition: 'color 0.8s ease',
+            }}
+          >
+            {secondaryLabel}
+          </span>
+          
+          <div
+            style={{
+              width: '40px',
+              height: '2px',
+              background: color,
+              opacity: 0.4,
+              transition: 'background 0.8s ease',
+            }}
+          />
+        </div>
       </div>
     </>
   );

@@ -168,60 +168,68 @@ export function ScrollSections({
             pointerEvents: show('shoreline') ? 'all' : 'none',
           }}
         >
-          <h1
-            className="serif-text"
-            style={{
-              fontSize: 'clamp(3.5rem, 9vw, 8rem)',
-              fontWeight: 300,
-              color: '#e8f5f5',
-              letterSpacing: '0.12em',
-              marginBottom: '1.5rem',
-              lineHeight: 1,
-              textAlign: 'center',
-              zIndex: 1,
-            }}
-          >
-            {heroName}
-          </h1>
-
-          <div
-            className="hud-text"
-            style={{
-              fontSize: 'clamp(0.55rem, 1.2vw, 0.75rem)',
-              letterSpacing: '0.4em',
-              color: '#3dd9c4',
-              opacity: 0.7,
-              height: '1.4em',
-              overflow: 'hidden',
-              display: 'flex',
+          <div 
+            className="glass-panel" 
+            style={{ 
+              padding: '4rem 6rem', 
+              textAlign: 'center', 
+              display: 'flex', 
+              flexDirection: 'column', 
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: '1em',
               zIndex: 1,
+              maxWidth: '90vw'
             }}
           >
-            <span key={identityIndex} style={{ animation: 'identity-enter 0.5s ease forwards' }}>
-              {identities[identityIndex]}
-            </span>
-            <span style={{ opacity: 0.3 }}>//</span>
-            <span style={{ opacity: 0.3 }}>{identities[(identityIndex + 1) % identities.length]}</span>
-            <span style={{ opacity: 0.15 }}>//</span>
-            <span style={{ opacity: 0.15 }}>{identities[(identityIndex + 2) % identities.length]}</span>
-          </div>
+            <h1
+              className="serif-text"
+              style={{
+                fontSize: 'clamp(3.5rem, 8vw, 7rem)',
+                fontWeight: 300,
+                color: '#ffffff',
+                letterSpacing: '0.05em',
+                lineHeight: 1,
+              }}
+            >
+              {heroName}
+            </h1>
+            
+            <p 
+              className="sans-text text-gradient-teal" 
+              style={{ 
+                fontSize: 'clamp(1rem, 2vw, 1.5rem)', 
+                fontWeight: 500, 
+                letterSpacing: '0.25em', 
+                marginTop: '1.5rem', 
+                textTransform: 'uppercase',
+                maxWidth: '600px',
+                lineHeight: 1.6
+              }}
+            >
+              Digital Identity & Engineering
+            </p>
 
-          <p
-            className="hud-text"
-            style={{
-              marginTop: '3rem',
-              fontSize: '0.4rem',
-              letterSpacing: '0.4em',
-              color: '#3dd9c4',
-              opacity: 0.2,
-              zIndex: 1,
-            }}
-          >
-            {heroLocation}  //  {heroCoordinates}
-          </p>
+            <button 
+              className="sans-text magnetic-btn" 
+              style={{ 
+                marginTop: '3.5rem', 
+                padding: '1.2rem 3.5rem', 
+                fontSize: '0.85rem', 
+                fontWeight: 600,
+                letterSpacing: '0.2em', 
+                color: '#fff', 
+                border: '1px solid rgba(61, 217, 196, 0.3)', 
+                borderRadius: '30px', 
+                background: 'rgba(61, 217, 196, 0.05)', 
+                cursor: 'pointer', 
+                textTransform: 'uppercase',
+                backdropFilter: 'blur(5px)'
+              }}
+            >
+              <a href="#selected-work" style={{ color: 'inherit', textDecoration: 'none' }}>
+                View Masterworks
+              </a>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -554,81 +562,60 @@ export function ScrollSections({
             </div>
           ))}
 
-          <p
-            className="hud-text"
-            style={{ fontSize: '0.45rem', letterSpacing: '0.4em', color: '#888', opacity: 0.4 }}
+          <h2
+            className="serif-text"
+            style={{
+              fontSize: 'clamp(2.5rem, 6vw, 5rem)',
+              fontWeight: 300,
+              color: '#ffffff',
+              letterSpacing: '0.05em',
+              marginBottom: '2rem',
+              textAlign: 'center',
+            }}
           >
-            SELECTED WORK
-          </p>
+            Engineering
+          </h2>
 
-          {/* Portfolio grid */}
+          {/* Premium Portfolio gallery */}
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '1rem',
-              width: 'clamp(320px, 80vw, 920px)',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+              gap: '2rem',
+              width: '100%',
+              maxWidth: '1200px',
+              padding: '0 2rem',
               maxHeight: '65vh',
               overflowY: 'auto',
               scrollbarWidth: 'none',
-              padding: '0.25rem',
+              msOverflowStyle: 'none', // IE and Edge
             }}
           >
             {activeDevProjects.map((p) => {
               const cardStyle = {
-                border: '1px solid rgba(136,136,136,0.15)',
-                padding: '1.25rem 1.5rem',
-                position: 'relative' as const,
-                backdropFilter: 'blur(12px)',
-                background: 'rgba(0,0,0,0.45)',
-                cursor: p.url ? 'crosshair' : 'default',
-                display: 'block',
+                padding: '2rem',
+                display: 'flex',
+                flexDirection: 'column' as const,
+                cursor: p.url ? 'pointer' : 'default',
                 textDecoration: 'none',
                 color: 'inherit',
+                transition: 'transform 0.4s ease, box-shadow 0.4s ease',
               };
+              
               const cardContent = (
                 <>
-                  {/* Targeting corners — animated on hover via CSS */}
-                  <div className="target-corner target-corner--tr" />
-                  <div className="target-corner target-corner--bl" />
-                  <div className="target-corner target-corner--tl" />
-                  <div className="target-corner target-corner--br" />
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                    <p className="hud-text" style={{ fontSize: '0.32rem', letterSpacing: '0.3em', color: '#888', opacity: 0.35 }}>
-                      {p.num}
-                    </p>
-                    <p className="hud-text" style={{ fontSize: '0.28rem', letterSpacing: '0.25em', color: '#00ff88', opacity: 0.5 }}>
-                      {p.status}
-                    </p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                    <span className="hud-text" style={{ fontSize: '0.6rem', color: '#888', opacity: 0.5 }}>{p.num}</span>
+                    <span className="hud-text" style={{ fontSize: '0.5rem', color: '#00ff88', opacity: 0.7, padding: '0.3rem 0.6rem', border: '1px solid rgba(0,255,136,0.3)', borderRadius: '12px' }}>{p.status}</span>
                   </div>
-
-                  <h3
-                    className="serif-text"
-                    style={{ fontSize: '1.1rem', fontWeight: 400, color: '#ccc', letterSpacing: '0.05em', marginBottom: '0.4rem' }}
-                  >
-                    {p.name}
-                  </h3>
-
-                  <p className="hud-text" style={{ fontSize: '0.32rem', letterSpacing: '0.08em', color: '#666', lineHeight: 1.7, marginBottom: '0.75rem' }}>
-                    {p.desc}
-                  </p>
-
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
-                    {p.tech.map((t) => (
-                      <span
-                        key={t}
-                        className="hud-text tech-tag"
-                        style={{ fontSize: '0.28rem', letterSpacing: '0.15em', color: '#555', opacity: 0.8, padding: '0.1rem 0.3rem', border: '1px solid rgba(85,85,85,0.3)' }}
-                      >
-                        {t}
-                      </span>
+                  
+                  <h3 className="serif-text" style={{ fontSize: '1.8rem', fontWeight: 300, color: '#fff', marginBottom: '0.6rem' }}>{p.name}</h3>
+                  <p className="sans-text" style={{ fontSize: '0.95rem', color: '#ccc', lineHeight: 1.5, opacity: 0.8, marginBottom: '2rem', flex: 1 }}>{p.desc}</p>
+                  
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: 'auto' }}>
+                    {p.tech?.map((t) => (
+                      <span key={t} className="sans-text" style={{ fontSize: '0.7rem', padding: '0.3rem 0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', color: '#aaa' }}>{t}</span>
                     ))}
-                  </div>
-
-                  {/* Lock-on label — revealed on hover */}
-                  <div className="lock-on-label hud-text">
-                    LOCKED ▶
                   </div>
                 </>
               );
@@ -638,13 +625,13 @@ export function ScrollSections({
                   href={p.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="targeting-card"
+                  className="glass-panel magnetic-btn"
                   style={cardStyle}
                 >
                   {cardContent}
                 </a>
               ) : (
-                <div key={p._id} className="targeting-card" style={cardStyle}>
+                <div key={p._id} className="glass-panel" style={cardStyle}>
                   {cardContent}
                 </div>
               );
