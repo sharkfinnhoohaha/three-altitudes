@@ -7,9 +7,9 @@ const { GET: enableDraftMode } = defineEnableDraftMode({
 
 export const GET = isSanityConfigured
   ? enableDraftMode
-  : async function GETWhenUnconfigured() {
+  : async function unavailableHandler() {
       return Response.json(
         { error: 'Sanity is not configured. Set NEXT_PUBLIC_SANITY_PROJECT_ID to enable draft mode.' },
-        { status: 500 },
+        { status: 503 },
       );
     };
