@@ -7,7 +7,7 @@ const { GET: enableDraftMode } = defineEnableDraftMode({
 
 async function unavailableDraftModeHandler() {
   return Response.json(
-    { error: 'Sanity is not configured. Set NEXT_PUBLIC_SANITY_PROJECT_ID to enable draft mode.' },
+    { error: 'Draft mode is unavailable because Sanity is not configured. Set NEXT_PUBLIC_SANITY_PROJECT_ID to enable this feature.' },
     { status: 503 },
   );
 }
