@@ -5,11 +5,13 @@ const { GET: enableDraftMode } = defineEnableDraftMode({
   client: client.withConfig({ token: process.env.SANITY_API_READ_TOKEN }),
 });
 
+async function unavailableDraftModeHandler() {
+  return Response.json(
+    { error: 'Sanity is not configured. Set NEXT_PUBLIC_SANITY_PROJECT_ID to enable draft mode.' },
+    { status: 503 },
+  );
+}
+
 export const GET = isSanityConfigured
   ? enableDraftMode
-  : async function unavailableHandler() {
-      return Response.json(
-        { error: 'Sanity is not configured. Set NEXT_PUBLIC_SANITY_PROJECT_ID to enable draft mode.' },
-        { status: 503 },
-      );
-    };
+  : unavailableDraftModeHandler;
