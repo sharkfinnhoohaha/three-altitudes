@@ -1,6 +1,15 @@
 import { defineEnableDraftMode } from 'next-sanity/draft-mode';
-import { client } from '@/lib/sanity/client';
+import { client, isSanityConfigured } from '@/lib/sanity/client';
 
-export const { GET } = defineEnableDraftMode({
+const { GET: enableDraftMode } = defineEnableDraftMode({
   client: client.withConfig({ token: process.env.SANITY_API_READ_TOKEN }),
 });
+
+export const GET = isSanityConfigured
+  ? enableDraftMode
+  : async function GETWhenUnconfigured() {
+      return Response.json(
+        { error: 'Sanity is not configured. Set NEXT_PUBLIC_SANITY_PROJECT_ID to enable draft mode.' },
+        { status: 500 },
+      );
+    };
