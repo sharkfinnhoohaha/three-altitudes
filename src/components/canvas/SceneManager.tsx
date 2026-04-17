@@ -82,7 +82,7 @@ export function SceneManager({ transitionRef, cameraRef, cameraLocked }: SceneMa
     }
 
     if (scene.background instanceof THREE.Color) {
-      scene.background.lerp(tempColor, 0.08);
+      scene.background.lerp(tempColor, 0.14);
     }
 
     if (p >= 0.72) {

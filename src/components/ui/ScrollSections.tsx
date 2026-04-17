@@ -3,106 +3,357 @@
 import { useState, useEffect, useRef } from 'react';
 import { useScroll } from '@/contexts/ScrollContext';
 import { AirplaneCursor } from './AirplaneCursor';
-import type {
-  SanityHero,
-  SanityAudioWork,
-  SanityWebProject,
-  SanityDevProject,
-  SanityAviation,
-} from '@/lib/sanity/types';
+import { CaliforniaTime } from './CaliforniaTime';
 
-import { SelectedWorkBrowser } from './SelectedWorkBrowser';
-import {
-  FALLBACK_IDENTITIES,
-  FALLBACK_PROJECTS,
-  FALLBACK_WEB_PROJECTS,
-  DATA_COLUMNS,
-  WAVEFORM_BARS,
-} from '@/lib/fallbacks';
+const IDENTITIES = ['PILOT', 'PRODUCER', 'DEVELOPER'];
 
-interface ScrollSectionsProps {
-  hero?: SanityHero | null;
-  audioWork?: SanityAudioWork | null;
-  webProjects?: SanityWebProject[];
-  devProjects?: SanityDevProject[];
-  aviation?: SanityAviation | null;
+const FEATURED_TRACKS = [
+  { num: '01', title: 'Mineral King', artist: 'Mineral King', role: 'PRODUCTION', spotifyUrl: 'https://open.spotify.com' },
+  { num: '02', title: 'Strange Case', artist: 'Sublime w/ Rome', role: 'FOH ENGINEER', spotifyUrl: 'https://open.spotify.com' },
+  { num: '03', title: 'Jakob Nowell', artist: 'Jakob Nowell', role: 'LIVE SOUND', spotifyUrl: 'https://open.spotify.com' },
+];
+
+const PROJECTS = [
+  {
+    id: 'spatial-mixer',
+    num: '01',
+    name: 'Spatial Mixer',
+    desc: 'Browser-based spatial audio mixing environment',
+    tech: ['Web Audio API', 'WASM', 'React'],
+    role: 'SOLO BUILD',
+    status: 'DEPLOYED',
+    url: 'https://overlookstrategy.com',
+  },
+  {
+    id: 'stem-engine',
+    num: '02',
+    name: 'Stem Engine',
+    desc: 'AI-powered stem separation and mastering pipeline',
+    tech: ['PyTorch', 'FFmpeg', 'Next.js'],
+    role: 'FULL STACK',
+    status: 'DEPLOYED',
+    url: 'https://overlookstrategy.com',
+  },
+  {
+    id: 'fleet-ops',
+    num: '03',
+    name: 'Fleet Ops',
+    desc: 'Real-time aviation fleet operations dashboard',
+    tech: ['Next.js', 'Redis', 'Mapbox'],
+    role: 'LEAD DEV',
+    status: 'LIVE',
+    url: 'https://johnson-aviation.vercel.app',
+  },
+  {
+    id: 'wx-brief',
+    num: '04',
+    name: 'WX Brief',
+    desc: 'GOES satellite weather briefing for pilots',
+    tech: ['Python', 'GOES API', 'React'],
+    role: 'FULL STACK',
+    status: 'LIVE',
+    url: 'https://johnson-aviation.vercel.app',
+  },
+  {
+    id: 'tidal-forecast',
+    num: '05',
+    name: 'Tidal Forecast',
+    desc: 'ML-driven coastal tidal pattern visualization',
+    tech: ['TensorFlow', 'MapboxGL', 'D3'],
+    role: 'SOLO BUILD',
+    status: 'BETA',
+    url: 'https://overlookaudio.com',
+  },
+  {
+    id: 'overlook-strategy',
+    num: '06',
+    name: 'Overlook Strategy',
+    desc: 'Brand identity and digital systems agency site',
+    tech: ['Next.js', 'Three.js', 'GSAP'],
+    role: 'DESIGN + DEV',
+    status: 'LIVE',
+    url: 'https://overlookstrategy.com',
+  },
+];
+
+const WEB_PROJECTS = [
+  {
+    id: 'johnson-aviation',
+    name: 'Johnson Aviation Consulting',
+    domain: 'johnson-aviation.vercel.app',
+    url: 'https://johnson-aviation.vercel.app',
+    desc: 'Strategic airport planning firm — land use, facilities & financial advisory',
+    tech: ['Next.js', 'Three.js', 'GSAP', 'Tailwind'],
+    role: 'DESIGN + DEV',
+    type: 'AGENCY SITE',
+  },
+  {
+    id: 'overlook-audio',
+    name: 'Overlook Audio',
+    domain: 'overlookaudio.com',
+    url: 'https://overlookaudio.com',
+    desc: 'Recording studio & live sound production — Ventura, CA',
+    tech: ['Next.js', 'Framer Motion', 'Tailwind'],
+    role: 'DESIGN + DEV',
+    type: 'STUDIO SITE',
+  },
+  {
+    id: 'overlook-strategy',
+    name: 'Overlook Strategy',
+    domain: 'overlookstrategy.com',
+    url: 'https://overlookstrategy.com',
+    desc: 'Brand identity & digital systems agency',
+    tech: ['Next.js', 'Three.js', 'GSAP'],
+    role: 'DESIGN + DEV',
+    type: 'AGENCY SITE',
+  },
+];
+
+const DATA_COLUMNS = [
+  '01001101\n11010010\n00110101\n10100110\n01101001',
+  'const x =\n  await fetch\n  ("/api")\nreturn res\n  .json()',
+  'FF A3 2D\n00 1B 4E\n7C 9A FF\nE2 00 3D\n12 BC 44',
+  'init()\ncompile\nlink()\nbundle\ndeploy()',
+  '0xDEAD\n0xBEEF\n0xCAFE\n0xFACE\n0x1337',
+  'GET /api\n200 OK\n{"ok":1}\nContent\nLength:0',
+  '▓▒░▓▒░\n░▓▒░▓▒\n▒░▓▒░▓\n▓▒░▓▒░\n░▓▒░▓▒',
+  'npm run\nbuild &&\ndeploy -e\nprod --no\n-cache',
+  '10110011\n01101100\n11001011\n00110110\n10011001',
+  'SELECT *\nFROM sys\nWHERE id\nIN (1,2)\nLIMIT 8',
+];
+
+// ── Waveform decoration data (static, generated once) ────────────────────────
+const WAVEFORM_BARS = Array.from({ length: 120 }, (_, i) => {
+  const t = i / 119;
+  const envelope = Math.sin(t * Math.PI) * 0.85 + 0.15;
+  const w1 = Math.sin(i * 0.63);
+  const w2 = Math.sin(i * 1.78 + 1.2);
+  const w3 = Math.sin(i * 4.1 + 0.5);
+  const w4 = Math.sin(i * 9.3 + 2.1);
+  const raw = Math.abs(w1 * 0.4 + w2 * 0.3 + w3 * 0.2 + w4 * 0.1);
+  return Math.max(0.04, raw * envelope);
+});
+
+// ── Selected Work Browser ─────────────────────────────────────────────────────
+// Single macOS-style browser mockup with three stacked iframe panels,
+// crossfade transitions, tab selector, and auto-rotation.
+function SelectedWorkBrowser() {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const resumeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Scroll entrance via IntersectionObserver
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setIsVisible(true); },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Auto-rotation — pauses on user interaction, resumes after 8 s
+  useEffect(() => {
+    if (paused) return;
+    const id = setInterval(() => {
+      setActiveIdx((i) => (i + 1) % WEB_PROJECTS.length);
+    }, 4500);
+    return () => clearInterval(id);
+  }, [paused]);
+
+  const handleTabClick = (idx: number) => {
+    setActiveIdx(idx);
+    setPaused(true);
+    if (resumeRef.current) clearTimeout(resumeRef.current);
+    resumeRef.current = setTimeout(() => setPaused(false), 8000);
+  };
+
+  const activeProject = WEB_PROJECTS[activeIdx];
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        width: 'clamp(360px, 72vw, 900px)',
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? 'translateY(0)' : 'translateY(24px)',
+        transition: 'opacity 0.8s ease, transform 0.8s ease',
+      }}
+    >
+      {/* ── Browser frame ── */}
+      <div
+        style={{
+          borderRadius: 16,
+          overflow: 'hidden',
+          background: 'rgb(26,26,26)',
+          boxShadow: 'rgba(0,0,0,0.15) 0px 25px 50px',
+          border: '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
+        {/* Title bar */}
+        <div
+          style={{
+            background: 'rgb(20,20,20)',
+            padding: '12px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            borderBottom: '1px solid rgba(255,255,255,0.05)',
+          }}
+        >
+          {/* Traffic lights */}
+          <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+            <span style={{ display: 'block', width: 12, height: 12, borderRadius: '50%', background: 'rgb(255,95,87)' }} />
+            <span style={{ display: 'block', width: 12, height: 12, borderRadius: '50%', background: 'rgb(254,188,46)' }} />
+            <span style={{ display: 'block', width: 12, height: 12, borderRadius: '50%', background: 'rgb(40,200,64)' }} />
+          </div>
+
+          {/* URL bar — dynamically updates on tab switch */}
+          <div
+            style={{
+              flex: 1,
+              background: 'rgb(10,10,10)',
+              borderRadius: 6,
+              padding: '5px 12px',
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: '0.6rem',
+              letterSpacing: '0.04em',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            <span style={{ color: '#444' }}>https://</span>
+            <span style={{ color: '#888' }}>{activeProject.domain}</span>
+          </div>
+        </div>
+
+        {/* Panel area — all three panels exist in DOM, stacked absolutely */}
+        <div
+          data-lenis-prevent
+          style={{
+            position: 'relative',
+            width: '100%',
+            aspectRatio: '16 / 10',
+            background: '#0a0a0a',
+            overflow: 'hidden',
+          }}
+        >
+          {WEB_PROJECTS.map((project, idx) => (
+            <div
+              key={project.id}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                opacity: idx === activeIdx ? 1 : 0,
+                transform: idx === activeIdx ? 'scale(1)' : 'scale(0.98)',
+                zIndex: idx === activeIdx ? 10 : 0,
+                pointerEvents: idx === activeIdx ? 'auto' : 'none',
+                transition: 'opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
+              }}
+            >
+              <iframe
+                src={project.url}
+                title={project.name}
+                loading="lazy"
+                style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+              />
+            </div>
+          ))}
+
+          {/* Bottom fade — softens the iframe content edge */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 48,
+              background: 'linear-gradient(transparent, rgb(26,26,26))',
+              pointerEvents: 'none',
+              zIndex: 20,
+            }}
+          />
+        </div>
+      </div>
+
+      {/* ── Tab selector ── */}
+      <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+        {WEB_PROJECTS.map((project, idx) => {
+          const isActive = idx === activeIdx;
+          return (
+            <button
+              key={project.id}
+              onClick={() => handleTabClick(idx)}
+              style={{
+                flex: 1,
+                borderRadius: 12,
+                padding: '16px 20px',
+                height: 68,
+                cursor: 'pointer',
+                border: `1px solid ${isActive ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)'}`,
+                background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',
+                textAlign: 'left',
+                transition: 'background 0.3s ease, border-color 0.3s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                gap: 4,
+                outline: 'none',
+              }}
+            >
+              <span
+                className="serif-text"
+                style={{
+                  fontSize: 'clamp(0.7rem, 1.1vw, 0.9rem)',
+                  fontWeight: 400,
+                  color: isActive ? '#ccc' : '#444',
+                  letterSpacing: '0.05em',
+                  lineHeight: 1,
+                  transition: 'color 0.3s ease',
+                  display: 'block',
+                }}
+              >
+                {project.name}
+              </span>
+              <span
+                className="hud-text"
+                style={{
+                  fontSize: '0.28rem',
+                  letterSpacing: '0.3em',
+                  color: isActive ? '#00ff88' : '#333',
+                  transition: 'color 0.3s ease',
+                  display: 'block',
+                }}
+              >
+                {project.type}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
-export function ScrollSections({
-  hero,
-  audioWork,
-  webProjects = [],
-  devProjects = [],
-  aviation,
-}: ScrollSectionsProps = {}) {
-  const { atmosphere, velocity, scrollTo } = useScroll();
+export function ScrollSections() {
+  const { atmosphere, velocity } = useScroll();
   const [identityIndex, setIdentityIndex] = useState(0);
   const [cascadeActive, setCascadeActive] = useState(false);
   const [pocketEntered, setPocketEntered] = useState(false);
   const pocketTextRef = useRef<HTMLDivElement>(null);
   const prevAtmosphere = useRef(atmosphere);
 
-  // Resolved data — Sanity values with hardcoded fallbacks
-  const identities = hero?.identities?.length ? hero.identities : FALLBACK_IDENTITIES;
-  const heroName = hero?.name ?? 'FINN BENNETT';
-  const heroLocation = hero?.locationLabel ?? 'VENTURA, CALIFORNIA';
-  const heroCoordinates = hero?.coordinates ?? '34.2746° N  119.2290° W';
-
-  const audioHeadline = audioWork?.headline ?? 'OVERLOOK AUDIO';
-  const audioSectionTitle = audioWork?.sectionTitle ?? 'Sonic Work';
-  const spotifyPlaylistId = audioWork?.spotifyPlaylistId ?? '7x8qaRT5L4UVebsbvzRtzE';
-  const audioStats = audioWork?.stats?.length
-    ? audioWork.stats
-    : [
-        { value: '8M+', label: 'STREAMS', sub: 'catalog total' },
-        { value: '12+', label: 'YEARS', sub: 'in the field' },
-        { value: '50+', label: 'PROJECTS', sub: 'delivered' },
-      ];
-  const touringCredits = audioWork?.touringCredits?.length
-    ? audioWork.touringCredits
-    : [
-        { artistName: 'Mineral King', role: 'Live Production', context: 'Touring' },
-        { artistName: 'Sublime Strange Case', role: 'Front of House', context: 'Engineering' },
-      ];
-  const disciplines = audioWork?.disciplines?.length
-    ? audioWork.disciplines
-    : [
-        { code: 'LIVE FOH', description: 'Touring front-of-house' },
-        { code: 'STUDIO', description: 'Recording & mixing' },
-        { code: 'PRODUCTION', description: 'Music production' },
-      ];
-  const specialties = audioWork?.specialties?.length
-    ? audioWork.specialties
-    : ['FRONT OF HOUSE', 'MIX ENGINEERING', 'LIVE PRODUCTION'];
-
-  const activeWebProjects = webProjects.length ? webProjects : FALLBACK_WEB_PROJECTS;
-  const activeDevProjects = devProjects.length ? devProjects : FALLBACK_PROJECTS;
-
-  const aviationCallsign = aviation?.callsign ?? 'N12345';
-  const aviationCertLabel = aviation?.certLabel ?? 'COMMERCIAL PILOT';
-  const aviationCoordinates = aviation?.coordinates ?? '34°12′48″N  //  119°05′39″W';
-  const aviationTagline = aviation?.tagline ?? 'From altitude, everything is pattern.';
-  const aviationGauges = aviation?.gauges?.length
-    ? aviation.gauges
-    : [
-        { label: 'ALTITUDE', value: '+5,200 FT' },
-        { label: 'HEADING', value: '270° W' },
-        { label: 'ORIGIN', value: 'KCMA' },
-      ];
-  const beaconLinks = aviation?.beaconLinks?.length
-    ? aviation.beaconLinks
-    : [
-        { label: '@FINN.BENNETT', href: 'https://instagram.com/finn.bennett', sub: 'INSTAGRAM' },
-        { label: 'OVERLOOK STRATEGY', href: 'https://overlookstrategy.com', sub: 'AGENCY' },
-        { label: 'OVERLOOK AUDIO', href: 'https://overlookaudio.com', sub: 'STUDIO' },
-      ];
-
   useEffect(() => {
     const id = setInterval(() => {
-      setIdentityIndex((i) => (i + 1) % identities.length);
+      setIdentityIndex((i) => (i + 1) % IDENTITIES.length);
     }, 2200);
     return () => clearInterval(id);
-  }, [identities.length]);
+  }, []);
 
   // Pocket text vibration — linked to scroll velocity
   useEffect(() => {
@@ -166,68 +417,75 @@ export function ScrollSections({
             opacity: show('shoreline') ? 1 : 0,
             transition: 'opacity 0.9s ease',
             pointerEvents: show('shoreline') ? 'all' : 'none',
+            overflow: 'hidden',
           }}
         >
-          <div 
-            className="glass-panel" 
-            style={{ 
-              padding: '4rem 6rem', 
-              textAlign: 'center', 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center',
+          {/* Bottom-left name + identity + time block */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 'clamp(1.5rem, 4vh, 3rem)',
+              left: 'clamp(1.5rem, 3vw, 3rem)',
               zIndex: 1,
-              maxWidth: '90vw'
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.55rem',
             }}
           >
-            <h1
+            <p
               className="serif-text"
               style={{
-                fontSize: 'clamp(3.5rem, 8vw, 7rem)',
+                fontSize: 'clamp(1.1rem, 2.2vw, 1.7rem)',
                 fontWeight: 300,
-                color: '#ffffff',
-                letterSpacing: '0.05em',
+                color: '#e8f5f5',
+                letterSpacing: '0.16em',
                 lineHeight: 1,
+                opacity: 0.88,
               }}
             >
-              {heroName}
-            </h1>
-            
-            <p 
-              className="sans-text text-gradient-teal" 
-              style={{ 
-                fontSize: 'clamp(1rem, 2vw, 1.5rem)', 
-                fontWeight: 500, 
-                letterSpacing: '0.25em', 
-                marginTop: '1.5rem', 
-                textTransform: 'uppercase',
-                maxWidth: '600px',
-                lineHeight: 1.6
-              }}
-            >
-              Digital Identity & Engineering
+              FINN BENNETT
             </p>
 
-            <button 
-              className="sans-text magnetic-btn" 
-              onClick={() => scrollTo('#selected-work')}
-              style={{ 
-                marginTop: '3.5rem', 
-                padding: '1.2rem 3.5rem', 
-                fontSize: '0.85rem', 
-                fontWeight: 600,
-                letterSpacing: '0.2em', 
-                color: '#fff', 
-                border: '1px solid rgba(61, 217, 196, 0.3)', 
-                borderRadius: '30px', 
-                background: 'rgba(61, 217, 196, 0.05)', 
-                cursor: 'pointer', 
-                textTransform: 'uppercase',
-                backdropFilter: 'blur(5px)'
+            <div
+              className="hud-text"
+              style={{
+                fontSize: 'clamp(0.42rem, 0.9vw, 0.58rem)',
+                letterSpacing: '0.38em',
+                color: '#3dd9c4',
+                opacity: 0.55,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.7em',
+                height: '1.3em',
+                overflow: 'hidden',
               }}
             >
-              View Masterworks
-            </button>
+              <span key={identityIndex} style={{ animation: 'identity-enter 0.5s ease forwards' }}>
+                {IDENTITIES[identityIndex]}
+              </span>
+              <span style={{ opacity: 0.35 }}>//</span>
+              <span style={{ opacity: 0.35 }}>{IDENTITIES[(identityIndex + 1) % 3]}</span>
+              <span style={{ opacity: 0.18 }}>//</span>
+              <span style={{ opacity: 0.18 }}>{IDENTITIES[(identityIndex + 2) % 3]}</span>
+            </div>
+
+            <div
+              className="hud-text"
+              style={{
+                fontSize: 'clamp(0.36rem, 0.75vw, 0.5rem)',
+                letterSpacing: '0.32em',
+                color: '#3dd9c4',
+                opacity: 0.25,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5em',
+              }}
+            >
+              <span>VENTURA, CA</span>
+              <span style={{ opacity: 0.4 }}>//</span>
+              <CaliforniaTime />
+              <span style={{ opacity: 0.4 }}>PT</span>
+            </div>
           </div>
         </div>
       </section>
@@ -270,7 +528,7 @@ export function ScrollSections({
               }}
             >
               <p className="hud-text" style={{ fontSize: '0.38rem', letterSpacing: '0.42em', color: '#ff8c00', opacity: 0.45, whiteSpace: 'nowrap' }}>
-                {audioHeadline}
+                OVERLOOK AUDIO
               </p>
               <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(255,140,0,0.22) 0%, rgba(255,140,0,0.04) 70%, transparent 100%)' }} />
               <p className="hud-text" style={{ fontSize: '0.28rem', letterSpacing: '0.38em', color: '#ff8c00', opacity: 0.2, whiteSpace: 'nowrap' }}>
@@ -299,7 +557,7 @@ export function ScrollSections({
                   flexShrink: 0,
                 }}
               >
-                {audioSectionTitle}
+                Sonic Work
               </h2>
 
               {/* Decorative waveform — fills remaining title row width */}
@@ -328,7 +586,7 @@ export function ScrollSections({
               </div>
 
               <p className="hud-text" style={{ fontSize: '0.28rem', letterSpacing: '0.38em', color: '#ff8c00', opacity: 0.2, paddingBottom: '0.5rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                {(audioStats.find((s) => s.label?.toUpperCase().includes('YEAR'))?.value ?? '12+') + ' YRS'}
+                12+ YRS
               </p>
             </div>
 
@@ -350,7 +608,11 @@ export function ScrollSections({
                   <p className="hud-text" style={{ fontSize: '0.26rem', letterSpacing: '0.44em', color: '#ff8c00', opacity: 0.22, marginBottom: '0.65rem' }}>
                     CREDENTIALS
                   </p>
-                  {audioStats.map(({ value, label, sub }, i) => (
+                  {[
+                    { value: '8M+',  label: 'STREAMS',  sub: 'catalog total' },
+                    { value: '12+',  label: 'YEARS',    sub: 'in the field'  },
+                    { value: '50+',  label: 'PROJECTS', sub: 'delivered'     },
+                  ].map(({ value, label, sub }, i) => (
                     <div
                       key={label}
                       style={{
@@ -376,11 +638,9 @@ export function ScrollSections({
                       <p className="hud-text" style={{ fontSize: '0.23rem', letterSpacing: '0.34em', color: '#ff8c00', opacity: 0.28, marginTop: '0.07rem' }}>
                         {label}
                       </p>
-                      {sub && (
-                        <p className="hud-text" style={{ fontSize: '0.21rem', letterSpacing: '0.1em', color: '#f5e6d0', opacity: 0.12, marginTop: '0.04rem' }}>
-                          {sub}
-                        </p>
-                      )}
+                      <p className="hud-text" style={{ fontSize: '0.21rem', letterSpacing: '0.1em', color: '#f5e6d0', opacity: 0.12, marginTop: '0.04rem' }}>
+                        {sub}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -391,8 +651,8 @@ export function ScrollSections({
                     DISCIPLINES
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.28rem' }}>
-                    {disciplines.map((d, i) => (
-                      <div key={d.code} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    {['LIVE FOH', 'STUDIO', 'PRODUCTION'].map((d, i) => (
+                      <div key={d} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                         <span
                           className="hud-text"
                           style={{
@@ -406,9 +666,9 @@ export function ScrollSections({
                             whiteSpace: 'nowrap',
                           }}
                         >
-                          {d.code}
+                          {d}
                         </span>
-                        {i < disciplines.length - 1 && (
+                        {i < 2 && (
                           <span className="hud-text" style={{ fontSize: '0.22rem', color: '#ff8c00', opacity: 0.16 }}>→</span>
                         )}
                       </div>
@@ -418,48 +678,114 @@ export function ScrollSections({
 
               </div>
 
-              {/* Center col: Spotify embed */}
+              {/* Center col: Featured Tracks */}
               <div style={{ position: 'relative', ...pocketAnim(0.22) }}>
 
-                {/* Corner brackets */}
-                <div style={{ position: 'absolute', top: -9, left: -9, width: 16, height: 16, borderTop: '1px solid rgba(255,140,0,0.22)', borderLeft: '1px solid rgba(255,140,0,0.22)', zIndex: 2, pointerEvents: 'none' }} />
-                <div style={{ position: 'absolute', top: -9, right: -9, width: 16, height: 16, borderTop: '1px solid rgba(255,140,0,0.22)', borderRight: '1px solid rgba(255,140,0,0.22)', zIndex: 2, pointerEvents: 'none' }} />
-                <div style={{ position: 'absolute', bottom: -9, left: -9, width: 16, height: 16, borderBottom: '1px solid rgba(255,140,0,0.22)', borderLeft: '1px solid rgba(255,140,0,0.22)', zIndex: 2, pointerEvents: 'none' }} />
-                <div style={{ position: 'absolute', bottom: -9, right: -9, width: 16, height: 16, borderBottom: '1px solid rgba(255,140,0,0.22)', borderRight: '1px solid rgba(255,140,0,0.22)', zIndex: 2, pointerEvents: 'none' }} />
+                <p className="hud-text" style={{ fontSize: '0.26rem', letterSpacing: '0.44em', color: '#ff8c00', opacity: 0.22, marginBottom: '0.65rem' }}>
+                  SELECTED TRACKS
+                </p>
 
-                {/* Ambient glow */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: '-50px -35px',
-                    background: 'radial-gradient(ellipse 70% 55% at 50% 50%, rgba(255,140,0,0.055) 0%, transparent 70%)',
-                    pointerEvents: 'none',
-                  }}
-                />
+                {/* Track list */}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {FEATURED_TRACKS.map(({ num, title, artist, role, spotifyUrl }, i) => (
+                    <a
+                      key={num}
+                      href={spotifyUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        padding: '0.6rem 0',
+                        borderBottom: `1px solid rgba(255,140,0,${i === FEATURED_TRACKS.length - 1 ? 0 : 0.08})`,
+                        textDecoration: 'none',
+                        cursor: 'pointer',
+                        transition: 'opacity 0.2s ease',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.opacity = '0.72')}
+                      onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+                    >
+                      {/* Track number */}
+                      <span className="hud-text" style={{ fontSize: '0.2rem', letterSpacing: '0.2em', color: '#ff8c00', opacity: 0.28, minWidth: '1.4rem', flexShrink: 0 }}>
+                        {num}
+                      </span>
 
-                <iframe
-                  title="Overlook Audio — Selected Works"
-                  src={`https://open.spotify.com/embed/playlist/${spotifyPlaylistId}?utm_source=generator&theme=0`}
-                  width="100%"
-                  style={{
-                    height: 'clamp(280px, 38vh, 352px)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    display: 'block',
-                    position: 'relative',
-                    zIndex: 1,
-                  }}
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                  loading="lazy"
-                />
+                      {/* Track info */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p
+                          className="serif-text"
+                          style={{
+                            fontSize: 'clamp(0.8rem, 1.1vw, 0.95rem)',
+                            fontWeight: 400,
+                            color: '#f5e6d0',
+                            letterSpacing: '0.03em',
+                            lineHeight: 1.2,
+                            marginBottom: '0.18rem',
+                            opacity: 0.9,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {title}
+                        </p>
+                        <p className="hud-text" style={{ fontSize: '0.21rem', letterSpacing: '0.16em', color: '#ff8c00', opacity: 0.3 }}>
+                          {artist}
+                        </p>
+                      </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.55rem', padding: '0 0.2rem' }}>
-                  <p className="hud-text" style={{ fontSize: '0.23rem', letterSpacing: '0.28em', color: '#ff8c00', opacity: 0.16 }}>
-                    SELECTED WORKS
-                  </p>
-                  <p className="hud-text" style={{ fontSize: '0.23rem', letterSpacing: '0.28em', color: '#ff8c00', opacity: 0.16 }}>
-                    SPOTIFY
-                  </p>
+                      {/* Role badge */}
+                      <span
+                        className="hud-text"
+                        style={{
+                          fontSize: '0.19rem',
+                          letterSpacing: '0.18em',
+                          color: '#ff8c00',
+                          opacity: 0.28,
+                          border: '1px solid rgba(255,140,0,0.14)',
+                          padding: '0.08rem 0.28rem',
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {role}
+                      </span>
+
+                      {/* Spotify arrow */}
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0, opacity: 0.22 }}>
+                        <path d="M1 9L9 1M9 1H3M9 1V7" stroke="#ff8c00" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </a>
+                  ))}
+                </div>
+
+                {/* "All tracks" link */}
+                <div style={{ marginTop: '0.65rem', display: 'flex', justifyContent: 'flex-end' }}>
+                  <a
+                    href="https://open.spotify.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hud-text"
+                    style={{
+                      fontSize: '0.21rem',
+                      letterSpacing: '0.28em',
+                      color: '#ff8c00',
+                      opacity: 0.18,
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      transition: 'opacity 0.2s ease',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.opacity = '0.45')}
+                    onMouseLeave={e => (e.currentTarget.style.opacity = '0.18')}
+                  >
+                    FULL CATALOG ON SPOTIFY
+                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                      <path d="M1 7L7 1M7 1H2.5M7 1V5.5" stroke="#ff8c00" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </a>
                 </div>
 
               </div>
@@ -472,9 +798,12 @@ export function ScrollSections({
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  {touringCredits.map(({ artistName, role, context }, i) => (
+                  {[
+                    { artist: 'Mineral King',       role: 'Live Production', ctx: 'Touring'      },
+                    { artist: 'Sublime Strange Case', role: 'Front of House', ctx: 'Engineering'  },
+                  ].map(({ artist, role, ctx }, i) => (
                     <div
-                      key={artistName}
+                      key={artist}
                       style={{
                         padding: '0.65rem 0',
                         borderBottom: `1px solid rgba(255,140,0,${i === 0 ? 0.1 : 0.04})`,
@@ -495,10 +824,10 @@ export function ScrollSections({
                           opacity: 0.88,
                         }}
                       >
-                        {artistName}
+                        {artist}
                       </p>
                       <p className="hud-text" style={{ fontSize: '0.23rem', letterSpacing: '0.18em', color: '#ff8c00', opacity: 0.32 }}>
-                        {role}{context ? `  //  ${context}` : ''}
+                        {role}  //  {ctx}
                       </p>
                     </div>
                   ))}
@@ -510,7 +839,7 @@ export function ScrollSections({
                     SPECIALTIES
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                    {specialties.map((s) => (
+                    {['FRONT OF HOUSE', 'MIX ENGINEERING', 'LIVE PRODUCTION'].map((s) => (
                       <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         <div style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,140,0,0.32)', flexShrink: 0 }} />
                         <span className="hud-text" style={{ fontSize: '0.23rem', letterSpacing: '0.2em', color: '#ff8c00', opacity: 0.28 }}>
@@ -561,80 +890,89 @@ export function ScrollSections({
             </div>
           ))}
 
-          <h2
-            className="serif-text"
-            style={{
-              fontSize: 'clamp(2.5rem, 6vw, 5rem)',
-              fontWeight: 300,
-              color: '#ffffff',
-              letterSpacing: '0.05em',
-              marginBottom: '2rem',
-              textAlign: 'center',
-            }}
+          <p
+            className="hud-text"
+            style={{ fontSize: '0.45rem', letterSpacing: '0.4em', color: '#888', opacity: 0.4 }}
           >
-            Engineering
-          </h2>
+            SELECTED WORK
+          </p>
 
-          {/* Premium Portfolio gallery */}
+          {/* Portfolio grid */}
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-              gap: '2rem',
-              width: '100%',
-              maxWidth: '1200px',
-              padding: '0 2rem',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '1rem',
+              width: 'clamp(320px, 80vw, 920px)',
               maxHeight: '65vh',
               overflowY: 'auto',
               scrollbarWidth: 'none',
-              msOverflowStyle: 'none', // IE and Edge
+              padding: '0.25rem',
             }}
           >
-            {activeDevProjects.map((p) => {
-              const cardStyle = {
-                padding: '2rem',
-                display: 'flex',
-                flexDirection: 'column' as const,
-                cursor: p.url ? 'pointer' : 'default',
-                textDecoration: 'none',
-                color: 'inherit',
-                transition: 'transform 0.4s ease, box-shadow 0.4s ease',
-              };
-              
-              const cardContent = (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                    <span className="hud-text" style={{ fontSize: '0.6rem', color: '#888', opacity: 0.5 }}>{p.num}</span>
-                    <span className="hud-text" style={{ fontSize: '0.5rem', color: '#00ff88', opacity: 0.7, padding: '0.3rem 0.6rem', border: '1px solid rgba(0,255,136,0.3)', borderRadius: '12px' }}>{p.status}</span>
-                  </div>
-                  
-                  <h3 className="serif-text" style={{ fontSize: '1.8rem', fontWeight: 300, color: '#fff', marginBottom: '0.6rem' }}>{p.name}</h3>
-                  <p className="sans-text" style={{ fontSize: '0.95rem', color: '#ccc', lineHeight: 1.5, opacity: 0.8, marginBottom: '2rem', flex: 1 }}>{p.desc}</p>
-                  
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: 'auto' }}>
-                    {p.tech?.map((t) => (
-                      <span key={t} className="sans-text" style={{ fontSize: '0.7rem', padding: '0.3rem 0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', color: '#aaa' }}>{t}</span>
-                    ))}
-                  </div>
-                </>
-              );
-              return p.url ? (
-                <a
-                  key={p._id}
-                  href={p.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="glass-panel magnetic-btn"
-                  style={cardStyle}
-                >
-                  {cardContent}
-                </a>
-              ) : (
-                <div key={p._id} className="glass-panel" style={cardStyle}>
-                  {cardContent}
+            {PROJECTS.map((p) => (
+              <a
+                key={p.id}
+                href={p.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="targeting-card"
+                style={{
+                  border: '1px solid rgba(136,136,136,0.15)',
+                  padding: '1.25rem 1.5rem',
+                  position: 'relative',
+                  backdropFilter: 'blur(12px)',
+                  background: 'rgba(0,0,0,0.45)',
+                  cursor: 'crosshair',
+                  display: 'block',
+                  textDecoration: 'none',
+                  color: 'inherit',
+                }}
+              >
+                {/* Targeting corners — animated on hover via CSS */}
+                <div className="target-corner target-corner--tr" />
+                <div className="target-corner target-corner--bl" />
+                <div className="target-corner target-corner--tl" />
+                <div className="target-corner target-corner--br" />
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                  <p className="hud-text" style={{ fontSize: '0.32rem', letterSpacing: '0.3em', color: '#888', opacity: 0.35 }}>
+                    {p.num}
+                  </p>
+                  <p className="hud-text" style={{ fontSize: '0.28rem', letterSpacing: '0.25em', color: '#00ff88', opacity: 0.5 }}>
+                    {p.status}
+                  </p>
                 </div>
-              );
-            })}
+
+                <h3
+                  className="serif-text"
+                  style={{ fontSize: '1.1rem', fontWeight: 400, color: '#ccc', letterSpacing: '0.05em', marginBottom: '0.4rem' }}
+                >
+                  {p.name}
+                </h3>
+
+                <p className="hud-text" style={{ fontSize: '0.32rem', letterSpacing: '0.08em', color: '#666', lineHeight: 1.7, marginBottom: '0.75rem' }}>
+                  {p.desc}
+                </p>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
+                  {p.tech.map((t) => (
+                    <span
+                      key={t}
+                      className="hud-text tech-tag"
+                      style={{ fontSize: '0.28rem', letterSpacing: '0.15em', color: '#555', opacity: 0.8, padding: '0.1rem 0.3rem', border: '1px solid rgba(85,85,85,0.3)' }}
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Lock-on label — revealed on hover */}
+                <div className="lock-on-label hud-text">
+                  LOCKED ▶
+                </div>
+              </a>
+            ))}
           </div>
         </div>
       </section>
@@ -665,7 +1003,7 @@ export function ScrollSections({
           </p>
 
           {/* Single browser mockup with tab switcher */}
-          <SelectedWorkBrowser projects={activeWebProjects} />
+          <SelectedWorkBrowser />
         </div>
       </section>
 
@@ -710,7 +1048,7 @@ export function ScrollSections({
               className="hud-text"
               style={{ fontSize: '0.35rem', letterSpacing: '0.5em', color: '#aaa', opacity: 0.4 }}
             >
-              {aviationCallsign}  //  {aviationCertLabel}
+              N12345  //  COMMERCIAL PILOT
             </p>
 
             <div style={{ width: '80px', height: '1px', background: 'rgba(68,68,68,0.3)', margin: '0.5rem 0' }} />
@@ -719,7 +1057,7 @@ export function ScrollSections({
               className="hud-text"
               style={{ fontSize: '0.35rem', letterSpacing: '0.5em', color: '#333', opacity: 0.3 }}
             >
-              {aviationCoordinates}
+              34°12′48″N  //  119°05′39″W
             </p>
 
             <h2
@@ -735,12 +1073,16 @@ export function ScrollSections({
                 marginBottom: '0.5rem',
               }}
             >
-              {aviationTagline}
+              From altitude, everything is pattern.
             </h2>
 
             {/* Flight instruments */}
             <div style={{ display: 'flex', gap: '2rem', marginTop: '1rem' }}>
-              {aviationGauges.map(({ label, value }) => (
+              {[
+                { label: 'ALTITUDE', value: '+5,200 FT' },
+                { label: 'HEADING', value: '270° W' },
+                { label: 'ORIGIN', value: 'KCMA' },
+              ].map(({ label, value }) => (
                 <div
                   key={label}
                   className="flight-gauge"
@@ -769,7 +1111,11 @@ export function ScrollSections({
 
             {/* Social / company links */}
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '0.5rem' }}>
-              {beaconLinks.map(({ label, href, sub }) => (
+              {[
+                { label: '@FINN.BENNETT', href: 'https://instagram.com/finn.bennett', sub: 'INSTAGRAM' },
+                { label: 'OVERLOOK STRATEGY', href: 'https://overlookstrategy.com', sub: 'AGENCY' },
+                { label: 'OVERLOOK AUDIO', href: 'https://overlookaudio.com', sub: 'STUDIO' },
+              ].map(({ label, href, sub }) => (
                 <a
                   key={label}
                   href={href}

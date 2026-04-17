@@ -21,6 +21,7 @@ const webProjectsQuery = `
     "tech": coalesce(tech, []),
     "role": coalesce(role, ""),
     "type": coalesce(projectType, ""),
+    "screenshotUrl": screenshot.asset->url,
   }
 `;
 
@@ -45,7 +46,6 @@ const devProjectsQuery = `
     "tech": coalesce(tech, []),
     "role": coalesce(role, ""),
     "status": coalesce(status, ""),
-    "url": coalesce(url, ""),
   }
 `;
 
@@ -67,18 +67,6 @@ const heroQuery = `
     "identities": coalesce(identities, []),
     "locationLabel": coalesce(locationLabel, ""),
     "coordinates": coalesce(coordinates, ""),
-    "primaryPhoto": primaryPhoto {
-      "_key": _key,
-      "_type": _type,
-      "url": asset->url,
-      "mimeType": asset->mimeType,
-    },
-    "accentPhoto": accentPhoto {
-      "_key": _key,
-      "_type": _type,
-      "url": asset->url,
-      "mimeType": asset->mimeType,
-    },
   }
 `;
 
@@ -99,34 +87,20 @@ const audioWorkQuery = `
     headline,
     sectionTitle,
     spotifyPlaylistId,
-    "stats": coalesce(stats[] {
-      "_key": _key,
-      "value": coalesce(value, ""),
-      "label": coalesce(label, ""),
-      "sub": sub,
-    }, []),
-    "touringCredits": coalesce(touringCredits[] {
-      artistName,
-      role,
-      "context": coalesce(context, ""),
-    }, []),
+    "stats": coalesce(stats, []),
+    "touringCredits": coalesce(touringCredits, []),
     "disciplines": coalesce(disciplines[] {
       code,
       "description": description,
     }, []),
-    "specialties": coalesce(specialties, []),
-    "primaryPhoto": primaryPhoto {
-      "_key": _key,
-      "_type": _type,
-      "url": asset->url,
-      "mimeType": asset->mimeType,
-    },
-    "accentPhoto": accentPhoto {
-      "_key": _key,
-      "_type": _type,
-      "url": asset->url,
-      "mimeType": asset->mimeType,
-    },
+    "tracks": coalesce(tracks[] {
+      trackName,
+      artistName,
+      albumName,
+      "albumArtUrl": albumArt.asset->url,
+      spotifyUrl,
+      role,
+    }, []),
   }
 `;
 
@@ -150,30 +124,26 @@ const aviationQuery = `
     tagline,
     "gauges": coalesce(gauges, []),
     "beaconLinks": coalesce(beaconLinks, []),
-    "primaryPhoto": primaryPhoto {
-      "_key": _key,
-      "_type": _type,
-      "url": asset->url,
-      "mimeType": asset->mimeType,
-    },
-    "accentPhoto": accentPhoto {
-      "_key": _key,
-      "_type": _type,
-      "url": asset->url,
-      "mimeType": asset->mimeType,
-    },
   }
 `;
 
-// ─── Site Settings ─────────────────────────────────────────────────────────────
+export async function getAviation(): Promise<SanityAviation | null> {
+  if (!isSanityConfigured) return null;
+  try {
+    const { data } = await sanityFetch({ query: aviationQuery, tags: ['aviation'] });
+    return (data as SanityAviation | null) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// ─── Site Settings ────────────────────────────────────────────────────────────
 
 const siteSettingsQuery = `
-  *[_type == "siteSettings" && _id == "siteSettings"][0] {
+  *[_type == "siteSettings"][0] {
     siteName,
     email,
-    "engineRoomVideo": engineRoomVideo.asset->{
-      "url": url,
-    },
+    "heroVideoUrl": heroVideo.asset->url,
   }
 `;
 
@@ -182,16 +152,6 @@ export async function getSiteSettings(): Promise<SanitySettings | null> {
   try {
     const { data } = await sanityFetch({ query: siteSettingsQuery, tags: ['siteSettings'] });
     return (data as SanitySettings | null) ?? null;
-  } catch {
-    return null;
-  }
-}
-
-export async function getAviation(): Promise<SanityAviation | null> {
-  if (!isSanityConfigured) return null;
-  try {
-    const { data } = await sanityFetch({ query: aviationQuery, tags: ['aviation'] });
-    return (data as SanityAviation | null) ?? null;
   } catch {
     return null;
   }

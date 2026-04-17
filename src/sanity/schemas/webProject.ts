@@ -1,21 +1,9 @@
-import { defineArrayMember, defineField, defineType } from 'sanity';
+import { defineField, defineType } from 'sanity';
 
 export const webProject = defineType({
   name: 'webProject',
   title: 'Web Project',
   type: 'document',
-  fieldsets: [
-    {
-      name: 'content',
-      title: 'Project Details',
-      options: { collapsible: true, collapsed: false },
-    },
-    {
-      name: 'meta',
-      title: 'Display & Metadata',
-      options: { collapsible: true, collapsed: false },
-    },
-  ],
   orderings: [
     {
       title: 'Display Order',
@@ -29,7 +17,6 @@ export const webProject = defineType({
       title: 'Project Name',
       type: 'string',
       validation: (r) => r.required(),
-      fieldset: 'content',
     }),
     defineField({
       name: 'domain',
@@ -37,7 +24,6 @@ export const webProject = defineType({
       type: 'string',
       description: 'Shown in the browser mockup URL bar (e.g. overlookaudio.com).',
       validation: (r) => r.required(),
-      fieldset: 'content',
     }),
     defineField({
       name: 'url',
@@ -45,36 +31,31 @@ export const webProject = defineType({
       type: 'url',
       description: 'Full URL loaded in the iframe preview.',
       validation: (r) => r.required(),
-      fieldset: 'content',
     }),
     defineField({
       name: 'description',
       title: 'Description',
       type: 'text',
       rows: 2,
-      fieldset: 'content',
     }),
     defineField({
       name: 'tech',
       title: 'Tech Stack',
       type: 'array',
-      of: [defineArrayMember({ type: 'string' })],
+      of: [{ type: 'string' }],
       description: 'Technologies used (e.g. Next.js, Three.js, GSAP).',
-      fieldset: 'content',
     }),
     defineField({
       name: 'role',
       title: 'Role',
       type: 'string',
       description: 'e.g. DESIGN + DEV',
-      fieldset: 'meta',
     }),
     defineField({
       name: 'projectType',
       title: 'Project Type',
       type: 'string',
       options: {
-        layout: 'radio',
         list: [
           { title: 'Agency Site', value: 'AGENCY SITE' },
           { title: 'Studio Site', value: 'STUDIO SITE' },
@@ -82,23 +63,22 @@ export const webProject = defineType({
           { title: 'Other', value: 'OTHER' },
         ],
       },
-      fieldset: 'meta',
+    }),
+    defineField({
+      name: 'screenshot',
+      title: 'Screenshot',
+      type: 'image',
+      description: 'Preview screenshot shown in the browser mockup when the live iframe is unavailable.',
+      options: { hotspot: true },
     }),
     defineField({
       name: 'order',
       title: 'Display Order',
       type: 'number',
       description: 'Lower numbers appear first.',
-      fieldset: 'meta',
     }),
   ],
   preview: {
-    select: { title: 'name', domain: 'domain', role: 'role' },
-    prepare({ title, domain, role }) {
-      return {
-        title,
-        subtitle: [domain, role].filter(Boolean).join(' • '),
-      };
-    },
+    select: { title: 'name', subtitle: 'domain', media: 'screenshot' },
   },
 });

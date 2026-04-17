@@ -23,6 +23,8 @@ interface ScrollState {
   scrollY: number;
   /** Total scrollable height */
   maxScroll: number;
+  /** Scroll to a given section index (0-4) */
+  scrollToSection: (index: number) => void;
   /** Programmatically scroll to an element, selector, or pixel offset */
   scrollTo: (target: string | HTMLElement | number, options?: { offset?: number; duration?: number }) => void;
 }
@@ -35,6 +37,7 @@ const defaultState: ScrollState = {
   atmosphere: 'shoreline',
   scrollY: 0,
   maxScroll: 1,
+  scrollToSection: () => {},
   scrollTo: noop,
 };
 
@@ -43,6 +46,9 @@ const ScrollContext = createContext<ScrollState>(defaultState);
 export function useScroll() {
   return useContext(ScrollContext);
 }
+
+// Section snap points as progress fractions (0–1)
+const SECTION_PROGRESS = [0, 0.2, 0.4, 0.6, 0.8];
 
 function getAtmosphere(progress: number): Atmosphere {
   if (progress < 0.20) return 'shoreline';      // Stage 1: The Shoreline — Identity
@@ -57,7 +63,7 @@ interface ScrollProviderProps {
 }
 
 export function ScrollProvider({ children }: ScrollProviderProps) {
-  const [state, setState] = useState<Omit<ScrollState, 'scrollTo'>>({
+  const [state, setState] = useState<Omit<ScrollState, 'scrollToSection' | 'scrollTo'>>({
     progress: 0,
     velocity: 0,
     atmosphere: 'shoreline',
@@ -67,6 +73,19 @@ export function ScrollProvider({ children }: ScrollProviderProps) {
   const prevScrollY = useRef(0);
   const rafId = useRef<number>(0);
   const lenisRef = useRef<any>(null);
+  const maxScrollRef = useRef(1);
+
+  const scrollToSection = useCallback((index: number) => {
+    const clampedIndex = Math.max(0, Math.min(index, SECTION_PROGRESS.length - 1));
+    const targetProgress = SECTION_PROGRESS[clampedIndex];
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    const targetY = targetProgress * (maxScroll > 0 ? maxScroll : maxScrollRef.current);
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(targetY, { duration: 1.4 });
+    } else {
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    }
+  }, []);
 
   const scrollTo = useCallback(
     (target: string | HTMLElement | number, options?: { offset?: number; duration?: number }) => {
@@ -88,26 +107,25 @@ export function ScrollProvider({ children }: ScrollProviderProps) {
   const onScroll = useCallback(() => {
     const scrollY = window.scrollY || window.pageYOffset;
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    maxScrollRef.current = maxScroll;
     const progress = maxScroll > 0 ? Math.min(scrollY / maxScroll, 1) : 0;
     const velocity = scrollY - prevScrollY.current;
     prevScrollY.current = scrollY;
 
-    setState({
+    setState((prev) => ({
+      ...prev,
       progress,
       velocity,
       atmosphere: getAtmosphere(progress),
       scrollY,
       maxScroll,
-    });
+    }));
   }, []);
 
   useEffect(() => {
     // Dynamic import Lenis to avoid SSR issues
     let lenis: any = null;
     let snapDebounceId: ReturnType<typeof setTimeout> | null = null;
-
-    // Section snap points — normalized scroll positions (0–1) for each atmosphere boundary
-    const SNAP_POINTS = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
 
     async function initLenis() {
       try {
@@ -134,6 +152,33 @@ export function ScrollProvider({ children }: ScrollProviderProps) {
         lenis.on('scroll', () => {
           ScrollTrigger.update();
           onScroll();
+
+          // Section snap: debounce 550ms after scroll stops, then snap to nearest section start
+          if (snapDebounceId) clearTimeout(snapDebounceId);
+          snapDebounceId = setTimeout(() => {
+            const scrollY = window.scrollY || 0;
+            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+            if (maxScroll <= 0) return;
+            const p = scrollY / maxScroll;
+
+            // Find nearest section start
+            let nearestIdx = 0;
+            let nearestDist = Infinity;
+            SECTION_PROGRESS.forEach((sp, i) => {
+              const dist = Math.abs(p - sp);
+              if (dist < nearestDist) {
+                nearestDist = dist;
+                nearestIdx = i;
+              }
+            });
+
+            // Only snap if the user is in a transition zone (within 8% of a boundary)
+            // and not already very close to the snap point (< 0.5%)
+            if (nearestDist > 0.005 && nearestDist < 0.08) {
+              const targetY = SECTION_PROGRESS[nearestIdx] * maxScroll;
+              lenis.scrollTo(targetY, { duration: 1.0 });
+            }
+          }, 550);
         });
 
         function raf(time: number) {
@@ -159,7 +204,7 @@ export function ScrollProvider({ children }: ScrollProviderProps) {
   }, [onScroll]);
 
   return (
-    <ScrollContext.Provider value={{ ...state, scrollTo }}>
+    <ScrollContext.Provider value={{ ...state, scrollToSection, scrollTo }}>
       {children}
     </ScrollContext.Provider>
   );

@@ -36,16 +36,23 @@ const ATMOSPHERE_CONFIG: Record<Atmosphere, AtmosphereConfig> = {
   },
 };
 
+const SECTION_LABELS: { index: number; label: string; atmosphere: Atmosphere }[] = [
+  { index: 0, label: 'SHORELINE', atmosphere: 'shoreline' },
+  { index: 1, label: 'SONIC', atmosphere: 'pocket' },
+  { index: 2, label: 'ENGINE ROOM', atmosphere: 'engine-room' },
+  { index: 3, label: 'SELECTED WORK', atmosphere: 'selected-work' },
+  { index: 4, label: 'HORIZON', atmosphere: 'horizon' },
+];
+
 export function HUD() {
-  const { progress, atmosphere, scrollY, maxScroll } = useScroll();
+  const { atmosphere, scrollToSection } = useScroll();
 
   const config = ATMOSPHERE_CONFIG[atmosphere] || ATMOSPHERE_CONFIG.shoreline;
   const { primaryLabel, secondaryLabel, color } = config;
 
-  // ── Altimeter — maps scrollY to simulated altitude (0 – 5 200 ft MSL) ───────
-  const altitudeRaw = Math.round((scrollY / Math.max(maxScroll, 1)) * 5200);
-  const altitudeFt = Math.round(altitudeRaw / 100) * 100;
-  const altDisplay = altitudeFt.toLocaleString('en-US');
+  const isHorizon = atmosphere === 'horizon';
+  const labelColor = isHorizon ? '#444' : '#fff';
+  const subColor = isHorizon ? '#666' : color;
 
   return (
     <>
@@ -62,7 +69,7 @@ export function HUD() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          textShadow: '0 2px 10px rgba(0,0,0,0.5)'
+          textShadow: isHorizon ? 'none' : '0 2px 10px rgba(0,0,0,0.5)',
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
@@ -72,8 +79,9 @@ export function HUD() {
               fontSize: '0.85rem',
               fontWeight: 500,
               letterSpacing: '0.15em',
-              color: '#ffffff',
+              color: labelColor,
               opacity: 0.9,
+              transition: 'color 0.8s ease',
             }}
           >
             FINN BENNETT
@@ -83,7 +91,7 @@ export function HUD() {
             style={{
               fontSize: '0.5rem',
               letterSpacing: '0.3em',
-              color,
+              color: subColor,
               opacity: 0.6,
               transition: 'color 0.8s ease',
             }}
@@ -98,7 +106,7 @@ export function HUD() {
             style={{
               fontSize: '0.55rem',
               letterSpacing: '0.25em',
-              color,
+              color: subColor,
               opacity: 0.6,
               transition: 'color 0.8s ease',
             }}
@@ -110,13 +118,54 @@ export function HUD() {
             style={{
               width: '40px',
               height: '2px',
-              background: color,
+              background: subColor,
               opacity: 0.4,
               transition: 'background 0.8s ease',
             }}
           />
         </div>
       </div>
+
+      {/* Section navigation dots — right side */}
+      <nav
+        aria-label="Section navigation"
+        style={{
+          position: 'fixed',
+          right: '1.8rem',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          zIndex: 50,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem',
+          alignItems: 'center',
+        }}
+      >
+        {SECTION_LABELS.map(({ index, label, atmosphere: sectionAtmos }) => {
+          const isActive = atmosphere === sectionAtmos;
+          const dotColor = isHorizon ? '#444' : (isActive ? color : 'rgba(255,255,255,0.25)');
+          return (
+            <button
+              key={index}
+              onClick={() => scrollToSection(index)}
+              title={label}
+              aria-label={`Go to ${label}`}
+              style={{
+                width: isActive ? '8px' : '5px',
+                height: isActive ? '8px' : '5px',
+                borderRadius: '50%',
+                background: dotColor,
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                transition: 'width 0.3s ease, height 0.3s ease, background 0.3s ease, box-shadow 0.3s ease',
+                boxShadow: isActive ? `0 0 8px 2px ${dotColor}55` : 'none',
+                pointerEvents: 'all',
+              }}
+            />
+          );
+        })}
+      </nav>
     </>
   );
 }
