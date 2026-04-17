@@ -11,13 +11,17 @@ const ATMOSPHERE_COLORS: Record<string, string> = {
   horizon: 'transparent',
 };
 
+interface MediaLayersProps {
+  engineRoomVideoUrl?: string | null;
+}
+
 /**
  * MediaLayers — fixed atmospheric layers.
  *
  * Layer A — CSS radial-gradient vignette, color shifts with atmosphere.
- * Layer B — Engine Room code background video (code-bg.mp4, 6% opacity).
+ * Layer B — Engine Room code background video (engineRoomVideoUrl or code-bg.mp4, 6% opacity).
  */
-export function MediaLayers() {
+export function MediaLayers({ engineRoomVideoUrl }: MediaLayersProps) {
   const { atmosphere } = useScroll();
   const codeVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -33,6 +37,8 @@ export function MediaLayers() {
 
   const vignetteColor = ATMOSPHERE_COLORS[atmosphere] ?? 'transparent';
   const vignetteOpacity = atmosphere === 'horizon' ? 0 : 0.12;
+
+  const codeVideoSrc = engineRoomVideoUrl ?? '/videos/code-bg.mp4';
 
   return (
     <>
@@ -65,7 +71,7 @@ export function MediaLayers() {
       >
         <video
           ref={codeVideoRef}
-          src="/videos/code-bg.mp4"
+          src={codeVideoSrc}
           muted
           loop
           playsInline

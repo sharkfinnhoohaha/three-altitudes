@@ -1,4 +1,13 @@
-import type { SanityDevProject, SanityWebProject } from '@/lib/sanity/types';
+import type {
+  SanityDevProject,
+  SanityWebProject,
+  SanityAudioStat,
+  SanityTrack,
+  SanityTouringCredit,
+  SanityDiscipline,
+  SanityGauge,
+  SanityBeaconLink,
+} from '@/lib/sanity/types';
 
 export const FALLBACK_IDENTITIES = ['PILOT', 'PRODUCER', 'DEVELOPER'];
 
@@ -121,3 +130,42 @@ export const WAVEFORM_BARS = Array.from({ length: 120 }, (_, i) => {
   const raw = Math.abs(w1 * 0.4 + w2 * 0.3 + w3 * 0.2 + w4 * 0.1);
   return Math.max(0.04, raw * envelope);
 });
+
+// ─── Audio Work Fallbacks ─────────────────────────────────────────────────────
+
+export const FALLBACK_AUDIO_STATS: SanityAudioStat[] = [
+  { value: '8M+', label: 'STREAMS' },
+  { value: '12+', label: 'YEARS' },
+  { value: '50+', label: 'PROJECTS' },
+];
+
+export const FALLBACK_TRACKS: SanityTrack[] = [
+  { trackName: 'Mineral King', artistName: 'Mineral King', albumName: '', role: 'PRODUCTION', spotifyUrl: 'https://open.spotify.com' },
+  { trackName: 'Strange Case', artistName: 'Sublime w/ Rome', albumName: '', role: 'FOH ENGINEER', spotifyUrl: 'https://open.spotify.com' },
+  { trackName: 'Jakob Nowell', artistName: 'Jakob Nowell', albumName: '', role: 'LIVE SOUND', spotifyUrl: 'https://open.spotify.com' },
+];
+
+export const FALLBACK_TOURING_CREDITS: SanityTouringCredit[] = [
+  { artistName: 'Mineral King', role: 'Live Production' },
+  { artistName: 'Sublime Strange Case', role: 'Front of House' },
+];
+
+export const FALLBACK_DISCIPLINES: SanityDiscipline[] = [
+  { code: 'LIVE FOH', description: 'Touring front-of-house' },
+  { code: 'STUDIO', description: 'Studio recording & mixing' },
+  { code: 'PRODUCTION', description: 'Music production & composition' },
+];
+
+// ─── Aviation Fallbacks ───────────────────────────────────────────────────────
+
+export const FALLBACK_AVIATION_GAUGES: SanityGauge[] = [
+  { label: 'ALTITUDE', value: '+5,200 FT' },
+  { label: 'HEADING', value: '270° W' },
+  { label: 'ORIGIN', value: 'KCMA' },
+];
+
+export const FALLBACK_AVIATION_BEACON_LINKS: SanityBeaconLink[] = [
+  { label: '@FINN.BENNETT', href: 'https://instagram.com/finn.bennett', sub: 'INSTAGRAM' },
+  { label: 'OVERLOOK STRATEGY', href: 'https://overlookstrategy.com', sub: 'AGENCY' },
+  { label: 'OVERLOOK AUDIO', href: 'https://overlookaudio.com', sub: 'STUDIO' },
+];

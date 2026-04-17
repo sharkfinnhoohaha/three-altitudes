@@ -35,30 +35,20 @@ export const siteSettings = defineType({
       fieldset: 'contact',
     }),
     defineField({
+      name: 'heroVideo',
+      title: 'Hero Background Video',
+      type: 'file',
+      description: 'Video displayed fullscreen on the Shoreline (landing) section. Replaces the built-in wave video.',
+      options: { accept: 'video/*' },
+      fieldset: 'media',
+    }),
+    defineField({
       name: 'engineRoomVideo',
       title: 'Engine Room Background Video',
       type: 'file',
       description: 'Background video for the Engine Room (dev/code) section. Falls back to built-in code-bg.mp4 if not set.',
       options: { accept: 'video/*' },
       fieldset: 'media',
-    }),
-    defineField({
-      name: 'heroVideo',
-      title: 'Hero Background Video',
-      type: 'file',
-      description: 'Video displayed fullscreen on the Shoreline (landing) section. Replaces the built-in wave video.',
-      options: {
-        accept: 'video/*',
-      },
-    }),
-    defineField({
-      name: 'heroVideo',
-      title: 'Hero Background Video',
-      type: 'file',
-      description: 'Video displayed fullscreen on the Shoreline (landing) section. Replaces the built-in wave video.',
-      options: {
-        accept: 'video/*',
-      },
     }),
     defineField({
       name: 'socialLinks',

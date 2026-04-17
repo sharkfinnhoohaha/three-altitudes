@@ -67,6 +67,8 @@ const heroQuery = `
     "identities": coalesce(identities, []),
     "locationLabel": coalesce(locationLabel, ""),
     "coordinates": coalesce(coordinates, ""),
+    "primaryPhotoUrl": primaryPhoto.asset->url,
+    "accentPhotoUrl": accentPhoto.asset->url,
   }
 `;
 
@@ -124,6 +126,8 @@ const aviationQuery = `
     tagline,
     "gauges": coalesce(gauges, []),
     "beaconLinks": coalesce(beaconLinks, []),
+    "primaryPhotoUrl": primaryPhoto.asset->url,
+    "accentPhotoUrl": accentPhoto.asset->url,
   }
 `;
 
@@ -144,6 +148,7 @@ const siteSettingsQuery = `
     siteName,
     email,
     "heroVideoUrl": heroVideo.asset->url,
+    "engineRoomVideoUrl": engineRoomVideo.asset->url,
   }
 `;
 

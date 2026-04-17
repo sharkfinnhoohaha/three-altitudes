@@ -29,6 +29,8 @@ export interface SanityHero {
   identities: string[];
   locationLabel: string;
   coordinates: string;
+  primaryPhotoUrl?: string | null;
+  accentPhotoUrl?: string | null;
 }
 
 export interface SanityAudioStat {
@@ -83,10 +85,13 @@ export interface SanityAviation {
   tagline: string;
   gauges: SanityGauge[];
   beaconLinks: SanityBeaconLink[];
+  primaryPhotoUrl?: string | null;
+  accentPhotoUrl?: string | null;
 }
 
 export interface SanitySettings {
   siteName: string;
   email: string;
   heroVideoUrl?: string;
+  engineRoomVideoUrl?: string | null;
 }

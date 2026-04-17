@@ -27,12 +27,18 @@ export default async function HomePage() {
   return (
     <>
       <MainCanvasClient />
-      <MediaLayers />
+      <MediaLayers engineRoomVideoUrl={siteSettings?.engineRoomVideoUrl} />
       <HeroVideo src={siteSettings?.heroVideoUrl} />
       <GhostingCode />
       <SectionFlash />
       <HUD />
-      <ScrollSections />
+      <ScrollSections
+        hero={hero}
+        audioWork={audioWork}
+        aviation={aviation}
+        webProjects={webProjects}
+        devProjects={devProjects}
+      />
     </>
   );
 }
