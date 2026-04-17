@@ -21,12 +21,7 @@ const ATMOSPHERE_CONFIG: Record<Atmosphere, AtmosphereConfig> = {
   },
   'engine-room': {
     primaryLabel: 'OVERLOOK STRATEGY',
-    secondaryLabel: 'SYSTEMS // DEVELOPMENT',
-    color: '#888888',
-  },
-  'selected-work': {
-    primaryLabel: 'FINN BENNETT',
-    secondaryLabel: 'WEB // DESIGN + DEV',
+    secondaryLabel: 'SYSTEMS // WEB + DEV',
     color: '#888888',
   },
   horizon: {
@@ -39,9 +34,8 @@ const ATMOSPHERE_CONFIG: Record<Atmosphere, AtmosphereConfig> = {
 const SECTION_LABELS: { index: number; label: string; atmosphere: Atmosphere }[] = [
   { index: 0, label: 'SHORELINE', atmosphere: 'shoreline' },
   { index: 1, label: 'SONIC', atmosphere: 'pocket' },
-  { index: 2, label: 'ENGINE ROOM', atmosphere: 'engine-room' },
-  { index: 3, label: 'SELECTED WORK', atmosphere: 'selected-work' },
-  { index: 4, label: 'HORIZON', atmosphere: 'horizon' },
+  { index: 2, label: 'WORK', atmosphere: 'engine-room' },
+  { index: 3, label: 'HORIZON', atmosphere: 'horizon' },
 ];
 
 export function HUD() {

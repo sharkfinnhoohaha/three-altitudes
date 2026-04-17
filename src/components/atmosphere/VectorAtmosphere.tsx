@@ -187,16 +187,17 @@ export function EngineRoomAtmosphere() {
     []
   );
 
-  // Merged airplane silhouette geometry — recognisable even in wireframe
+  // Merged module geometry for the work section (avoids aircraft silhouettes
+  // before the dedicated aviation section).
   const geo = useMemo(() => {
-    const fuselage = new THREE.BoxGeometry(0.08, 0.06, 1.2);
-    const wings = new THREE.BoxGeometry(1.8, 0.03, 0.28);
-    wings.translate(0, 0, 0.06);
-    const tailH = new THREE.BoxGeometry(0.6, 0.03, 0.15);
-    tailH.translate(0, 0, -0.52);
-    const tailV = new THREE.BoxGeometry(0.03, 0.25, 0.15);
-    tailV.translate(0, 0.12, -0.52);
-    return mergeGeometries([fuselage, wings, tailH, tailV])!;
+    const core = new THREE.BoxGeometry(0.9, 0.22, 0.22);
+    const sideLeft = new THREE.BoxGeometry(0.12, 0.12, 0.12);
+    sideLeft.translate(-0.58, 0, 0);
+    const sideRight = sideLeft.clone();
+    sideRight.translate(1.16, 0, 0);
+    const antenna = new THREE.BoxGeometry(0.08, 0.32, 0.08);
+    antenna.translate(0, 0.24, 0);
+    return mergeGeometries([core, sideLeft, sideRight, antenna])!;
   }, []);
 
   const mat = useMemo(
@@ -217,13 +218,12 @@ export function EngineRoomAtmosphere() {
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     const progress = maxScroll > 0 ? Math.min(scrollY / maxScroll, 1) : 0;
 
-    // Only fade in after the engine-room transition has started (p > 0.42),
-    // so the planes never conflict with the pocket / sonic-work section above.
+    // Fade in only inside the work section.
     const visibility =
-      progress < 0.42
+      progress < 0.52
         ? 0
-        : progress < 0.50
-          ? (progress - 0.42) / 0.08
+        : progress < 0.60
+          ? (progress - 0.52) / 0.08
           : progress < 0.74
             ? 1
             : Math.max(0, 1 - (progress - 0.74) / 0.08);
@@ -259,7 +259,7 @@ export function EngineRoomAtmosphere() {
 }
 
 /**
- * HorizonAtmosphere — Stage 5 (75–100% scroll)
+ * HorizonAtmosphere — Stage 4 (75–100% scroll)
  *
  * Procedural cloud flythrough: 10 unique Simplex fBm cloud planes the camera
  * flies through. Each layer has its own ShaderMaterial with unique frequency,
@@ -377,13 +377,12 @@ export function HorizonAtmosphere() {
     const progress = maxScroll > 0 ? Math.min(scrollY / maxScroll, 1) : 0;
     const time = state.clock.elapsedTime;
 
-    // Clouds: start fading in at 0.80 (background already ~20% lightened by then),
-    // full coverage at 0.91 — gives a slow immersive build rather than a sudden pop
+    // Clouds: start only after aviation section begins.
     const visibility =
-      progress < 0.80
+      progress < 0.75
         ? 0
-        : progress < 0.91
-          ? (progress - 0.80) / 0.11
+        : progress < 0.86
+          ? (progress - 0.75) / 0.11
           : 1;
 
     // ── Per-layer material + drift updates ────────────────────────────────

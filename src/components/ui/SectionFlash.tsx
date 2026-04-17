@@ -25,14 +25,9 @@ const FLASH_CONFIG: Record<Atmosphere, FlashConfig> = {
     sublabel: 'SYSTEMS + DEVELOPMENT  //  STAGE III',
     accentColor: '#888888',
   },
-  'selected-work': {
-    label: 'SELECTED WORK',
-    sublabel: 'WEB + DESIGN  //  STAGE IV',
-    accentColor: '#888888',
-  },
   horizon: {
     label: 'THE HORIZON',
-    sublabel: 'COMMERCIAL PILOT  //  STAGE V',
+    sublabel: 'COMMERCIAL PILOT  //  STAGE IV',
     accentColor: '#444444',
   },
 };

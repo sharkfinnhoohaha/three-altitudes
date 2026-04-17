@@ -7,7 +7,6 @@ const ATMOSPHERE_COLORS: Record<string, string> = {
   shoreline: '#3dd9c4',
   pocket: '#ff8c00',
   'engine-room': '#4a4a4a',
-  'selected-work': '#4a4a4a',
   horizon: 'transparent',
 };
 

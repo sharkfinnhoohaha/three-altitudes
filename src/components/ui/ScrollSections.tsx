@@ -308,11 +308,10 @@ export function ScrollSections({
     return fadeIn * fadeOut;
   }
 
-  const shorelineOpacity   = sectionOpacity(0,    0.04, 0.17, 0.25);
-  const pocketOpacity      = sectionOpacity(0.18, 0.25, 0.37, 0.45);
-  const engineRoomOpacity  = sectionOpacity(0.38, 0.45, 0.57, 0.65);
-  const selectedWorkOpacity= sectionOpacity(0.58, 0.65, 0.77, 0.85);
-  const horizonOpacity     = sectionOpacity(0.78, 0.85, 0.97, 1.02);
+  const shorelineOpacity  = sectionOpacity(0, 0.03, 0.22, 0.28);
+  const pocketOpacity     = sectionOpacity(0.23, 0.28, 0.47, 0.53);
+  const engineRoomOpacity = sectionOpacity(0.48, 0.53, 0.72, 0.78);
+  const horizonOpacity    = sectionOpacity(0.73, 0.78, 0.98, 1.02);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -357,8 +356,6 @@ export function ScrollSections({
     return () => document.body.classList.remove('cursor-none');
   }, [atmosphere]);
 
-  const show = (zone: typeof atmosphere) => atmosphere === zone;
-
   // Staggered entrance animation helper — opacity + lift-in with delay
   const pocketAnim = (delay: number) => ({
     opacity: pocketEntered ? 1 : 0,
@@ -367,7 +364,7 @@ export function ScrollSections({
   });
 
   return (
-    <div className="scroll-content" style={{ height: '1000vh' }}>
+    <div className="scroll-content" style={{ height: '800vh' }}>
 
       {/* ─── Stage 1: The Shoreline — Identity ────────────────────────── */}
       <section style={{ height: '200vh', position: 'relative' }}>
@@ -403,7 +400,50 @@ export function ScrollSections({
             </div>
           )}
 
-          {/* Bottom-left name + identity + time block */}
+          {/* Hero title card — pinned to initial viewport for immediate identity */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '48%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.7rem',
+              textAlign: 'center',
+              padding: '0 1rem',
+            }}
+          >
+            <p
+              className="serif-text"
+              style={{
+                fontSize: 'clamp(2.3rem, 8vw, 7rem)',
+                fontWeight: 300,
+                color: '#f0fbfb',
+                letterSpacing: '0.22em',
+                lineHeight: 0.96,
+                textShadow: '0 8px 36px rgba(0,0,0,0.48)',
+              }}
+            >
+              {heroName}
+            </p>
+            <p
+              className="hud-text"
+              style={{
+                fontSize: 'clamp(0.34rem, 0.85vw, 0.58rem)',
+                letterSpacing: '0.42em',
+                color: '#86f5e4',
+                opacity: 0.72,
+                textShadow: '0 4px 16px rgba(0,0,0,0.6)',
+              }}
+            >
+              DIGITAL STORYTELLER // CREATIVE BUILDER
+            </p>
+          </div>
+
+          {/* Bottom-left context + identity ticker */}
           <div
             style={{
               position: 'absolute',
@@ -418,15 +458,14 @@ export function ScrollSections({
             <p
               className="serif-text"
               style={{
-                fontSize: 'clamp(2rem, 4.5vw, 4rem)',
-                fontWeight: 300,
-                color: '#e8f5f5',
-                letterSpacing: '0.16em',
+                fontSize: 'clamp(0.62rem, 1.4vw, 1rem)',
+                color: '#7de6d5',
+                letterSpacing: '0.36em',
                 lineHeight: 1,
-                opacity: 0.88,
+                opacity: 0.72,
               }}
             >
-              {heroName}
+              LANDING ID
             </p>
 
             <div
@@ -831,7 +870,7 @@ export function ScrollSections({
         </div>
       </section>
 
-      {/* ─── Stage 3: The Engine Room — Dev Portfolio ─────────────────── */}
+      {/* ─── Stage 3: Work Lab — Dev + Web Portfolio ───────────────────── */}
       <section style={{ height: '200vh', position: 'relative' }}>
         <div
           style={{
@@ -867,7 +906,7 @@ export function ScrollSections({
             className="hud-text"
             style={{ fontSize: '0.45rem', letterSpacing: '0.4em', color: '#888', opacity: 0.4 }}
           >
-            SELECTED WORK
+            SELECTED WORK  //  BUILD + SHIP
           </p>
 
           {/* Portfolio grid */}
@@ -877,7 +916,7 @@ export function ScrollSections({
               gridTemplateColumns: 'repeat(3, 1fr)',
               gap: '1rem',
               width: 'clamp(320px, 80vw, 920px)',
-              maxHeight: '65vh',
+              maxHeight: '40vh',
               overflowY: 'auto',
               scrollbarWidth: 'none',
               padding: '0.25rem',
@@ -946,39 +985,13 @@ export function ScrollSections({
               </a>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ─── Stage 4: Selected Work — Web Projects ─────────────────────── */}
-      <section id="selected-work" style={{ height: '200vh', position: 'relative' }}>
-        <div
-          style={{
-            position: 'sticky',
-            top: 0,
-            height: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: selectedWorkOpacity,
-            pointerEvents: selectedWorkOpacity > 0.1 ? 'all' : 'none',
-            gap: '1.5rem',
-          }}
-        >
-          {/* Section header */}
-          <p
-            className="hud-text"
-            style={{ fontSize: '0.45rem', letterSpacing: '0.4em', color: '#888', opacity: 0.4 }}
-          >
-            SELECTED WORK  //  WEB
-          </p>
-
-          {/* Single browser mockup with tab switcher */}
+          {/* Single browser mockup with tab switcher (web work) */}
           <SelectedWorkBrowser webProjects={webProjects} />
         </div>
       </section>
 
-      {/* ─── Stage 5: The Horizon — Aviation ──────────────────────────── */}
+      {/* ─── Stage 4: The Horizon — Aviation ───────────────────────────── */}
       <section style={{ height: '200vh', position: 'relative' }}>
         <div
           style={{

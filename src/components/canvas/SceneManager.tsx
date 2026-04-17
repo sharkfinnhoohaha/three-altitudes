@@ -63,22 +63,18 @@ export function SceneManager({ transitionRef, cameraRef, cameraLocked }: SceneMa
       camera.position.z += (targetZ - camera.position.z) * 0.08;
     }
 
-    if (p < 0.20) {
+    if (p < 0.25) {
       tempColor.copy(SHORELINE_COLOR);
-    } else if (p < 0.40) {
-      const t = (p - 0.20) / 0.20;
+    } else if (p < 0.50) {
+      const t = (p - 0.25) / 0.25;
       const smooth = t * t * (3 - 2 * t);
       tempColor.copy(SHORELINE_COLOR).lerp(POCKET_COLOR, smooth);
-    } else if (p < 0.60) {
-      const t = (p - 0.40) / 0.20;
+    } else if (p < 0.75) {
+      const t = (p - 0.50) / 0.25;
       tempColor.copy(POCKET_COLOR).lerp(ENGINE_COLOR, t);
-    } else if (p < 0.78) {
-      // Stage 4: Selected Work — stays engine-room dark
-      tempColor.copy(ENGINE_COLOR);
     } else {
-      // Stage 5: Aviation — start brightening at 0.78 so the background is
-      // already partially lit when clouds appear at 0.80, preventing a dark pop.
-      const t = (p - 0.78) / 0.22;
+      // Stage 4: Aviation — brighten immediately on final section entry.
+      const t = (p - 0.75) / 0.25;
       const smooth = t * t * (3 - 2 * t);
       tempColor.copy(ENGINE_COLOR).lerp(HORIZON_COLOR, smooth);
     }
@@ -87,9 +83,9 @@ export function SceneManager({ transitionRef, cameraRef, cameraLocked }: SceneMa
       scene.background.lerp(tempColor, 0.14);
     }
 
-    if (p >= 0.78) {
+    if (p >= 0.75) {
       // ── Aviation approach + cloud section: switch to FogExp2 early ────────
-      // Switching at 0.78 (just before clouds at 0.80) lets the density build slowly
+      // Switching at 0.75 (on aviation entry) lets the density build slowly
       // so there's no hard fog-type pop when clouds become visible.
       if (fogTypeRef.current !== 'exp') {
         const exp = new THREE.FogExp2(tempColor.getHex(), 0.004);
@@ -100,8 +96,8 @@ export function SceneManager({ transitionRef, cameraRef, cameraLocked }: SceneMa
       }
       if (fogExpRef.current) {
         fogExpRef.current.color.lerp(tempColor, 0.06);
-        // Density ramps 0.004 (p=0.78) → 0.022 (p=1.0) — gentle buildup
-        const t = (p - 0.78) / 0.22;
+        // Density ramps 0.004 (p=0.75) → 0.022 (p=1.0) — gentle buildup
+        const t = (p - 0.75) / 0.25;
         const targetDensity = 0.004 + t * 0.018;
         fogExpRef.current.density +=
           (targetDensity - fogExpRef.current.density) * 0.04;
@@ -117,8 +113,8 @@ export function SceneManager({ transitionRef, cameraRef, cameraLocked }: SceneMa
       }
       if (fogRef.current) {
         fogRef.current.color.lerp(tempColor, 0.08);
-        const targetNear = p > 0.60 ? 15 : 20;
-        const targetFar  = p > 0.60 ? 100 : 120;
+        const targetNear = p > 0.50 ? 15 : 20;
+        const targetFar  = p > 0.50 ? 100 : 120;
         fogRef.current.near += (targetNear - fogRef.current.near) * 0.05;
         fogRef.current.far  += (targetFar  - fogRef.current.far)  * 0.05;
       }

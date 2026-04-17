@@ -10,7 +10,7 @@ import React, {
   type ReactNode,
 } from 'react';
 
-export type Atmosphere = 'shoreline' | 'pocket' | 'engine-room' | 'selected-work' | 'horizon';
+export type Atmosphere = 'shoreline' | 'pocket' | 'engine-room' | 'horizon';
 
 interface ScrollState {
   /** 0.0 – 1.0, normalized scroll progress */
@@ -48,14 +48,13 @@ export function useScroll() {
 }
 
 // Section snap points as progress fractions (0–1)
-const SECTION_PROGRESS = [0, 0.2, 0.4, 0.6, 0.8];
+const SECTION_PROGRESS = [0, 0.25, 0.5, 0.75];
 
 function getAtmosphere(progress: number): Atmosphere {
-  if (progress < 0.20) return 'shoreline';      // Stage 1: The Shoreline — Identity
-  if (progress < 0.40) return 'pocket';         // Stage 2: The Pocket — The Visceral
-  if (progress < 0.60) return 'engine-room';    // Stage 3: The Engine Room — The Systems
-  if (progress < 0.80) return 'selected-work';  // Stage 4: Selected Work — Web Projects
-  return 'horizon';                              // Stage 5: The Horizon — The Perspective
+  if (progress < 0.25) return 'shoreline';      // Stage 1: The Shoreline — Identity
+  if (progress < 0.50) return 'pocket';         // Stage 2: The Pocket — Sonic life
+  if (progress < 0.75) return 'engine-room';    // Stage 3: Work — Systems + Portfolio
+  return 'horizon';                             // Stage 4: The Horizon — Aviation
 }
 
 interface ScrollProviderProps {
