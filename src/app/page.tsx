@@ -4,7 +4,6 @@ import { GhostingCode } from '@/components/ui/GhostingCode';
 import { MediaLayers } from '@/components/ui/MediaLayers';
 import { HeroVideo } from '@/components/ui/HeroVideo';
 import { MainCanvasClient } from '@/components/canvas/MainCanvasClient';
-import { SectionFlash } from '@/components/ui/SectionFlash';
 import {
   getWebProjects,
   getDevProjects,
@@ -30,7 +29,6 @@ export default async function HomePage() {
       <MediaLayers engineRoomVideoUrl={siteSettings?.engineRoomVideoUrl} />
       <HeroVideo src={siteSettings?.heroVideoUrl} />
       <GhostingCode />
-      <SectionFlash />
       <HUD />
       <ScrollSections
         hero={hero}

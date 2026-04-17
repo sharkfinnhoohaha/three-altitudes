@@ -268,6 +268,7 @@ export function ScrollSections({
   const heroName = hero?.name ?? 'FINN BENNETT';
   const heroLocationLabel = hero?.locationLabel ?? 'VENTURA, CA';
   const identities = hero?.identities?.length ? hero.identities : FALLBACK_IDENTITIES;
+  const heroBgUrl = hero?.primaryPhotoUrl ?? null;
   const aviationBgUrl = aviation?.primaryPhotoUrl ?? '/images/la-altitude.jpg';
   const callsign = aviation?.callsign ?? 'N12345';
   const certLabel = aviation?.certLabel ?? 'COMMERCIAL PILOT';
@@ -360,6 +361,24 @@ export function ScrollSections({
             overflow: 'hidden',
           }}
         >
+          {/* Hero background photo — primary photo from Sanity hero document */}
+          {heroBgUrl && (
+            <div style={{ position: 'absolute', inset: 0, zIndex: 0, overflow: 'hidden' }}>
+              <img
+                src={heroBgUrl}
+                alt=""
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                  opacity: 0.14,
+                  mixBlendMode: 'luminosity',
+                }}
+              />
+            </div>
+          )}
+
           {/* Bottom-left name + identity + time block */}
           <div
             style={{
@@ -853,8 +872,7 @@ export function ScrollSections({
                   border: '1px solid rgba(136,136,136,0.15)',
                   padding: '1.25rem 1.5rem',
                   position: 'relative',
-                  backdropFilter: 'blur(12px)',
-                  background: 'rgba(0,0,0,0.45)',
+                  background: 'rgba(0,0,0,0.6)',
                   cursor: 'crosshair',
                   display: 'block',
                   textDecoration: 'none',

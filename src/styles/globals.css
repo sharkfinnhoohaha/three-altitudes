@@ -117,6 +117,7 @@ body::after {
   background-repeat: repeat;
   background-size: 200px 200px;
   mix-blend-mode: overlay;
+  will-change: background-position;
   animation: grain-shift 0.08s steps(1) infinite;
 }
 
