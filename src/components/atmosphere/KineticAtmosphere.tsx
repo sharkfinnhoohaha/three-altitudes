@@ -98,9 +98,16 @@ export function ShorelineAtmosphere() {
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     const progress = maxScroll > 0 ? Math.min(scrollY / maxScroll, 1) : 0;
 
-    // Fade out as we leave the Shoreline zone
+    // Fade in after a little scroll so it doesn't obscure the primary hero on load;
+    // fade out as we leave the Shoreline zone.
     const visibility =
-      progress < 0.25 ? 1.0 : Math.max(0, 1 - (progress - 0.25) / 0.07);
+      progress < 0.03
+        ? 0
+        : progress < 0.09
+          ? (progress - 0.03) / 0.06
+          : progress < 0.25
+            ? 1.0
+            : Math.max(0, 1 - (progress - 0.25) / 0.07);
 
     // --- Wave plane GPU displacement uniform ---
     if (waveMat.userData.shader) {

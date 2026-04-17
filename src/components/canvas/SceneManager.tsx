@@ -7,7 +7,9 @@ import * as THREE from 'three';
 const SHORELINE_COLOR = new THREE.Color('#003838');
 const POCKET_COLOR = new THREE.Color('#050305');
 const ENGINE_COLOR = new THREE.Color('#111111');
-const HORIZON_COLOR = new THREE.Color('#f5f5f7');
+// Soft sky-blue instead of near-white — prevents the "blank white page" look at the
+// end of the site and gives the aviation section an atmospheric sky feel.
+const HORIZON_COLOR = new THREE.Color('#d4e4f0');
 const tempColor = new THREE.Color();
 
 const CAMERA_START_Z = 10;
@@ -70,13 +72,13 @@ export function SceneManager({ transitionRef, cameraRef, cameraLocked }: SceneMa
     } else if (p < 0.60) {
       const t = (p - 0.40) / 0.20;
       tempColor.copy(POCKET_COLOR).lerp(ENGINE_COLOR, t);
-    } else if (p < 0.72) {
+    } else if (p < 0.78) {
       // Stage 4: Selected Work — stays engine-room dark
       tempColor.copy(ENGINE_COLOR);
     } else {
-      // Stage 5: Aviation — start brightening at 0.72 so background is already
-      // partially light when clouds appear at 0.80 (prevents white-on-black pop)
-      const t = (p - 0.72) / 0.28;
+      // Stage 5: Aviation — start brightening at 0.78 so the background is
+      // already partially lit when clouds appear at 0.80, preventing a dark pop.
+      const t = (p - 0.78) / 0.22;
       const smooth = t * t * (3 - 2 * t);
       tempColor.copy(ENGINE_COLOR).lerp(HORIZON_COLOR, smooth);
     }
@@ -85,13 +87,11 @@ export function SceneManager({ transitionRef, cameraRef, cameraLocked }: SceneMa
       scene.background.lerp(tempColor, 0.14);
     }
 
-    if (p >= 0.72) {
+    if (p >= 0.78) {
       // ── Aviation approach + cloud section: switch to FogExp2 early ────────
-      // Switching at 0.72 (before clouds at 0.80) lets the density build slowly
+      // Switching at 0.78 (just before clouds at 0.80) lets the density build slowly
       // so there's no hard fog-type pop when clouds become visible.
       if (fogTypeRef.current !== 'exp') {
-        // Match outgoing linear fog density at the switch point (~distance 25)
-        // Linear: (25-15)/(100-15) ≈ 0.12 fogged → FogExp2 equiv ≈ density 0.005
         const exp = new THREE.FogExp2(tempColor.getHex(), 0.004);
         scene.fog = exp;
         fogRef.current = null;
@@ -100,8 +100,8 @@ export function SceneManager({ transitionRef, cameraRef, cameraLocked }: SceneMa
       }
       if (fogExpRef.current) {
         fogExpRef.current.color.lerp(tempColor, 0.06);
-        // Density ramps 0.004 (p=0.72) → 0.022 (p=1.0) — gentle buildup
-        const t = (p - 0.72) / 0.28;
+        // Density ramps 0.004 (p=0.78) → 0.022 (p=1.0) — gentle buildup
+        const t = (p - 0.78) / 0.22;
         const targetDensity = 0.004 + t * 0.018;
         fogExpRef.current.density +=
           (targetDensity - fogExpRef.current.density) * 0.04;

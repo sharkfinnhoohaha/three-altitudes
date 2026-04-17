@@ -217,11 +217,13 @@ export function EngineRoomAtmosphere() {
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     const progress = maxScroll > 0 ? Math.min(scrollY / maxScroll, 1) : 0;
 
+    // Only fade in after the engine-room transition has started (p > 0.42),
+    // so the planes never conflict with the pocket / sonic-work section above.
     const visibility =
-      progress < 0.36
+      progress < 0.42
         ? 0
-        : progress < 0.44
-          ? (progress - 0.36) / 0.08
+        : progress < 0.50
+          ? (progress - 0.42) / 0.08
           : progress < 0.74
             ? 1
             : Math.max(0, 1 - (progress - 0.74) / 0.08);

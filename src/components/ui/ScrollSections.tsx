@@ -257,7 +257,7 @@ export function ScrollSections({
   webProjects: webProjectsProp,
   devProjects: devProjectsProp,
 }: ScrollSectionsProps) {
-  const { atmosphere, velocity } = useScroll();
+  const { atmosphere, velocity, progress } = useScroll();
   const [identityIndex, setIdentityIndex] = useState(0);
   const [cascadeActive, setCascadeActive] = useState(false);
   const [pocketEntered, setPocketEntered] = useState(false);
@@ -288,6 +288,31 @@ export function ScrollSections({
     : 'https://open.spotify.com';
   const devProjects = devProjectsProp?.length ? devProjectsProp : FALLBACK_PROJECTS;
   const webProjects = webProjectsProp?.length ? webProjectsProp : FALLBACK_WEB_PROJECTS;
+
+  // ── Smooth progress-driven section opacities ──────────────────────────────
+  // Each section has an independent fade-in / fade-out range so sections gently
+  // dissolve into one another rather than snapping on the atmosphere boundary.
+  // The overlap creates a cinematic cross-fade as the user scrolls.
+  function sectionOpacity(
+    fadeInStart: number, fadeInEnd: number,
+    fadeOutStart: number, fadeOutEnd: number
+  ): number {
+    const fadeIn =
+      progress <= fadeInStart ? 0
+      : progress <= fadeInEnd ? (progress - fadeInStart) / (fadeInEnd - fadeInStart)
+      : 1;
+    const fadeOut =
+      progress <= fadeOutStart ? 1
+      : progress <= fadeOutEnd ? 1 - (progress - fadeOutStart) / (fadeOutEnd - fadeOutStart)
+      : 0;
+    return fadeIn * fadeOut;
+  }
+
+  const shorelineOpacity   = sectionOpacity(0,    0.04, 0.17, 0.25);
+  const pocketOpacity      = sectionOpacity(0.18, 0.25, 0.37, 0.45);
+  const engineRoomOpacity  = sectionOpacity(0.38, 0.45, 0.57, 0.65);
+  const selectedWorkOpacity= sectionOpacity(0.58, 0.65, 0.77, 0.85);
+  const horizonOpacity     = sectionOpacity(0.78, 0.85, 0.97, 1.02);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -355,9 +380,8 @@ export function ScrollSections({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            opacity: show('shoreline') ? 1 : 0,
-            transition: 'opacity 0.9s ease',
-            pointerEvents: show('shoreline') ? 'all' : 'none',
+            opacity: shorelineOpacity,
+            pointerEvents: shorelineOpacity > 0.1 ? 'all' : 'none',
             overflow: 'hidden',
           }}
         >
@@ -394,7 +418,7 @@ export function ScrollSections({
             <p
               className="serif-text"
               style={{
-                fontSize: 'clamp(1.1rem, 2.2vw, 1.7rem)',
+                fontSize: 'clamp(2rem, 4.5vw, 4rem)',
                 fontWeight: 300,
                 color: '#e8f5f5',
                 letterSpacing: '0.16em',
@@ -460,9 +484,8 @@ export function ScrollSections({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            opacity: show('pocket') ? 1 : 0,
-            transition: 'opacity 0.9s ease',
-            pointerEvents: show('pocket') ? 'all' : 'none',
+            opacity: pocketOpacity,
+            pointerEvents: pocketOpacity > 0.1 ? 'all' : 'none',
             padding: '0 clamp(1.5rem, 5vw, 4rem)',
           }}
         >
@@ -819,9 +842,8 @@ export function ScrollSections({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            opacity: show('engine-room') ? 1 : 0,
-            transition: 'opacity 0.9s ease',
-            pointerEvents: show('engine-room') ? 'all' : 'none',
+            opacity: engineRoomOpacity,
+            pointerEvents: engineRoomOpacity > 0.1 ? 'all' : 'none',
             gap: '1.5rem',
             overflow: 'hidden',
           }}
@@ -938,9 +960,8 @@ export function ScrollSections({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            opacity: show('selected-work') ? 1 : 0,
-            transition: 'opacity 0.9s ease',
-            pointerEvents: show('selected-work') ? 'all' : 'none',
+            opacity: selectedWorkOpacity,
+            pointerEvents: selectedWorkOpacity > 0.1 ? 'all' : 'none',
             gap: '1.5rem',
           }}
         >
@@ -968,9 +989,8 @@ export function ScrollSections({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            opacity: show('horizon') ? 1 : 0,
-            transition: 'opacity 0.9s ease',
-            pointerEvents: show('horizon') ? 'all' : 'none',
+            opacity: horizonOpacity,
+            pointerEvents: horizonOpacity > 0.1 ? 'all' : 'none',
             gap: '0.4rem',
             overflow: 'hidden',
           }}
