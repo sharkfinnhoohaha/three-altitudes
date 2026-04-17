@@ -35,7 +35,7 @@ export function ScrollSections({
   devProjects = [],
   aviation,
 }: ScrollSectionsProps = {}) {
-  const { atmosphere, velocity } = useScroll();
+  const { atmosphere, velocity, scrollTo } = useScroll();
   const [identityIndex, setIdentityIndex] = useState(0);
   const [cascadeActive, setCascadeActive] = useState(false);
   const [pocketEntered, setPocketEntered] = useState(false);
@@ -210,6 +210,7 @@ export function ScrollSections({
 
             <button 
               className="sans-text magnetic-btn" 
+              onClick={() => scrollTo('#selected-work')}
               style={{ 
                 marginTop: '3.5rem', 
                 padding: '1.2rem 3.5rem', 
@@ -225,9 +226,7 @@ export function ScrollSections({
                 backdropFilter: 'blur(5px)'
               }}
             >
-              <a href="#selected-work" style={{ color: 'inherit', textDecoration: 'none' }}>
-                View Masterworks
-              </a>
+              View Masterworks
             </button>
           </div>
         </div>
@@ -641,7 +640,7 @@ export function ScrollSections({
       </section>
 
       {/* ─── Stage 4: Selected Work — Web Projects ─────────────────────── */}
-      <section style={{ height: '200vh', position: 'relative' }}>
+      <section id="selected-work" style={{ height: '200vh', position: 'relative' }}>
         <div
           style={{
             position: 'sticky',

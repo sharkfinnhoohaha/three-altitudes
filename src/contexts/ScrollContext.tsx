@@ -23,7 +23,11 @@ interface ScrollState {
   scrollY: number;
   /** Total scrollable height */
   maxScroll: number;
+  /** Programmatically scroll to an element, selector, or pixel offset */
+  scrollTo: (target: string | HTMLElement | number, options?: { offset?: number; duration?: number }) => void;
 }
+
+const noop = () => {};
 
 const defaultState: ScrollState = {
   progress: 0,
@@ -31,6 +35,7 @@ const defaultState: ScrollState = {
   atmosphere: 'shoreline',
   scrollY: 0,
   maxScroll: 1,
+  scrollTo: noop,
 };
 
 const ScrollContext = createContext<ScrollState>(defaultState);
@@ -52,10 +57,33 @@ interface ScrollProviderProps {
 }
 
 export function ScrollProvider({ children }: ScrollProviderProps) {
-  const [state, setState] = useState<ScrollState>(defaultState);
+  const [state, setState] = useState<Omit<ScrollState, 'scrollTo'>>({
+    progress: 0,
+    velocity: 0,
+    atmosphere: 'shoreline',
+    scrollY: 0,
+    maxScroll: 1,
+  });
   const prevScrollY = useRef(0);
   const rafId = useRef<number>(0);
   const lenisRef = useRef<any>(null);
+
+  const scrollTo = useCallback(
+    (target: string | HTMLElement | number, options?: { offset?: number; duration?: number }) => {
+      if (lenisRef.current) {
+        lenisRef.current.scrollTo(target, { offset: options?.offset ?? 0, duration: options?.duration ?? 1.4 });
+      } else {
+        // Fallback to native scroll when Lenis is not available
+        const el = typeof target === 'string' ? document.querySelector(target) : target;
+        if (el && typeof el !== 'number' && 'scrollIntoView' in el) {
+          (el as HTMLElement).scrollIntoView({ behavior: 'smooth' });
+        } else if (typeof target === 'number') {
+          window.scrollTo({ top: target, behavior: 'smooth' });
+        }
+      }
+    },
+    [],
+  );
 
   const onScroll = useCallback(() => {
     const scrollY = window.scrollY || window.pageYOffset;
@@ -131,7 +159,7 @@ export function ScrollProvider({ children }: ScrollProviderProps) {
   }, [onScroll]);
 
   return (
-    <ScrollContext.Provider value={state}>
+    <ScrollContext.Provider value={{ ...state, scrollTo }}>
       {children}
     </ScrollContext.Provider>
   );

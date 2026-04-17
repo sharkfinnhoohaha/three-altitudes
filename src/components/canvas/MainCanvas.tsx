@@ -23,7 +23,7 @@ export function MainCanvas() {
           stencil: false,
           depth: true,
         }}
-        dpr={[1, 2]}
+        dpr={[1, 1.5]}
         flat={false}
       >
         <PerspectiveCamera makeDefault fov={60} near={0.1} far={300} position={[0, 0, 10]} />

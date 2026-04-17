@@ -80,12 +80,24 @@ export function MediaLayers({
 }: MediaLayersProps) {
   const { progress, atmosphere } = useScroll();
   const heroVideoRef = useRef<HTMLVideoElement>(null);
+  const codeVideoRef = useRef<HTMLVideoElement>(null);
 
   // ── Hero video — play/pause based on visibility ─────────────────────────────
   useEffect(() => {
     const video = heroVideoRef.current;
     if (!video) return;
     if (atmosphere === 'shoreline') {
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  }, [atmosphere]);
+
+  // ── Code BG video — play/pause based on visibility ──────────────────────────
+  useEffect(() => {
+    const video = codeVideoRef.current;
+    if (!video) return;
+    if (atmosphere === 'engine-room') {
       video.play().catch(() => {});
     } else {
       video.pause();
@@ -359,8 +371,8 @@ export function MediaLayers({
         }}
       >
         <video
+          ref={codeVideoRef}
           src={engineRoomVideoUrl ?? '/videos/code-bg.mp4'}
-          autoPlay
           muted
           loop
           playsInline
