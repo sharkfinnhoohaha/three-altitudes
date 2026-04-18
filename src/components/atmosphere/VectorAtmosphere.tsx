@@ -220,13 +220,13 @@ export function EngineRoomAtmosphere() {
 
     // Fade in only inside the work section.
     const visibility =
-      progress < 0.52
+      progress < 0.46
         ? 0
-        : progress < 0.60
-          ? (progress - 0.52) / 0.08
-          : progress < 0.74
+        : progress < 0.54
+          ? (progress - 0.46) / 0.08
+          : progress < 0.72
             ? 1
-            : Math.max(0, 1 - (progress - 0.74) / 0.08);
+            : Math.max(0, 1 - (progress - 0.72) / 0.06);
 
     mat.opacity = visibility * 0.50;
 
@@ -379,10 +379,10 @@ export function HorizonAtmosphere() {
 
     // Clouds: start only after aviation section begins.
     const visibility =
-      progress < 0.75
+      progress < 0.79
         ? 0
-        : progress < 0.86
-          ? (progress - 0.75) / 0.11
+        : progress < 0.90
+          ? (progress - 0.79) / 0.11
           : 1;
 
     // ── Per-layer material + drift updates ────────────────────────────────

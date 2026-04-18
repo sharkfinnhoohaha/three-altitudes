@@ -3,6 +3,7 @@ import { ScrollSections } from '@/components/ui/ScrollSections';
 import { GhostingCode } from '@/components/ui/GhostingCode';
 import { MediaLayers } from '@/components/ui/MediaLayers';
 import { HeroVideo } from '@/components/ui/HeroVideo';
+import { SectionFlash } from '@/components/ui/SectionFlash';
 import { MainCanvasClient } from '@/components/canvas/MainCanvasClient';
 import {
   getWebProjects,
@@ -30,6 +31,7 @@ export default async function HomePage() {
       <HeroVideo src={siteSettings?.heroVideoUrl} />
       <GhostingCode />
       <HUD />
+      <SectionFlash />
       <ScrollSections
         hero={hero}
         audioWork={audioWork}

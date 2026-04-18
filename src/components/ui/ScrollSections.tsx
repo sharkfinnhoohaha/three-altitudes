@@ -25,6 +25,12 @@ import {
   WAVEFORM_BARS,
 } from '@/lib/fallbacks';
 
+const SECTION_ENTRY_MOTION = {
+  pocket: { y: 26, rotate: -7, baseScale: 0.93, scaleRange: 0.07 },
+  engine: { x: 44, rotateY: 7, baseScale: 0.94, scaleRange: 0.06 },
+  horizon: { y: 30, rotateX: 8, baseScale: 0.95, scaleRange: 0.05 },
+} as const;
+
 
 // ── Selected Work Browser ─────────────────────────────────────────────────────
 // Single macOS-style browser mockup with three stacked iframe panels,
@@ -265,7 +271,7 @@ export function ScrollSections({
   const prevAtmosphere = useRef(atmosphere);
 
   // Resolve data — Sanity data when available, fallback constants otherwise
-  const heroName = hero?.name ?? 'FINN BENNETT';
+  const heroName = (hero?.name ?? '').trim() || 'FINN BENNETT';
   const heroLocationLabel = hero?.locationLabel ?? 'VENTURA, CA';
   const identities = hero?.identities?.length ? hero.identities : FALLBACK_IDENTITIES;
   const heroBgUrl = hero?.primaryPhotoUrl ?? null;
@@ -308,10 +314,25 @@ export function ScrollSections({
     return fadeIn * fadeOut;
   }
 
-  const shorelineOpacity  = sectionOpacity(0, 0.03, 0.22, 0.28);
-  const pocketOpacity     = sectionOpacity(0.23, 0.28, 0.47, 0.53);
-  const engineRoomOpacity = sectionOpacity(0.48, 0.53, 0.72, 0.78);
-  const horizonOpacity    = sectionOpacity(0.73, 0.78, 0.98, 1.02);
+  const shorelineOpacity  = sectionOpacity(-0.02, 0.03, 0.22, 0.28);
+  const pocketOpacity     = sectionOpacity(0.23, 0.29, 0.50, 0.56);
+  const engineRoomOpacity = sectionOpacity(0.47, 0.54, 0.77, 0.83);
+  const horizonOpacity    = sectionOpacity(0.78, 0.84, 0.98, 1.02);
+
+  const sectionMix = (start: number, end: number) => {
+    if (progress <= start) return 0;
+    if (progress >= end) return 1;
+    const t = (progress - start) / (end - start);
+    return t * t * (3 - 2 * t);
+  };
+
+  const pocketEnterMix = sectionMix(0.21, 0.32);
+  const engineEnterMix = sectionMix(0.45, 0.57);
+  const horizonEnterMix = sectionMix(0.76, 0.88);
+
+  const pocketSectionTransform = `translateY(${(1 - pocketEnterMix) * SECTION_ENTRY_MOTION.pocket.y}px) rotate(${(1 - pocketEnterMix) * SECTION_ENTRY_MOTION.pocket.rotate}deg) scale(${SECTION_ENTRY_MOTION.pocket.baseScale + pocketEnterMix * SECTION_ENTRY_MOTION.pocket.scaleRange})`;
+  const engineSectionTransform = `translateX(${(1 - engineEnterMix) * SECTION_ENTRY_MOTION.engine.x}px) rotateY(${(1 - engineEnterMix) * SECTION_ENTRY_MOTION.engine.rotateY}deg) scale(${SECTION_ENTRY_MOTION.engine.baseScale + engineEnterMix * SECTION_ENTRY_MOTION.engine.scaleRange})`;
+  const horizonSectionTransform = `translateY(${(1 - horizonEnterMix) * SECTION_ENTRY_MOTION.horizon.y}px) rotateX(${(1 - horizonEnterMix) * SECTION_ENTRY_MOTION.horizon.rotateX}deg) scale(${SECTION_ENTRY_MOTION.horizon.baseScale + horizonEnterMix * SECTION_ENTRY_MOTION.horizon.scaleRange})`;
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -524,8 +545,11 @@ export function ScrollSections({
             alignItems: 'center',
             justifyContent: 'center',
             opacity: pocketOpacity,
+            transform: pocketSectionTransform,
+            filter: `blur(${(1 - pocketEnterMix) * 1.2}px)`,
             pointerEvents: pocketOpacity > 0.1 ? 'all' : 'none',
             padding: '0 clamp(1.5rem, 5vw, 4rem)',
+            willChange: 'transform, filter',
           }}
         >
           <div
@@ -882,9 +906,12 @@ export function ScrollSections({
             alignItems: 'center',
             justifyContent: 'center',
             opacity: engineRoomOpacity,
+            transform: engineSectionTransform,
+            filter: `blur(${(1 - engineEnterMix) * 1.4}px)`,
             pointerEvents: engineRoomOpacity > 0.1 ? 'all' : 'none',
             gap: '1.5rem',
             overflow: 'hidden',
+            willChange: 'transform, filter',
           }}
         >
           {/* Data cascade overlay */}
@@ -1003,9 +1030,12 @@ export function ScrollSections({
             alignItems: 'center',
             justifyContent: 'center',
             opacity: horizonOpacity,
+            transform: horizonSectionTransform,
+            filter: `blur(${(1 - horizonEnterMix) * 1.8}px)`,
             pointerEvents: horizonOpacity > 0.1 ? 'all' : 'none',
             gap: '0.4rem',
             overflow: 'hidden',
+            willChange: 'transform, filter',
           }}
         >
           {/* Aviation background photo — from Sanity or falls back to la-altitude.jpg */}

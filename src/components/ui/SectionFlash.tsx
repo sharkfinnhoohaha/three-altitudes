@@ -32,6 +32,25 @@ const FLASH_CONFIG: Record<Atmosphere, FlashConfig> = {
   },
 };
 
+const TITLE_TRANSFORMS: Record<Atmosphere, { show: string; hide: string }> = {
+  shoreline: {
+    show: 'translateY(0) scale(1)',
+    hide: 'translateY(8px) scale(0.98)',
+  },
+  pocket: {
+    show: 'translateY(0) rotate(-5deg) scale(1)',
+    hide: 'translateY(12px) rotate(-14deg) scale(0.9)',
+  },
+  'engine-room': {
+    show: 'translateX(0) skewX(0deg) scale(1)',
+    hide: 'translateX(24px) skewX(-8deg) scale(0.92)',
+  },
+  horizon: {
+    show: 'translateY(0) rotateX(0deg) scale(1)',
+    hide: 'translateY(16px) rotateX(18deg) scale(0.9)',
+  },
+};
+
 export function SectionFlash() {
   const { atmosphere } = useScroll();
   const prevAtmosphere = useRef<Atmosphere>(atmosphere);
@@ -103,10 +122,12 @@ export function SectionFlash() {
           flexDirection: 'column',
           alignItems: 'center',
           gap: '0.6rem',
-          transform: `translateY(${visible ? '0' : '8px'})`,
+          transform: visible
+            ? TITLE_TRANSFORMS[currentAtmos].show
+            : TITLE_TRANSFORMS[currentAtmos].hide,
           transition: visible
-            ? 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
-            : 'transform 0.4s ease',
+            ? 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)'
+            : 'transform 0.45s ease',
         }}
       >
         <p
