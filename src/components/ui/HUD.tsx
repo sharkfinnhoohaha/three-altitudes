@@ -144,19 +144,33 @@ export function HUD() {
               onClick={() => scrollToSection(index)}
               title={label}
               aria-label={`Go to ${label}`}
+              className="nav-dot-btn"
               style={{
-                width: isActive ? '8px' : '5px',
-                height: isActive ? '8px' : '5px',
-                borderRadius: '50%',
-                background: dotColor,
+                width: '44px',
+                height: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
                 padding: 0,
-                transition: 'width 0.3s ease, height 0.3s ease, background 0.3s ease, box-shadow 0.3s ease',
-                boxShadow: isActive ? `0 0 8px 2px ${dotColor}55` : 'none',
                 pointerEvents: 'all',
               }}
-            />
+            >
+              <span
+                style={{
+                  display: 'block',
+                  width: isActive ? '8px' : '5px',
+                  height: isActive ? '8px' : '5px',
+                  borderRadius: '50%',
+                  background: dotColor,
+                  transition: 'width 0.3s ease, height 0.3s ease, background 0.3s ease, box-shadow 0.3s ease',
+                  boxShadow: isActive ? `0 0 8px 2px ${dotColor}55` : 'none',
+                  flexShrink: 0,
+                }}
+              />
+            </button>
           );
         })}
       </nav>

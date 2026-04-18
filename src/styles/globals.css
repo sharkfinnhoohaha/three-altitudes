@@ -90,7 +90,7 @@ html.lenis body {
 
 /* Technical / HUD data */
 .hud-text {
-  font-family: 'DM Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -418,6 +418,82 @@ body::after {
 .targeting-card:hover .lock-on-label {
   opacity: 0.7;
   transform: translateY(0);
+}
+
+/* ── HUD Nav Dot Buttons ────────────────────────────── */
+.nav-dot-btn {
+  outline: none;
+}
+
+.nav-dot-btn:focus-visible > span {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+/* ── Browser Tab Buttons ────────────────────────────── */
+.browser-tab-btn {
+  outline: none;
+}
+
+.browser-tab-btn:focus-visible {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+}
+
+/* ── Premium UI Redesign Utilities ────────────────────── */
+@keyframes scroll-hint-bob {
+  0%, 100% { transform: translateY(0) translateX(-50%); opacity: 0.45; }
+  50%       { transform: translateY(6px) translateX(-50%); opacity: 0.7; }
+}
+
+.scroll-hint {
+  animation: scroll-hint-bob 2s ease-in-out infinite;
+}
+
+/* ── Reduced Motion ──────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  /* Pause the always-on grain animation */
+  body::after {
+    animation: none;
+  }
+
+  /* Pause the identity cycling ticker */
+  .identity-tag {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Pause beacon pulse */
+  .beacon-link {
+    animation: none;
+  }
+
+  /* Pause scroll hint */
+  .scroll-hint {
+    animation: none;
+    opacity: 0.5;
+  }
+
+  /* Disable data cascade */
+  .data-cascade-column {
+    animation: none;
+    opacity: 0;
+  }
+
+  /* Smooth all CSS transitions to instant — scoped to application elements */
+  .scroll-hint,
+  .beacon-link,
+  .identity-tag,
+  .targeting-card,
+  .browser-tab-btn,
+  .nav-dot-btn,
+  .nav-dot-btn > span,
+  .flight-gauge,
+  .lock-on-label,
+  .target-corner {
+    transition-duration: 0.01ms;
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+  }
 }
 
 /* ── Premium UI Redesign Utilities ────────────────────── */

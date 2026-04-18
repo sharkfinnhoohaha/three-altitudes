@@ -31,6 +31,10 @@ const SECTION_ENTRY_MOTION = {
   horizon: { y: 30, rotateX: 8, baseScale: 0.95, scaleRange: 0.05 },
 } as const;
 
+// Scroll progress fraction at which the scroll-down hint is fully hidden.
+// The hint fades linearly from 1 → 0 as progress goes 0 → SCROLL_HINT_FADE_END.
+const SCROLL_HINT_FADE_END = 0.06;
+
 
 // ── Selected Work Browser ─────────────────────────────────────────────────────
 // Single macOS-style browser mockup with three stacked iframe panels,
@@ -54,9 +58,17 @@ function SelectedWorkBrowser({ webProjects }: { webProjects: SanityWebProject[] 
     return () => observer.disconnect();
   }, []);
 
-  // Auto-rotation — pauses on user interaction, resumes after 8 s
+  // Cleanup resume timeout on unmount
   useEffect(() => {
-    if (paused) return;
+    return () => {
+      if (resumeRef.current) clearTimeout(resumeRef.current);
+    };
+  }, []);
+
+  // Auto-rotation — pauses on user interaction, resumes after 8 s
+  // Skip rotation when there's only one project or list is empty
+  useEffect(() => {
+    if (paused || webProjects.length <= 1) return;
     const id = setInterval(() => {
       setActiveIdx((i) => (i + 1) % webProjects.length);
     }, 4500);
@@ -197,6 +209,7 @@ function SelectedWorkBrowser({ webProjects }: { webProjects: SanityWebProject[] 
             <button
               key={project._id}
               onClick={() => handleTabClick(idx)}
+              className="browser-tab-btn"
               style={{
                 flex: 1,
                 borderRadius: 12,
@@ -211,7 +224,6 @@ function SelectedWorkBrowser({ webProjects }: { webProjects: SanityWebProject[] 
                 flexDirection: 'column',
                 justifyContent: 'center',
                 gap: 4,
-                outline: 'none',
               }}
             >
               <span
@@ -530,6 +542,41 @@ export function ScrollSections({
               <span style={{ opacity: 0.4 }}>PT</span>
             </div>
           </div>
+
+          {/* Scroll-down hint — fades out as user begins scrolling */}
+          <div
+            className="scroll-hint"
+            style={{
+              position: 'absolute',
+              bottom: 'clamp(1.5rem, 4vh, 3rem)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.4rem',
+              opacity: Math.max(0, 1 - progress / SCROLL_HINT_FADE_END),
+              transition: 'opacity 0.4s ease',
+              pointerEvents: 'none',
+            }}
+          >
+            <span
+              className="hud-text"
+              style={{
+                fontSize: 'clamp(0.3rem, 0.6vw, 0.42rem)',
+                letterSpacing: '0.4em',
+                color: '#3dd9c4',
+                opacity: 0.45,
+              }}
+            >
+              SCROLL
+            </span>
+            <svg width="14" height="20" viewBox="0 0 14 20" fill="none" aria-hidden="true">
+              <rect x="1" y="1" width="12" height="18" rx="6" stroke="#3dd9c4" strokeWidth="1" opacity="0.35" />
+              <rect x="6" y="4" width="2" height="5" rx="1" fill="#3dd9c4" opacity="0.55" />
+            </svg>
+          </div>
         </div>
       </section>
 
@@ -639,7 +686,7 @@ export function ScrollSections({
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: '165px 1fr 200px',
+                gridTemplateColumns: 'clamp(120px, 15vw, 165px) 1fr clamp(140px, 18vw, 200px)',
                 gap: 'clamp(1.25rem, 3vw, 2.5rem)',
                 alignItems: 'start',
               }}
@@ -938,17 +985,21 @@ export function ScrollSections({
 
           {/* Portfolio grid */}
           <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '1rem',
-              width: 'clamp(320px, 80vw, 920px)',
-              maxHeight: '40vh',
-              overflowY: 'auto',
-              scrollbarWidth: 'none',
-              padding: '0.25rem',
-            }}
+            style={{ position: 'relative', width: 'clamp(320px, 80vw, 920px)' }}
           >
+            <div
+              data-lenis-prevent
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '1rem',
+                maxHeight: '40vh',
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(136,136,136,0.3) transparent',
+                padding: '0.25rem',
+              }}
+            >
             {devProjects.map((p) => (
               <a
                 key={p._id}
@@ -1011,6 +1062,20 @@ export function ScrollSections({
                 </div>
               </a>
             ))}
+            </div>
+
+            {/* Bottom fade — hints at scrollable content below */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: 48,
+                background: 'linear-gradient(transparent, rgba(20,20,20,0.9))',
+                pointerEvents: 'none',
+              }}
+            />
           </div>
 
           {/* Single browser mockup with tab switcher (web work) */}
