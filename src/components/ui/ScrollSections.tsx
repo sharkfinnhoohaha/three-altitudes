@@ -34,6 +34,13 @@ const SECTION_ENTRY_MOTION = {
 // Scroll progress fraction at which the scroll-down hint is fully hidden.
 // The hint fades linearly from 1 → 0 as progress goes 0 → SCROLL_HINT_FADE_END.
 const SCROLL_HINT_FADE_END = 0.06;
+const SECTION_BOUNDARIES = [0.25, 0.5, 0.75] as const;
+const VEIL_TRANSITION_RADIUS = 0.055;
+const VEIL_BASE_RGB = '5,8,12';
+const VEIL_BACKGROUND = `
+  radial-gradient(ellipse at center, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 100%),
+  linear-gradient(180deg, rgba(${VEIL_BASE_RGB},0.8) 0%, rgba(${VEIL_BASE_RGB},0.2) 22%, rgba(${VEIL_BASE_RGB},0.2) 78%, rgba(${VEIL_BASE_RGB},0.8) 100%)
+`;
 
 
 // ── Selected Work Browser ─────────────────────────────────────────────────────
@@ -90,7 +97,7 @@ function SelectedWorkBrowser({ webProjects }: { webProjects: SanityWebProject[] 
     <div
       ref={containerRef}
       style={{
-        width: 'clamp(360px, 72vw, 900px)',
+        width: 'clamp(340px, 66vw, 820px)',
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? 'translateY(0)' : 'translateY(24px)',
         transition: 'opacity 0.8s ease, transform 0.8s ease',
@@ -341,6 +348,14 @@ export function ScrollSections({
   const pocketEnterMix = sectionMix(0.21, 0.32);
   const engineEnterMix = sectionMix(0.45, 0.57);
   const horizonEnterMix = sectionMix(0.76, 0.88);
+  const sectionTransitionVeilOpacity = SECTION_BOUNDARIES.reduce((maxOpacity, boundary) => {
+    const dist = Math.abs(progress - boundary);
+    if (dist >= VEIL_TRANSITION_RADIUS) return maxOpacity;
+    const transitionProgress = 1 - dist / VEIL_TRANSITION_RADIUS;
+    // Smoothstep interpolation to avoid abrupt veil intensity changes.
+    const eased = transitionProgress * transitionProgress * (3 - 2 * transitionProgress);
+    return Math.max(maxOpacity, eased);
+  }, 0);
 
   const pocketSectionTransform = `translateY(${(1 - pocketEnterMix) * SECTION_ENTRY_MOTION.pocket.y}px) rotate(${(1 - pocketEnterMix) * SECTION_ENTRY_MOTION.pocket.rotate}deg) scale(${SECTION_ENTRY_MOTION.pocket.baseScale + pocketEnterMix * SECTION_ENTRY_MOTION.pocket.scaleRange})`;
   const engineSectionTransform = `translateX(${(1 - engineEnterMix) * SECTION_ENTRY_MOTION.engine.x}px) rotateY(${(1 - engineEnterMix) * SECTION_ENTRY_MOTION.engine.rotateY}deg) scale(${SECTION_ENTRY_MOTION.engine.baseScale + engineEnterMix * SECTION_ENTRY_MOTION.engine.scaleRange})`;
@@ -398,6 +413,20 @@ export function ScrollSections({
 
   return (
     <div className="scroll-content" style={{ height: '800vh' }}>
+      {/* Full-page transition veil to soften hard image edges at section boundaries */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 40,
+          pointerEvents: 'none',
+          opacity: sectionTransitionVeilOpacity,
+          transition: 'opacity 180ms linear',
+          background: VEIL_BACKGROUND,
+          mixBlendMode: 'multiply',
+        }}
+      />
 
       {/* ─── Stage 1: The Shoreline — Identity ────────────────────────── */}
       <section style={{ height: '200vh', position: 'relative' }}>
@@ -951,12 +980,14 @@ export function ScrollSections({
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
+            justifyContent: 'flex-start',
             opacity: engineRoomOpacity,
             transform: engineSectionTransform,
             filter: `blur(${(1 - engineEnterMix) * 1.4}px)`,
             pointerEvents: engineRoomOpacity > 0.1 ? 'all' : 'none',
-            gap: '1.5rem',
+            gap: 'clamp(2.25rem, 6vh, 5rem)',
+            paddingTop: 'clamp(1.5rem, 5vh, 4rem)',
+            paddingBottom: 'clamp(2.2rem, 6vh, 5rem)',
             overflow: 'hidden',
             willChange: 'transform, filter',
           }}
@@ -993,7 +1024,7 @@ export function ScrollSections({
                 display: 'grid',
                 gridTemplateColumns: 'repeat(3, 1fr)',
                 gap: '1rem',
-                maxHeight: '40vh',
+                maxHeight: 'min(36vh, 340px)',
                 overflowY: 'auto',
                 scrollbarWidth: 'thin',
                 scrollbarColor: 'rgba(136,136,136,0.3) transparent',
@@ -1079,7 +1110,9 @@ export function ScrollSections({
           </div>
 
           {/* Single browser mockup with tab switcher (web work) */}
-          <SelectedWorkBrowser webProjects={webProjects} />
+          <div style={{ marginTop: 'clamp(0.75rem, 3vh, 2.5rem)' }}>
+            <SelectedWorkBrowser webProjects={webProjects} />
+          </div>
         </div>
       </section>
 
