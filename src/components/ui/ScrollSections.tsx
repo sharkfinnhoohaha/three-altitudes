@@ -31,10 +31,9 @@ const SECTION_ENTRY_MOTION = {
   horizon: { y: 30, rotateX: 8, baseScale: 0.95, scaleRange: 0.05 },
 } as const;
 
-// Scroll progress fraction at which the scroll-down hint is fully hidden.
-// The hint fades linearly from 1 → 0 as progress goes 0 → SCROLL_HINT_FADE_END.
-const SCROLL_HINT_FADE_END = 0.06;
-const SECTION_BOUNDARIES = [0.25, 0.5, 0.75] as const;
+// With 4 sections at 200vh each, total height is 800vh and maxScroll is 700vh.
+// Section starts at 200vh/400vh/600vh, which normalize to 2/7, 4/7, 6/7 of maxScroll.
+const SECTION_BOUNDARIES = [2 / 7, 4 / 7, 6 / 7] as const;
 const VEIL_TRANSITION_RADIUS = 0.055;
 const VEIL_BASE_RGB = '5,8,12';
 const VEIL_BACKGROUND = `
@@ -336,7 +335,8 @@ export function ScrollSections({
   const shorelineOpacity  = sectionOpacity(-0.02, 0.03, 0.22, 0.28);
   const pocketOpacity     = sectionOpacity(0.23, 0.29, 0.50, 0.56);
   const engineRoomOpacity = sectionOpacity(0.47, 0.54, 0.77, 0.83);
-  const horizonOpacity    = sectionOpacity(0.78, 0.84, 0.98, 1.02);
+  // Keep the final horizon section fully present through page end by placing fade-out past max progress (1.0).
+  const horizonOpacity    = sectionOpacity(0.82, 0.9, 1.2, 1.28);
 
   const sectionMix = (start: number, end: number) => {
     if (progress <= start) return 0;
@@ -429,7 +429,7 @@ export function ScrollSections({
       />
 
       {/* ─── Stage 1: The Shoreline — Identity ────────────────────────── */}
-      <section style={{ height: '200vh', position: 'relative' }}>
+      <section data-scroll-section data-section-index={0} style={{ height: '200vh', position: 'relative' }}>
         <div
           style={{
             position: 'sticky',
@@ -572,45 +572,11 @@ export function ScrollSections({
             </div>
           </div>
 
-          {/* Scroll-down hint — fades out as user begins scrolling */}
-          <div
-            className="scroll-hint"
-            style={{
-              position: 'absolute',
-              bottom: 'clamp(1.5rem, 4vh, 3rem)',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '0.4rem',
-              opacity: Math.max(0, 1 - progress / SCROLL_HINT_FADE_END),
-              transition: 'opacity 0.4s ease',
-              pointerEvents: 'none',
-            }}
-          >
-            <span
-              className="hud-text"
-              style={{
-                fontSize: 'clamp(0.3rem, 0.6vw, 0.42rem)',
-                letterSpacing: '0.4em',
-                color: '#3dd9c4',
-                opacity: 0.45,
-              }}
-            >
-              SCROLL
-            </span>
-            <svg width="14" height="20" viewBox="0 0 14 20" fill="none" aria-hidden="true">
-              <rect x="1" y="1" width="12" height="18" rx="6" stroke="#3dd9c4" strokeWidth="1" opacity="0.35" />
-              <rect x="6" y="4" width="2" height="5" rx="1" fill="#3dd9c4" opacity="0.55" />
-            </svg>
-          </div>
         </div>
       </section>
 
       {/* ─── Stage 2: The Pocket — Sonic Work ─────────────────────────── */}
-      <section style={{ height: '200vh', position: 'relative' }}>
+      <section data-scroll-section data-section-index={1} style={{ height: '200vh', position: 'relative' }}>
         <div
           style={{
             position: 'sticky',
@@ -625,6 +591,7 @@ export function ScrollSections({
             filter: `blur(${(1 - pocketEnterMix) * 1.2}px)`,
             pointerEvents: pocketOpacity > 0.1 ? 'all' : 'none',
             padding: '0 clamp(1.5rem, 5vw, 4rem)',
+            textAlign: 'left',
             willChange: 'transform, filter',
           }}
         >
@@ -644,7 +611,7 @@ export function ScrollSections({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '1rem',
-                marginBottom: '0.9rem',
+                marginBottom: '1.25rem',
                 ...pocketAnim(0),
               }}
             >
@@ -663,7 +630,7 @@ export function ScrollSections({
                 display: 'flex',
                 alignItems: 'flex-end',
                 gap: '1.5rem',
-                marginBottom: '1.6rem',
+                marginBottom: '2rem',
                 ...pocketAnim(0.08),
               }}
             >
@@ -718,6 +685,7 @@ export function ScrollSections({
                 gridTemplateColumns: 'clamp(120px, 15vw, 165px) 1fr clamp(140px, 18vw, 200px)',
                 gap: 'clamp(1.25rem, 3vw, 2.5rem)',
                 alignItems: 'start',
+                paddingBottom: '0.75rem',
               }}
             >
 
@@ -971,7 +939,7 @@ export function ScrollSections({
       </section>
 
       {/* ─── Stage 3: Work Lab — Dev + Web Portfolio ───────────────────── */}
-      <section style={{ height: '200vh', position: 'relative' }}>
+      <section data-scroll-section data-section-index={2} style={{ height: '200vh', position: 'relative' }}>
         <div
           style={{
             position: 'sticky',
@@ -985,8 +953,8 @@ export function ScrollSections({
             transform: engineSectionTransform,
             filter: `blur(${(1 - engineEnterMix) * 1.4}px)`,
             pointerEvents: engineRoomOpacity > 0.1 ? 'all' : 'none',
-            gap: 'clamp(2.25rem, 6vh, 5rem)',
-            paddingTop: 'clamp(1.5rem, 5vh, 4rem)',
+            gap: 'clamp(2.8rem, 7vh, 6rem)',
+            paddingTop: 'clamp(2.6rem, 8vh, 5.5rem)',
             paddingBottom: 'clamp(2.2rem, 6vh, 5rem)',
             overflow: 'hidden',
             willChange: 'transform, filter',
@@ -1009,7 +977,7 @@ export function ScrollSections({
 
           <p
             className="hud-text"
-            style={{ fontSize: '0.45rem', letterSpacing: '0.4em', color: '#888', opacity: 0.4 }}
+            style={{ fontSize: '0.45rem', letterSpacing: '0.4em', color: '#888', opacity: 0.4, textAlign: 'center' }}
           >
             SELECTED WORK  //  BUILD + SHIP
           </p>
@@ -1110,14 +1078,14 @@ export function ScrollSections({
           </div>
 
           {/* Single browser mockup with tab switcher (web work) */}
-          <div style={{ marginTop: 'clamp(0.75rem, 3vh, 2.5rem)' }}>
+          <div style={{ marginTop: 'clamp(1.35rem, 4vh, 3.6rem)' }}>
             <SelectedWorkBrowser webProjects={webProjects} />
           </div>
         </div>
       </section>
 
       {/* ─── Stage 4: The Horizon — Aviation ───────────────────────────── */}
-      <section style={{ height: '200vh', position: 'relative' }}>
+      <section data-scroll-section data-section-index={3} style={{ height: '200vh', position: 'relative' }}>
         <div
           style={{
             position: 'sticky',
