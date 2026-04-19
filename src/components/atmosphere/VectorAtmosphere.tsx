@@ -6,6 +6,10 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 const MODULE_COUNT = 14;
+const FLIGHT_CYCLE_RANGE = 32;
+const MIN_AIRPLANE_SCALE = 0.9;
+const AIRPLANE_SCALE_RANGE = 1.1;
+const FLIGHT_CYCLE_DEPTH_FACTOR = 0.45;
 
 // ── Shared Simplex Noise GLSL (Ashima / McEwan, BSD licensed) ───────────────
 
@@ -175,29 +179,39 @@ export function EngineRoomAtmosphere() {
         x: (Math.random() - 0.5) * 24,
         y: (Math.random() - 0.5) * 14,
         z: -52 - i * 3.2,
-        scale: 1.2 + Math.random() * 2.8,
+        scale: MIN_AIRPLANE_SCALE + Math.random() * AIRPLANE_SCALE_RANGE,
         phase: Math.random() * Math.PI * 2,
         floatSpeed: 0.12 + Math.random() * 0.22,
         heading: Math.random() * Math.PI * 2,
-        bank: (Math.random() - 0.5) * 0.35,
+        bank: (Math.random() - 0.5) * 0.22,
         pitch: (Math.random() - 0.5) * 0.12,
-        bankDrift: 0.08 + Math.random() * 0.12,
-        yawDrift: (Math.random() - 0.5) * 0.008,
+        bankDrift: 0.09 + Math.random() * 0.12,
+        yawDrift: (Math.random() - 0.5) * 0.006,
+        flightCycleOffset: Math.random() * FLIGHT_CYCLE_RANGE,
       })),
     []
   );
 
-  // Merged module geometry for the work section (avoids aircraft silhouettes
-  // before the dedicated aviation section).
+  // Stylized aircraft wireframe geometry.
   const geo = useMemo(() => {
-    const core = new THREE.BoxGeometry(0.9, 0.22, 0.22);
-    const sideLeft = new THREE.BoxGeometry(0.12, 0.12, 0.12);
-    sideLeft.translate(-0.58, 0, 0);
-    const sideRight = sideLeft.clone();
-    sideRight.translate(1.16, 0, 0);
-    const antenna = new THREE.BoxGeometry(0.08, 0.32, 0.08);
-    antenna.translate(0, 0.24, 0);
-    return mergeGeometries([core, sideLeft, sideRight, antenna])!;
+    const fuselage = new THREE.BoxGeometry(1.8, 0.16, 0.16);
+    const nose = new THREE.ConeGeometry(0.10, 0.32, 8);
+    nose.rotateZ(-Math.PI / 2);
+    nose.translate(1.06, 0, 0);
+
+    const wing = new THREE.BoxGeometry(0.26, 0.02, 1.65);
+    const tailWing = new THREE.BoxGeometry(0.22, 0.02, 0.72);
+    tailWing.translate(-0.70, 0, 0);
+
+    const vTail = new THREE.BoxGeometry(0.04, 0.32, 0.05);
+    vTail.translate(-0.76, 0.18, 0);
+
+    const enginePodL = new THREE.BoxGeometry(0.34, 0.10, 0.10);
+    enginePodL.translate(0.08, -0.03, -0.45);
+    const enginePodR = enginePodL.clone();
+    enginePodR.translate(0, 0, 0.90);
+
+    return mergeGeometries([fuselage, nose, wing, tailWing, vTail, enginePodL, enginePodR])!;
   }, []);
 
   const mat = useMemo(
@@ -232,16 +246,18 @@ export function EngineRoomAtmosphere() {
 
     for (let i = 0; i < MODULE_COUNT; i++) {
       const d = moduleData[i];
+      const flightCycle =
+        (time * (0.8 + d.floatSpeed) + d.flightCycleOffset) % FLIGHT_CYCLE_RANGE;
       dummy.position.set(
         d.x,
         d.y + Math.sin(time * d.floatSpeed + d.phase) * 0.35,
-        d.z
+        d.z + flightCycle * FLIGHT_CYCLE_DEPTH_FACTOR
       );
       dummy.scale.setScalar(d.scale);
       dummy.rotation.set(
         d.pitch + Math.sin(time * 0.10 + d.phase) * 0.04,
         d.heading + time * d.yawDrift,
-        d.bank + Math.sin(time * d.bankDrift + d.phase + 1.0) * 0.06
+        d.bank + Math.sin(time * d.bankDrift + d.phase + 1.0) * 0.09
       );
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);

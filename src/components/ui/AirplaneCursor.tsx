@@ -97,19 +97,25 @@ export function AirplaneCursor() {
         Dimensions match the previous CSS data-URI cursor (32 × 32 px).
       */}
       <svg
-        width="36"
-        height="36"
-        viewBox="-18 -18 36 36"
+        width="38"
+        height="38"
+        viewBox="-19 -19 38 38"
         style={{ transform: 'translate(-50%, -50%)' }}
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
-        {/* Fuselage — narrow teardrop, nose at top */}
-        <polygon points="0,-14 3.5,-2 0,2 -3.5,-2" fill="#1a1a1a" opacity="0.90" />
-        {/* Wings — swept horizontal span */}
-        <polygon points="-13,2 0,-2 13,2 0,5.5" fill="#1a1a1a" opacity="0.85" />
-        {/* Horizontal stabiliser */}
-        <polygon points="-5.5,8.5 0,6 5.5,8.5 0,10.5" fill="#1a1a1a" opacity="0.80" />
+        <path
+          d="M0 -15 L1.4 -9.4 L2.3 -1.7 L10.5 1.6 L10.5 3.1 L2.15 2.2 L2.05 9.2 L4.5 12.6 L4.5 14.3 L0 11.2 L-4.5 14.3 L-4.5 12.6 L-2.05 9.2 L-2.15 2.2 L-10.5 3.1 L-10.5 1.6 L-2.3 -1.7 L-1.4 -9.4 Z"
+          fill="#20262c"
+          opacity="0.92"
+        />
+        <path
+          d="M0 -15 L1.4 -9.4 L2.3 -1.7 L10.5 1.6 L10.5 3.1 L2.15 2.2 L2.05 9.2 L4.5 12.6 L4.5 14.3 L0 11.2 L-4.5 14.3 L-4.5 12.6 L-2.05 9.2 L-2.15 2.2 L-10.5 3.1 L-10.5 1.6 L-2.3 -1.7 L-1.4 -9.4 Z"
+          fill="none"
+          stroke="rgba(255,255,255,0.35)"
+          strokeWidth="0.5"
+        />
+        <circle cx="0" cy="-7.2" r="0.85" fill="rgba(230,245,255,0.9)" />
       </svg>
     </div>
   );

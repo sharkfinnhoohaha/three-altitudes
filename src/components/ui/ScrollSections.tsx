@@ -36,6 +36,9 @@ const SECTION_ENTRY_MOTION = {
 const SECTION_BOUNDARIES = [2 / 7, 4 / 7, 6 / 7] as const;
 const VEIL_TRANSITION_RADIUS = 0.055;
 const VEIL_BASE_RGB = '5,8,12';
+const HORIZON_PANEL_BORDER = 'rgba(42,42,42,0.16)';
+const HORIZON_PANEL_BG_TOP = 'rgba(255,255,255,0.26)';
+const HORIZON_PANEL_BG_BOTTOM = 'rgba(235,238,243,0.34)';
 const VEIL_BACKGROUND = `
   radial-gradient(ellipse at center, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 100%),
   linear-gradient(180deg, rgba(${VEIL_BASE_RGB},0.8) 0%, rgba(${VEIL_BASE_RGB},0.2) 22%, rgba(${VEIL_BASE_RGB},0.2) 78%, rgba(${VEIL_BASE_RGB},0.8) 100%)
@@ -1121,7 +1124,21 @@ export function ScrollSections({
           </div>
 
           {/* Content */}
-          <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.6rem' }}>
+          <div
+            style={{
+              position: 'relative',
+              zIndex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.6rem',
+              width: 'min(92vw, 880px)',
+              padding: 'clamp(0.8rem, 2.6vw, 1.7rem)',
+              border: `1px solid ${HORIZON_PANEL_BORDER}`,
+              background: `linear-gradient(180deg, ${HORIZON_PANEL_BG_TOP}, ${HORIZON_PANEL_BG_BOTTOM})`,
+              backdropFilter: 'blur(6px)',
+            }}
+          >
 
             <p
               className="hud-text"
@@ -1156,16 +1173,18 @@ export function ScrollSections({
             </h2>
 
             {/* Flight instruments */}
-            <div style={{ display: 'flex', gap: '2rem', marginTop: '1rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
               {gauges.map(({ label, value }) => (
                 <div
                   key={label}
                   className="flight-gauge"
                   style={{
                     textAlign: 'center',
-                    padding: '1rem 1.25rem',
-                    width: '90px',
-                    height: '90px',
+                    padding: '0.85rem 1rem',
+                    width: 'min(90px, 22vw)',
+                    height: 'min(90px, 22vw)',
+                    minWidth: '72px',
+                    minHeight: '72px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -1201,7 +1220,7 @@ export function ScrollSections({
                     padding: '0.6rem 1.1rem',
                     border: '1px solid rgba(42,42,42,0.35)',
                     textDecoration: 'none',
-                    background: 'rgba(245,245,247,0.5)',
+                    background: 'rgba(245,245,247,0.62)',
                     backdropFilter: 'blur(4px)',
                     transition: 'background 0.2s ease, border-color 0.2s ease',
                   }}
