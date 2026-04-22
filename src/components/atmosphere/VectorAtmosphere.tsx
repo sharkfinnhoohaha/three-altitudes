@@ -4,8 +4,10 @@ import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { isCompactLayout } from '@/lib/responsive';
 
-const MODULE_COUNT = 14;
+const MODULE_COUNT_DESKTOP = 14;
+const MODULE_COUNT_MOBILE = 7;
 const FLIGHT_CYCLE_RANGE = 32;
 const MIN_AIRPLANE_SCALE = 0.9;
 const AIRPLANE_SCALE_RANGE = 1.1;
@@ -177,9 +179,13 @@ export function EngineRoomAtmosphere() {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
+  // Reduce instance count on mobile/coarse-pointer devices.
+  const compact = useMemo(() => isCompactLayout(), []);
+  const moduleCount = compact ? MODULE_COUNT_MOBILE : MODULE_COUNT_DESKTOP;
+
   const moduleData = useMemo(
     () =>
-      Array.from({ length: MODULE_COUNT }, (_, i) => ({
+      Array.from({ length: moduleCount }, (_, i) => ({
         x: (Math.random() - 0.5) * 24,
         y: (Math.random() - 0.5) * 14,
         z: -52 - i * 3.2,
@@ -193,7 +199,7 @@ export function EngineRoomAtmosphere() {
         yawDrift: (Math.random() - 0.5) * 0.006,
         flightCycleOffset: Math.random() * FLIGHT_CYCLE_RANGE,
       })),
-    []
+    [moduleCount]
   );
 
   // Stylized aircraft wireframe geometry.
@@ -248,7 +254,7 @@ export function EngineRoomAtmosphere() {
 
     mat.opacity = visibility * 0.50;
 
-    for (let i = 0; i < MODULE_COUNT; i++) {
+    for (let i = 0; i < moduleCount; i++) {
       const d = moduleData[i];
       const flightCycle =
         (time * (0.8 + d.floatSpeed) + d.flightCycleOffset) % FLIGHT_CYCLE_RANGE;
@@ -272,7 +278,7 @@ export function EngineRoomAtmosphere() {
   return (
     <instancedMesh
       ref={meshRef}
-      args={[geo, mat, MODULE_COUNT]}
+      args={[geo, mat, moduleCount]}
       frustumCulled={false}
     />
   );
@@ -295,14 +301,20 @@ export function HorizonAtmosphere() {
   const groupRef = useRef<THREE.Group>(null);
   const mouseRef = useRef({ x: 0, y: 0 });
   const smoothMouse = useRef({ x: 0, y: 0 });
-  const cloudMeshRefs = useRef<(THREE.Mesh | null)[]>(
-    Array(CLOUD_LAYERS.length).fill(null)
+
+  // On mobile, use every other cloud layer (5 instead of 10) to halve GPU cost.
+  const compact = useMemo(() => isCompactLayout(), []);
+  const activeLayers = useMemo(
+    () => (compact ? CLOUD_LAYERS.filter((_, i) => i % 2 === 0) : CLOUD_LAYERS),
+    [compact]
   );
+
+  const cloudMeshRefs = useRef<(THREE.Mesh | null)[]>([]);
 
   // ── Per-layer materials (each unique — no shared state) ───────────────────
   const cloudMaterials = useMemo(
     () =>
-      CLOUD_LAYERS.map(
+      activeLayers.map(
         (layer) =>
           new THREE.ShaderMaterial({
             vertexShader: CLOUD_VERT,
@@ -320,7 +332,7 @@ export function HorizonAtmosphere() {
             depthWrite: false,
           })
       ),
-    []
+    [activeLayers]
   );
 
   // ── Shared plane geometry (scaled per-mesh via mesh.scale) ────────────────
@@ -406,7 +418,7 @@ export function HorizonAtmosphere() {
           : 1;
 
     // ── Per-layer material + drift updates ────────────────────────────────
-    CLOUD_LAYERS.forEach((layer, i) => {
+    activeLayers.forEach((layer, i) => {
       const mat = cloudMaterials[i];
       mat.uniforms.uTime.value = time;
       mat.uniforms.uVisibility.value = visibility;
@@ -458,7 +470,7 @@ export function HorizonAtmosphere() {
   return (
     <>
       {/* Cloud planes — each with its own unique ShaderMaterial */}
-      {CLOUD_LAYERS.map((layer, i) => (
+      {activeLayers.map((layer, i) => (
         <mesh
           key={i}
           ref={(el) => { cloudMeshRefs.current[i] = el; }}

@@ -3,10 +3,7 @@
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-
-const FOAM_COUNT = 28;
-const WAVE_X_SEGS = 48;
-const WAVE_Y_SEGS = 24;
+import { isCompactLayout } from '@/lib/responsive';
 
 /**
  * ShorelineAtmosphere — Stage 1 (0–25% scroll)
@@ -20,9 +17,15 @@ export function ShorelineAtmosphere() {
   const foamRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
+  // Reduce geometry complexity on mobile/coarse-pointer devices.
+  const compact = useMemo(() => isCompactLayout(), []);
+  const foamCount = compact ? 14 : 28;
+  const waveXSegs = compact ? 24 : 48;
+  const waveYSegs = compact ? 12 : 24;
+
   const waveGeo = useMemo(() => {
-    return new THREE.PlaneGeometry(60, 22, WAVE_X_SEGS, WAVE_Y_SEGS);
-  }, []);
+    return new THREE.PlaneGeometry(60, 22, waveXSegs, waveYSegs);
+  }, [waveXSegs, waveYSegs]);
 
   const waveMat = useMemo(() => {
     const mat = new THREE.MeshStandardMaterial({
@@ -66,7 +69,7 @@ export function ShorelineAtmosphere() {
   // Foam: small organic spheres drifting with the swell
   const foamData = useMemo(
     () =>
-      Array.from({ length: FOAM_COUNT }, () => ({
+      Array.from({ length: foamCount }, () => ({
         x: (Math.random() - 0.5) * 30,
         y: (Math.random() - 0.5) * 10,
         z: 7 - Math.random() * 28,
@@ -75,7 +78,7 @@ export function ShorelineAtmosphere() {
         period: 3.5 + Math.random() * 4.5, // slow swell 3.5–8s
         lateralPeriod: 5 + Math.random() * 6,
       })),
-    []
+    [foamCount]
   );
 
   const foamGeo = useMemo(() => new THREE.SphereGeometry(1, 5, 4), []);
@@ -118,7 +121,7 @@ export function ShorelineAtmosphere() {
     // --- Foam particles ---
     if (foamRef.current) {
       foamMat.opacity = visibility * 0.32;
-      for (let i = 0; i < FOAM_COUNT; i++) {
+      for (let i = 0; i < foamCount; i++) {
         const d = foamData[i];
         const swellY = Math.sin(time / d.period + d.phase) * 2.0;
         const swellX = Math.cos(time / d.lateralPeriod + d.phase) * 0.5;
@@ -146,7 +149,7 @@ export function ShorelineAtmosphere() {
       {/* Drifting foam particles */}
       <instancedMesh
         ref={foamRef}
-        args={[foamGeo, foamMat, FOAM_COUNT]}
+        args={[foamGeo, foamMat, foamCount]}
         frustumCulled={false}
       />
     </group>
