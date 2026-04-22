@@ -40,6 +40,7 @@ body {
   font-family: 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  scroll-snap-type: y mandatory;
 }
 
 /* Lenis smooth scroll overrides */
@@ -80,6 +81,11 @@ html.lenis body {
   position: relative;
   z-index: 1;
   pointer-events: none;
+}
+
+[data-scroll-section] {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
 }
 
 .scroll-content > * {
@@ -442,6 +448,27 @@ body::after {
 @keyframes scroll-hint-bob {
   0%, 100% { transform: translateY(0) translateX(-50%); opacity: 0.45; }
   50%       { transform: translateY(6px) translateX(-50%); opacity: 0.7; }
+}
+
+@keyframes journey-swipe {
+  0% {
+    opacity: 0;
+    transform: translateX(-16%) skewX(-8deg) scaleX(0.92);
+    filter: blur(8px);
+  }
+  24% {
+    opacity: 0.42;
+  }
+  55% {
+    opacity: 0.28;
+    transform: translateX(0%) skewX(-8deg) scaleX(1.03);
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(14%) skewX(-8deg) scaleX(1.06);
+    filter: blur(6px);
+  }
 }
 
 .scroll-hint {

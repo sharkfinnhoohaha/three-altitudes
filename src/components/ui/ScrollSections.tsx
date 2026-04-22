@@ -28,12 +28,12 @@ import {
 const SECTION_ENTRY_MOTION = {
   pocket: { y: 26, rotate: -7, baseScale: 0.93, scaleRange: 0.07 },
   engine: { x: 44, rotateY: 7, baseScale: 0.94, scaleRange: 0.06 },
+  web: { y: 24, rotate: 4, baseScale: 0.95, scaleRange: 0.05 },
   horizon: { y: 30, rotateX: 8, baseScale: 0.95, scaleRange: 0.05 },
 } as const;
 
-// With 4 sections at 200vh each, total height is 800vh and maxScroll is 700vh.
-// Section starts at 200vh/400vh/600vh, which normalize to 2/7, 4/7, 6/7 of maxScroll.
-const SECTION_BOUNDARIES = [2 / 7, 4 / 7, 6 / 7] as const;
+const SECTION_STARTS: number[] = [0, 0.25, 0.5, 0.75, 1];
+const SECTION_BOUNDARIES = [0.25, 0.5, 0.75] as const;
 const VEIL_TRANSITION_RADIUS = 0.055;
 const VEIL_BASE_RGB = '5,8,12';
 const HORIZON_PANEL_BORDER = 'rgba(42,42,42,0.16)';
@@ -288,8 +288,10 @@ export function ScrollSections({
   const [identityIndex, setIdentityIndex] = useState(0);
   const [cascadeActive, setCascadeActive] = useState(false);
   const [pocketEntered, setPocketEntered] = useState(false);
+  const [swipeFxKey, setSwipeFxKey] = useState(0);
   const pocketTextRef = useRef<HTMLDivElement>(null);
   const prevAtmosphere = useRef(atmosphere);
+  const prevSectionIndex = useRef(0);
 
   // Resolve data — Sanity data when available, fallback constants otherwise
   const heroName = (hero?.name ?? '').trim() || 'FINN BENNETT';
@@ -335,11 +337,12 @@ export function ScrollSections({
     return fadeIn * fadeOut;
   }
 
-  const shorelineOpacity  = sectionOpacity(-0.02, 0.03, 0.22, 0.28);
-  const pocketOpacity     = sectionOpacity(0.23, 0.29, 0.50, 0.56);
-  const engineRoomOpacity = sectionOpacity(0.47, 0.54, 0.77, 0.83);
+  const shorelineOpacity  = sectionOpacity(-0.02, 0.03, 0.21, 0.27);
+  const pocketOpacity     = sectionOpacity(0.2, 0.28, 0.46, 0.54);
+  const engineRoomOpacity = sectionOpacity(0.45, 0.53, 0.71, 0.79);
+  const webOpacity        = sectionOpacity(0.7, 0.78, 0.94, 1.02);
   // Keep the final horizon section fully present through page end by placing fade-out past max progress (1.0).
-  const horizonOpacity    = sectionOpacity(0.82, 0.9, 1.2, 1.28);
+  const horizonOpacity    = sectionOpacity(0.92, 0.98, 1.2, 1.28);
 
   const sectionMix = (start: number, end: number) => {
     if (progress <= start) return 0;
@@ -349,8 +352,9 @@ export function ScrollSections({
   };
 
   const pocketEnterMix = sectionMix(0.21, 0.32);
-  const engineEnterMix = sectionMix(0.45, 0.57);
-  const horizonEnterMix = sectionMix(0.76, 0.88);
+  const engineEnterMix = sectionMix(0.43, 0.56);
+  const webEnterMix = sectionMix(0.68, 0.81);
+  const horizonEnterMix = sectionMix(0.9, 0.99);
   const sectionTransitionVeilOpacity = SECTION_BOUNDARIES.reduce((maxOpacity, boundary) => {
     const dist = Math.abs(progress - boundary);
     if (dist >= VEIL_TRANSITION_RADIUS) return maxOpacity;
@@ -362,7 +366,14 @@ export function ScrollSections({
 
   const pocketSectionTransform = `translateY(${(1 - pocketEnterMix) * SECTION_ENTRY_MOTION.pocket.y}px) rotate(${(1 - pocketEnterMix) * SECTION_ENTRY_MOTION.pocket.rotate}deg) scale(${SECTION_ENTRY_MOTION.pocket.baseScale + pocketEnterMix * SECTION_ENTRY_MOTION.pocket.scaleRange})`;
   const engineSectionTransform = `translateX(${(1 - engineEnterMix) * SECTION_ENTRY_MOTION.engine.x}px) rotateY(${(1 - engineEnterMix) * SECTION_ENTRY_MOTION.engine.rotateY}deg) scale(${SECTION_ENTRY_MOTION.engine.baseScale + engineEnterMix * SECTION_ENTRY_MOTION.engine.scaleRange})`;
+  const webSectionTransform = `translateY(${(1 - webEnterMix) * SECTION_ENTRY_MOTION.web.y}px) rotate(${(1 - webEnterMix) * SECTION_ENTRY_MOTION.web.rotate}deg) scale(${SECTION_ENTRY_MOTION.web.baseScale + webEnterMix * SECTION_ENTRY_MOTION.web.scaleRange})`;
   const horizonSectionTransform = `translateY(${(1 - horizonEnterMix) * SECTION_ENTRY_MOTION.horizon.y}px) rotateX(${(1 - horizonEnterMix) * SECTION_ENTRY_MOTION.horizon.rotateX}deg) scale(${SECTION_ENTRY_MOTION.horizon.baseScale + horizonEnterMix * SECTION_ENTRY_MOTION.horizon.scaleRange})`;
+
+  const currentSectionIndex = SECTION_STARTS.reduce((nearestIdx, sectionStart, idx) => {
+    const nearestDist = Math.abs(progress - SECTION_STARTS[nearestIdx]);
+    const currentDist = Math.abs(progress - sectionStart);
+    return currentDist < nearestDist ? idx : nearestIdx;
+  }, 0);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -397,6 +408,13 @@ export function ScrollSections({
     if (atmosphere === 'pocket') setPocketEntered(true);
   }, [atmosphere]);
 
+  useEffect(() => {
+    if (currentSectionIndex !== prevSectionIndex.current) {
+      prevSectionIndex.current = currentSectionIndex;
+      setSwipeFxKey((k) => k + 1);
+    }
+  }, [currentSectionIndex]);
+
   // Hide default cursor in horizon section — AirplaneCursor renders the SVG replacement
   useEffect(() => {
     if (atmosphere === 'horizon') {
@@ -415,7 +433,7 @@ export function ScrollSections({
   });
 
   return (
-    <div className="scroll-content" style={{ height: '800vh' }}>
+    <div className="scroll-content" style={{ height: '500vh' }}>
       {/* Full-page transition veil to soften hard image edges at section boundaries */}
       <div
         aria-hidden="true"
@@ -431,8 +449,25 @@ export function ScrollSections({
         }}
       />
 
+      {/* Swipe transition pulse — surf/aviation inspired streak overlay */}
+      <div
+        key={swipeFxKey}
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 41,
+          pointerEvents: 'none',
+          opacity: 0,
+          background:
+            'linear-gradient(115deg, rgba(61,217,196,0) 8%, rgba(61,217,196,0.15) 28%, rgba(255,140,0,0.24) 50%, rgba(212,228,240,0.22) 72%, rgba(212,228,240,0) 92%)',
+          transform: 'translateX(-14%) skewX(-8deg)',
+          animation: 'journey-swipe 620ms cubic-bezier(0.16,1,0.3,1) forwards',
+        }}
+      />
+
       {/* ─── Stage 1: The Shoreline — Identity ────────────────────────── */}
-      <section data-scroll-section data-section-index={0} style={{ height: '200vh', position: 'relative' }}>
+      <section data-scroll-section data-atmosphere="shoreline" data-section-index={0} style={{ height: '100vh', position: 'relative' }}>
         <div
           style={{
             position: 'sticky',
@@ -579,7 +614,7 @@ export function ScrollSections({
       </section>
 
       {/* ─── Stage 2: The Pocket — Sonic Work ─────────────────────────── */}
-      <section data-scroll-section data-section-index={1} style={{ height: '200vh', position: 'relative' }}>
+      <section data-scroll-section data-atmosphere="pocket" data-section-index={1} style={{ height: '100vh', position: 'relative' }}>
         <div
           style={{
             position: 'sticky',
@@ -942,7 +977,7 @@ export function ScrollSections({
       </section>
 
       {/* ─── Stage 3: Work Lab — Dev + Web Portfolio ───────────────────── */}
-      <section data-scroll-section data-section-index={2} style={{ height: '200vh', position: 'relative' }}>
+      <section data-scroll-section data-atmosphere="engine-room" data-section-index={2} style={{ height: '100vh', position: 'relative' }}>
         <div
           style={{
             position: 'sticky',
@@ -951,14 +986,14 @@ export function ScrollSections({
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'flex-start',
+            justifyContent: 'center',
             opacity: engineRoomOpacity,
             transform: engineSectionTransform,
             filter: `blur(${(1 - engineEnterMix) * 1.4}px)`,
             pointerEvents: engineRoomOpacity > 0.1 ? 'all' : 'none',
-            gap: 'clamp(2.8rem, 7vh, 6rem)',
-            paddingTop: 'clamp(2.6rem, 8vh, 5.5rem)',
-            paddingBottom: 'clamp(2.2rem, 6vh, 5rem)',
+            gap: 'clamp(1.2rem, 3.8vh, 2.4rem)',
+            paddingTop: 'clamp(1.2rem, 3vh, 2.2rem)',
+            paddingBottom: 'clamp(1.2rem, 3vh, 2.2rem)',
             overflow: 'hidden',
             willChange: 'transform, filter',
           }}
@@ -1080,15 +1115,42 @@ export function ScrollSections({
             />
           </div>
 
-          {/* Single browser mockup with tab switcher (web work) */}
-          <div style={{ marginTop: 'clamp(1.35rem, 4vh, 3.6rem)' }}>
-            <SelectedWorkBrowser webProjects={webProjects} />
-          </div>
         </div>
       </section>
 
-      {/* ─── Stage 4: The Horizon — Aviation ───────────────────────────── */}
-      <section data-scroll-section data-section-index={3} style={{ height: '200vh', position: 'relative' }}>
+      {/* ─── Stage 4: Website Showcase ──────────────────────────────────── */}
+      <section data-scroll-section data-atmosphere="engine-room" data-section-index={3} style={{ height: '100vh', position: 'relative' }}>
+        <div
+          style={{
+            position: 'sticky',
+            top: 0,
+            height: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: webOpacity,
+            transform: webSectionTransform,
+            filter: `blur(${(1 - webEnterMix) * 1.2}px)`,
+            pointerEvents: webOpacity > 0.1 ? 'all' : 'none',
+            gap: 'clamp(1rem, 3vh, 2.2rem)',
+            padding: 'clamp(1rem, 3vh, 2rem)',
+            overflow: 'hidden',
+            willChange: 'transform, filter',
+          }}
+        >
+          <p
+            className="hud-text"
+            style={{ fontSize: '0.4rem', letterSpacing: '0.36em', color: '#00ff88', opacity: 0.45, textAlign: 'center' }}
+          >
+            WEBSITE SHOWCASE  //  LIVE PREVIEWS
+          </p>
+          <SelectedWorkBrowser webProjects={webProjects} />
+        </div>
+      </section>
+
+      {/* ─── Stage 5: The Horizon — Aviation ───────────────────────────── */}
+      <section data-scroll-section data-atmosphere="horizon" data-section-index={4} style={{ height: '100vh', position: 'relative' }}>
         <div
           style={{
             position: 'sticky',

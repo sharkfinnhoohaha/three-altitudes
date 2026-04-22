@@ -35,7 +35,7 @@ const SECTION_LABELS: { index: number; label: string; atmosphere: Atmosphere }[]
   { index: 0, label: 'SHORELINE', atmosphere: 'shoreline' },
   { index: 1, label: 'SONIC', atmosphere: 'pocket' },
   { index: 2, label: 'WORK', atmosphere: 'engine-room' },
-  { index: 3, label: 'HORIZON', atmosphere: 'horizon' },
+  { index: 4, label: 'HORIZON', atmosphere: 'horizon' },
 ];
 
 export function HUD() {
