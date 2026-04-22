@@ -40,7 +40,7 @@ body {
   font-family: 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  scroll-snap-type: y mandatory;
+  scroll-snap-type: none;
 }
 
 /* Lenis smooth scroll overrides */
@@ -84,8 +84,7 @@ html.lenis body {
 }
 
 [data-scroll-section] {
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
+  scroll-snap-align: none;
 }
 
 .scroll-content > * {

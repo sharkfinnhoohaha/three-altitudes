@@ -10,6 +10,10 @@ const FLIGHT_CYCLE_RANGE = 32;
 const MIN_AIRPLANE_SCALE = 0.9;
 const AIRPLANE_SCALE_RANGE = 1.1;
 const FLIGHT_CYCLE_DEPTH_FACTOR = 0.45;
+const HORIZON_3D_START_PROGRESS = 0.83;
+const HORIZON_3D_FULL_VISIBILITY_PROGRESS = 0.94;
+const HORIZON_3D_FADE_RANGE =
+  HORIZON_3D_FULL_VISIBILITY_PROGRESS - HORIZON_3D_START_PROGRESS;
 
 // ── Shared Simplex Noise GLSL (Ashima / McEwan, BSD licensed) ───────────────
 
@@ -395,10 +399,10 @@ export function HorizonAtmosphere() {
 
     // Clouds: start only after aviation section begins.
     const visibility =
-      progress < 0.79
+      progress < HORIZON_3D_START_PROGRESS
         ? 0
-        : progress < 0.90
-          ? (progress - 0.79) / 0.11
+        : progress < HORIZON_3D_FULL_VISIBILITY_PROGRESS
+          ? (progress - HORIZON_3D_START_PROGRESS) / HORIZON_3D_FADE_RANGE
           : 1;
 
     // ── Per-layer material + drift updates ────────────────────────────────

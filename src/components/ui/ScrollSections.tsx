@@ -24,6 +24,7 @@ import {
   DATA_COLUMNS,
   WAVEFORM_BARS,
 } from '@/lib/fallbacks';
+import { COMPACT_LAYOUT_MEDIA_QUERY } from '@/lib/responsive';
 
 const SECTION_ENTRY_MOTION = {
   pocket: { y: 26, rotate: -7, baseScale: 0.93, scaleRange: 0.07 },
@@ -43,6 +44,7 @@ const VEIL_BACKGROUND = `
   radial-gradient(ellipse at center, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 100%),
   linear-gradient(180deg, rgba(${VEIL_BASE_RGB},0.8) 0%, rgba(${VEIL_BASE_RGB},0.2) 22%, rgba(${VEIL_BASE_RGB},0.2) 78%, rgba(${VEIL_BASE_RGB},0.8) 100%)
 `;
+const CASCADE_TRIGGER_PROGRESS = 0.47;
 
 
 // ── Selected Work Browser ─────────────────────────────────────────────────────
@@ -99,7 +101,7 @@ function SelectedWorkBrowser({ webProjects }: { webProjects: SanityWebProject[] 
     <div
       ref={containerRef}
       style={{
-        width: 'clamp(340px, 66vw, 820px)',
+        width: 'clamp(280px, 90vw, 820px)',
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? 'translateY(0)' : 'translateY(24px)',
         transition: 'opacity 0.8s ease, transform 0.8s ease',
@@ -211,7 +213,7 @@ function SelectedWorkBrowser({ webProjects }: { webProjects: SanityWebProject[] 
       </div>
 
       {/* ── Tab selector ── */}
-      <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+      <div style={{ display: 'flex', gap: 12, marginTop: 24, flexWrap: 'wrap' }}>
         {webProjects.map((project, idx) => {
           const isActive = idx === activeIdx;
           return (
@@ -289,9 +291,11 @@ export function ScrollSections({
   const [cascadeActive, setCascadeActive] = useState(false);
   const [pocketEntered, setPocketEntered] = useState(false);
   const [swipeFxKey, setSwipeFxKey] = useState(0);
+  const [isCompactLayout, setIsCompactLayout] = useState(false);
   const pocketTextRef = useRef<HTMLDivElement>(null);
   const prevAtmosphere = useRef(atmosphere);
   const prevSectionIndex = useRef(0);
+  const prevProgressRef = useRef(progress);
 
   // Resolve data — Sanity data when available, fallback constants otherwise
   const heroName = (hero?.name ?? '').trim() || 'FINN BENNETT';
@@ -337,12 +341,12 @@ export function ScrollSections({
     return fadeIn * fadeOut;
   }
 
-  const shorelineOpacity  = sectionOpacity(-0.02, 0.03, 0.21, 0.27);
-  const pocketOpacity     = sectionOpacity(0.2, 0.28, 0.46, 0.54);
-  const engineRoomOpacity = sectionOpacity(0.45, 0.53, 0.71, 0.79);
-  const webOpacity        = sectionOpacity(0.7, 0.78, 0.94, 1.02);
+  const shorelineOpacity  = sectionOpacity(-0.02, 0.03, 0.18, 0.24);
+  const pocketOpacity     = sectionOpacity(0.14, 0.24, 0.44, 0.52);
+  const engineRoomOpacity = sectionOpacity(0.38, 0.49, 0.67, 0.75);
+  const webOpacity        = sectionOpacity(0.62, 0.74, 0.9, 0.98);
   // Keep the final horizon section fully present through page end by placing fade-out past max progress (1.0).
-  const horizonOpacity    = sectionOpacity(0.92, 0.98, 1.2, 1.28);
+  const horizonOpacity    = sectionOpacity(0.84, 0.95, 1.2, 1.28);
 
   const sectionMix = (start: number, end: number) => {
     if (progress <= start) return 0;
@@ -351,10 +355,10 @@ export function ScrollSections({
     return t * t * (3 - 2 * t);
   };
 
-  const pocketEnterMix = sectionMix(0.21, 0.32);
-  const engineEnterMix = sectionMix(0.43, 0.56);
-  const webEnterMix = sectionMix(0.68, 0.81);
-  const horizonEnterMix = sectionMix(0.9, 0.99);
+  const pocketEnterMix = sectionMix(0.15, 0.25);
+  const engineEnterMix = sectionMix(0.38, 0.5);
+  const webEnterMix = sectionMix(0.63, 0.76);
+  const horizonEnterMix = sectionMix(0.9, 1);
   const sectionTransitionVeilOpacity = SECTION_BOUNDARIES.reduce((maxOpacity, boundary) => {
     const dist = Math.abs(progress - boundary);
     if (dist >= VEIL_TRANSITION_RADIUS) return maxOpacity;
@@ -382,6 +386,14 @@ export function ScrollSections({
     return () => clearInterval(id);
   }, [identities.length]);
 
+  useEffect(() => {
+    const media = window.matchMedia(COMPACT_LAYOUT_MEDIA_QUERY);
+    const update = () => setIsCompactLayout(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
   // Pocket text vibration — linked to scroll velocity
   useEffect(() => {
     if (atmosphere !== 'pocket' || !pocketTextRef.current) return;
@@ -392,16 +404,19 @@ export function ScrollSections({
     el.style.transform = `translate(${jitterX}px, ${jitterY}px)`;
   }, [atmosphere, velocity]);
 
-  // Data cascade trigger on engine-room entry
+  // Data cascade trigger slightly before engine-room entry to land earlier in the transition.
   useEffect(() => {
-    if (atmosphere === 'engine-room' && prevAtmosphere.current !== 'engine-room') {
+    const previousProgress = prevProgressRef.current;
+    prevProgressRef.current = progress;
+    const crossedIntoCascadeZone =
+      previousProgress < CASCADE_TRIGGER_PROGRESS &&
+      progress >= CASCADE_TRIGGER_PROGRESS;
+    if (crossedIntoCascadeZone) {
       setCascadeActive(true);
       const t = setTimeout(() => setCascadeActive(false), 2000);
-      prevAtmosphere.current = atmosphere;
       return () => clearTimeout(t);
     }
-    prevAtmosphere.current = atmosphere;
-  }, [atmosphere]);
+  }, [progress]);
 
   // Pocket section entrance — triggers once on first visit
   useEffect(() => {
@@ -469,6 +484,7 @@ export function ScrollSections({
       {/* ─── Stage 1: The Shoreline — Identity ────────────────────────── */}
       <section data-scroll-section data-atmosphere="shoreline" data-section-index={0} style={{ height: '100vh', position: 'relative' }}>
         <div
+          tabIndex={isCompactLayout ? 0 : -1}
           style={{
             position: 'sticky',
             top: 0,
@@ -616,6 +632,7 @@ export function ScrollSections({
       {/* ─── Stage 2: The Pocket — Sonic Work ─────────────────────────── */}
       <section data-scroll-section data-atmosphere="pocket" data-section-index={1} style={{ height: '100vh', position: 'relative' }}>
         <div
+          tabIndex={isCompactLayout ? 0 : -1}
           style={{
             position: 'sticky',
             top: 0,
@@ -623,13 +640,16 @@ export function ScrollSections({
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
+            justifyContent: isCompactLayout ? 'flex-start' : 'center',
             opacity: pocketOpacity,
             transform: pocketSectionTransform,
-            filter: `blur(${(1 - pocketEnterMix) * 1.2}px)`,
+            filter: isCompactLayout ? 'none' : `blur(${(1 - pocketEnterMix) * 1.2}px)`,
             pointerEvents: pocketOpacity > 0.1 ? 'all' : 'none',
             padding: '0 clamp(1.5rem, 5vw, 4rem)',
             textAlign: 'left',
+            overflowY: isCompactLayout ? 'auto' : 'visible',
+            paddingTop: isCompactLayout ? 'clamp(3.5rem, 8vh, 5rem)' : '0',
+            paddingBottom: isCompactLayout ? 'clamp(2.5rem, 7vh, 4rem)' : '0',
             willChange: 'transform, filter',
           }}
         >
@@ -720,7 +740,9 @@ export function ScrollSections({
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'clamp(120px, 15vw, 165px) 1fr clamp(140px, 18vw, 200px)',
+                gridTemplateColumns: isCompactLayout
+                  ? '1fr'
+                  : 'clamp(120px, 15vw, 165px) 1fr clamp(140px, 18vw, 200px)',
                 gap: 'clamp(1.25rem, 3vw, 2.5rem)',
                 alignItems: 'start',
                 paddingBottom: '0.75rem',
@@ -986,15 +1008,15 @@ export function ScrollSections({
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
             opacity: engineRoomOpacity,
             transform: engineSectionTransform,
-            filter: `blur(${(1 - engineEnterMix) * 1.4}px)`,
+            filter: isCompactLayout ? 'none' : `blur(${(1 - engineEnterMix) * 1.4}px)`,
             pointerEvents: engineRoomOpacity > 0.1 ? 'all' : 'none',
             gap: 'clamp(1.2rem, 3.8vh, 2.4rem)',
             paddingTop: 'clamp(1.2rem, 3vh, 2.2rem)',
             paddingBottom: 'clamp(1.2rem, 3vh, 2.2rem)',
-            overflow: 'hidden',
+            justifyContent: isCompactLayout ? 'flex-start' : 'center',
+            overflowY: isCompactLayout ? 'auto' : 'hidden',
             willChange: 'transform, filter',
           }}
         >
@@ -1028,9 +1050,9 @@ export function ScrollSections({
               data-lenis-prevent
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
+                gridTemplateColumns: isCompactLayout ? '1fr' : 'repeat(3, 1fr)',
                 gap: '1rem',
-                maxHeight: 'min(36vh, 340px)',
+                maxHeight: isCompactLayout ? 'min(52vh, 480px)' : 'min(36vh, 340px)',
                 overflowY: 'auto',
                 scrollbarWidth: 'thin',
                 scrollbarColor: 'rgba(136,136,136,0.3) transparent',
@@ -1131,7 +1153,7 @@ export function ScrollSections({
             justifyContent: 'center',
             opacity: webOpacity,
             transform: webSectionTransform,
-            filter: `blur(${(1 - webEnterMix) * 1.2}px)`,
+            filter: isCompactLayout ? 'none' : `blur(${(1 - webEnterMix) * 1.2}px)`,
             pointerEvents: webOpacity > 0.1 ? 'all' : 'none',
             gap: 'clamp(1rem, 3vh, 2.2rem)',
             padding: 'clamp(1rem, 3vh, 2rem)',
@@ -1162,7 +1184,7 @@ export function ScrollSections({
             justifyContent: 'center',
             opacity: horizonOpacity,
             transform: horizonSectionTransform,
-            filter: `blur(${(1 - horizonEnterMix) * 1.8}px)`,
+            filter: isCompactLayout ? 'none' : `blur(${(1 - horizonEnterMix) * 1.8}px)`,
             pointerEvents: horizonOpacity > 0.1 ? 'all' : 'none',
             gap: '0.4rem',
             overflow: 'hidden',
