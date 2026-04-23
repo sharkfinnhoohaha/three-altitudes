@@ -3,9 +3,7 @@
 import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-
-const WAVE_X_SEGS = 96;
-const WAVE_Y_SEGS = 48;
+import { isCompactLayout } from '@/lib/responsive';
 
 /**
  * PocketAtmosphere — Stage 2 (26–50% scroll)
@@ -23,6 +21,11 @@ export function PocketAtmosphere() {
   // Store original vertex positions for wave displacement
   const origPositions = useRef<Float32Array | null>(null);
 
+  // Reduce geometry complexity on mobile/coarse-pointer devices.
+  const compact = useMemo(() => isCompactLayout(), []);
+  const waveXSegs = compact ? 48 : 96;
+  const waveYSegs = compact ? 24 : 48;
+
   useEffect(() => {
     const handleMouse = (e: MouseEvent) => {
       mouseRef.current.y = (e.clientY / window.innerHeight - 0.5) * 2;
@@ -32,12 +35,12 @@ export function PocketAtmosphere() {
   }, []);
 
   const waveGeo = useMemo(() => {
-    const geo = new THREE.PlaneGeometry(50, 24, WAVE_X_SEGS, WAVE_Y_SEGS);
+    const geo = new THREE.PlaneGeometry(50, 24, waveXSegs, waveYSegs);
     origPositions.current = new Float32Array(
       geo.attributes.position.array as Float32Array
     );
     return geo;
-  }, []);
+  }, [waveXSegs, waveYSegs]);
 
   const waveMat = useMemo(
     () =>
