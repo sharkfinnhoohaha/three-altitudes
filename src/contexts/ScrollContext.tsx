@@ -208,7 +208,7 @@ export function ScrollProvider({ children }: ScrollProviderProps) {
           ScrollTrigger.update();
           onScroll();
 
-          // Section snap: debounce 550ms after scroll stops, then snap to nearest section start
+          // Section snap: debounce 350ms after scroll stops, then glide to nearest section start
           if (snapDebounceId) clearTimeout(snapDebounceId);
           snapDebounceId = setTimeout(() => {
             if (isCoarsePointerRef.current) return;
@@ -230,13 +230,13 @@ export function ScrollProvider({ children }: ScrollProviderProps) {
               }
             });
 
-            // Only snap if the user is in a transition zone (within 8% of a boundary)
-            // and not already very close to the snap point (< 0.5%)
-            if (nearestDist > 0.005 && nearestDist < 0.08) {
+            // Wide capture zone: snap anywhere within 14% of a boundary so users never get
+            // stranded mid-transition, but skip if already essentially parked (< 0.6%).
+            if (nearestDist > 0.006 && nearestDist < 0.14) {
               const targetY = sectionPoints[nearestIdx].progress * maxScroll;
-              lenis.scrollTo(targetY, { duration: 1.0 });
+              lenis.scrollTo(targetY, { duration: 1.3, easing: (t: number) => 1 - Math.pow(1 - t, 3) });
             }
-          }, 550);
+          }, 350);
         });
 
         function raf(time: number) {
