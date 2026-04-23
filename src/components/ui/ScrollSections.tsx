@@ -26,20 +26,34 @@ import {
 } from '@/lib/fallbacks';
 import { COMPACT_LAYOUT_MEDIA_QUERY } from '@/lib/responsive';
 
+// Section entry motion: subtle scale only. No translate/rotate — content is fixed-positioned
+// and centered at all times, so any translate would visibly drift content off-center mid-fade.
 const SECTION_ENTRY_MOTION = {
-  pocket: { y: 26, rotate: -7, baseScale: 0.93, scaleRange: 0.07 },
-  engine: { x: 44, rotateY: 7, baseScale: 0.94, scaleRange: 0.06 },
-  web: { y: 24, rotate: 4, baseScale: 0.95, scaleRange: 0.05 },
-  horizon: { y: 30, rotateX: 8, baseScale: 0.95, scaleRange: 0.05 },
+  pocket: { baseScale: 0.97, scaleRange: 0.03 },
+  engine: { baseScale: 0.97, scaleRange: 0.03 },
+  web: { baseScale: 0.97, scaleRange: 0.03 },
+  horizon: { baseScale: 0.97, scaleRange: 0.03 },
 } as const;
 
 const SECTION_STARTS: number[] = [0, 0.25, 0.5, 0.75, 1];
 const SECTION_BOUNDARIES = [0.25, 0.5, 0.75] as const;
 const VEIL_TRANSITION_RADIUS = 0.055;
+
+// Shared style for each section's fixed-position inner container. Anchors content to
+// viewport center so it never drifts during opacity cross-fades.
+const SECTION_SHELL_BASE = {
+  position: 'fixed' as const,
+  inset: 0,
+  display: 'flex',
+  flexDirection: 'column' as const,
+  alignItems: 'center',
+  justifyContent: 'center',
+  willChange: 'opacity, transform',
+};
 const VEIL_BASE_RGB = '5,8,12';
-const HORIZON_PANEL_BORDER = 'rgba(42,42,42,0.16)';
-const HORIZON_PANEL_BG_TOP = 'rgba(255,255,255,0.26)';
-const HORIZON_PANEL_BG_BOTTOM = 'rgba(235,238,243,0.34)';
+const HORIZON_PANEL_BORDER = 'rgba(42,42,42,0.22)';
+const HORIZON_PANEL_BG_TOP = 'rgba(255,255,255,0.48)';
+const HORIZON_PANEL_BG_BOTTOM = 'rgba(232,236,242,0.55)';
 const VEIL_BACKGROUND = `
   radial-gradient(ellipse at center, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 100%),
   linear-gradient(180deg, rgba(${VEIL_BASE_RGB},0.8) 0%, rgba(${VEIL_BASE_RGB},0.2) 22%, rgba(${VEIL_BASE_RGB},0.2) 78%, rgba(${VEIL_BASE_RGB},0.8) 100%)
@@ -341,12 +355,14 @@ export function ScrollSections({
     return fadeIn * fadeOut;
   }
 
-  const shorelineOpacity  = sectionOpacity(-0.02, 0.03, 0.18, 0.24);
-  const pocketOpacity     = sectionOpacity(0.14, 0.24, 0.44, 0.52);
-  const engineRoomOpacity = sectionOpacity(0.38, 0.49, 0.67, 0.75);
-  const webOpacity        = sectionOpacity(0.62, 0.74, 0.9, 0.98);
+  // Tighter fade windows now that each section is fixed-centered: the outgoing section
+  // clears quickly so the incoming section can fully own the viewport without ghosting.
+  const shorelineOpacity  = sectionOpacity(-0.02, 0.04, 0.2, 0.26);
+  const pocketOpacity     = sectionOpacity(0.19, 0.27, 0.45, 0.51);
+  const engineRoomOpacity = sectionOpacity(0.44, 0.52, 0.69, 0.76);
+  const webOpacity        = sectionOpacity(0.69, 0.77, 0.92, 0.98);
   // Keep the final horizon section fully present through page end by placing fade-out past max progress (1.0).
-  const horizonOpacity    = sectionOpacity(0.84, 0.95, 1.2, 1.28);
+  const horizonOpacity    = sectionOpacity(0.92, 1, 1.2, 1.28);
 
   const sectionMix = (start: number, end: number) => {
     if (progress <= start) return 0;
@@ -368,10 +384,11 @@ export function ScrollSections({
     return Math.max(maxOpacity, eased);
   }, 0);
 
-  const pocketSectionTransform = `translateY(${(1 - pocketEnterMix) * SECTION_ENTRY_MOTION.pocket.y}px) rotate(${(1 - pocketEnterMix) * SECTION_ENTRY_MOTION.pocket.rotate}deg) scale(${SECTION_ENTRY_MOTION.pocket.baseScale + pocketEnterMix * SECTION_ENTRY_MOTION.pocket.scaleRange})`;
-  const engineSectionTransform = `translateX(${(1 - engineEnterMix) * SECTION_ENTRY_MOTION.engine.x}px) rotateY(${(1 - engineEnterMix) * SECTION_ENTRY_MOTION.engine.rotateY}deg) scale(${SECTION_ENTRY_MOTION.engine.baseScale + engineEnterMix * SECTION_ENTRY_MOTION.engine.scaleRange})`;
-  const webSectionTransform = `translateY(${(1 - webEnterMix) * SECTION_ENTRY_MOTION.web.y}px) rotate(${(1 - webEnterMix) * SECTION_ENTRY_MOTION.web.rotate}deg) scale(${SECTION_ENTRY_MOTION.web.baseScale + webEnterMix * SECTION_ENTRY_MOTION.web.scaleRange})`;
-  const horizonSectionTransform = `translateY(${(1 - horizonEnterMix) * SECTION_ENTRY_MOTION.horizon.y}px) rotateX(${(1 - horizonEnterMix) * SECTION_ENTRY_MOTION.horizon.rotateX}deg) scale(${SECTION_ENTRY_MOTION.horizon.baseScale + horizonEnterMix * SECTION_ENTRY_MOTION.horizon.scaleRange})`;
+  // Subtle scale-only entry — keeps content pinned to viewport center during opacity fades.
+  const pocketSectionTransform = `scale(${SECTION_ENTRY_MOTION.pocket.baseScale + pocketEnterMix * SECTION_ENTRY_MOTION.pocket.scaleRange})`;
+  const engineSectionTransform = `scale(${SECTION_ENTRY_MOTION.engine.baseScale + engineEnterMix * SECTION_ENTRY_MOTION.engine.scaleRange})`;
+  const webSectionTransform = `scale(${SECTION_ENTRY_MOTION.web.baseScale + webEnterMix * SECTION_ENTRY_MOTION.web.scaleRange})`;
+  const horizonSectionTransform = `scale(${SECTION_ENTRY_MOTION.horizon.baseScale + horizonEnterMix * SECTION_ENTRY_MOTION.horizon.scaleRange})`;
 
   const currentSectionIndex = SECTION_STARTS.reduce((nearestIdx, sectionStart, idx) => {
     const nearestDist = Math.abs(progress - SECTION_STARTS[nearestIdx]);
@@ -481,20 +498,45 @@ export function ScrollSections({
         }}
       />
 
+      {/* ── Scroll progress bar — cinematic thin line at top of viewport ── */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '2px',
+          zIndex: 45,
+          pointerEvents: 'none',
+          background: 'rgba(255,255,255,0.04)',
+        }}
+      >
+        <div
+          style={{
+            height: '100%',
+            width: `${Math.min(progress * 100, 100)}%`,
+            background: atmosphere === 'horizon'
+              ? 'linear-gradient(90deg, rgba(42,42,42,0.7), rgba(42,42,42,0.35))'
+              : atmosphere === 'pocket'
+              ? 'linear-gradient(90deg, rgba(255,140,0,0.8), rgba(255,140,0,0.35))'
+              : atmosphere === 'engine-room'
+              ? 'linear-gradient(90deg, rgba(0,255,136,0.7), rgba(0,255,136,0.3))'
+              : 'linear-gradient(90deg, rgba(61,217,196,0.8), rgba(61,217,196,0.35))',
+            transition: 'background 0.6s ease',
+          }}
+        />
+      </div>
+
+
       {/* ─── Stage 1: The Shoreline — Identity ────────────────────────── */}
       <section data-scroll-section data-atmosphere="shoreline" data-section-index={0} style={{ height: '100vh', position: 'relative' }}>
         <div
           tabIndex={isCompactLayout ? 0 : -1}
           style={{
-            position: 'sticky',
-            top: 0,
-            height: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
+            ...SECTION_SHELL_BASE,
             opacity: shorelineOpacity,
-            pointerEvents: shorelineOpacity > 0.1 ? 'all' : 'none',
+            pointerEvents: shorelineOpacity > 0.4 ? 'all' : 'none',
             overflow: 'hidden',
           }}
         >
@@ -516,31 +558,43 @@ export function ScrollSections({
             </div>
           )}
 
-          {/* Hero title card — pinned to initial viewport for immediate identity */}
+          {/* Hero title card — anchored to viewport center */}
           <div
             style={{
-              position: 'absolute',
-              top: '48%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
+              position: 'relative',
               zIndex: 1,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '0.7rem',
+              gap: '1.2rem',
               textAlign: 'center',
               padding: '0 1rem',
+              maxWidth: '92vw',
             }}
           >
             <p
+              className="hud-text"
+              style={{
+                fontSize: 'clamp(0.6rem, 0.85vw, 0.75rem)',
+                letterSpacing: '0.55em',
+                color: '#86f5e4',
+                opacity: 0.55,
+                textShadow: '0 4px 16px rgba(0,0,0,0.6)',
+                paddingLeft: '0.55em',
+              }}
+            >
+              STAGE 01 — SHORELINE
+            </p>
+            <p
               className="serif-text"
               style={{
-                fontSize: 'clamp(2.3rem, 8vw, 7rem)',
+                fontSize: 'clamp(2.6rem, 9vw, 7.6rem)',
                 fontWeight: 300,
                 color: '#f0fbfb',
                 letterSpacing: '0.22em',
                 lineHeight: 0.96,
                 textShadow: '0 8px 36px rgba(0,0,0,0.48)',
+                paddingLeft: '0.22em',
               }}
             >
               {heroName}
@@ -548,11 +602,12 @@ export function ScrollSections({
             <p
               className="hud-text"
               style={{
-                fontSize: 'clamp(0.34rem, 0.85vw, 0.58rem)',
+                fontSize: 'clamp(0.62rem, 1vw, 0.82rem)',
                 letterSpacing: '0.42em',
-                color: '#86f5e4',
-                opacity: 0.72,
+                color: '#d7fbf3',
+                opacity: 0.8,
                 textShadow: '0 4px 16px rgba(0,0,0,0.6)',
+                paddingLeft: '0.42em',
               }}
             >
               DIGITAL STORYTELLER // CREATIVE BUILDER
@@ -563,22 +618,23 @@ export function ScrollSections({
           <div
             style={{
               position: 'absolute',
-              bottom: 'clamp(1.5rem, 4vh, 3rem)',
+              bottom: 'clamp(1.75rem, 5vh, 3.2rem)',
               left: 'clamp(1.5rem, 3vw, 3rem)',
               zIndex: 1,
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.55rem',
+              gap: '0.8rem',
             }}
           >
             <p
-              className="serif-text"
+              className="hud-text"
               style={{
-                fontSize: 'clamp(0.62rem, 1.4vw, 1rem)',
+                fontSize: 'clamp(0.58rem, 0.75vw, 0.72rem)',
                 color: '#7de6d5',
-                letterSpacing: '0.36em',
+                letterSpacing: '0.45em',
                 lineHeight: 1,
-                opacity: 0.72,
+                opacity: 0.7,
+                paddingLeft: '0.45em',
               }}
             >
               LANDING ID
@@ -587,15 +643,16 @@ export function ScrollSections({
             <div
               className="hud-text"
               style={{
-                fontSize: 'clamp(0.42rem, 0.9vw, 0.58rem)',
+                fontSize: 'clamp(0.62rem, 0.85vw, 0.78rem)',
                 letterSpacing: '0.38em',
                 color: '#3dd9c4',
-                opacity: 0.55,
+                opacity: 0.8,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.7em',
                 height: '1.3em',
                 overflow: 'hidden',
+                paddingLeft: '0.38em',
               }}
             >
               <span key={identityIndex} style={{ animation: 'identity-enter 0.5s ease forwards' }}>
@@ -610,13 +667,14 @@ export function ScrollSections({
             <div
               className="hud-text"
               style={{
-                fontSize: 'clamp(0.36rem, 0.75vw, 0.5rem)',
+                fontSize: 'clamp(0.54rem, 0.72vw, 0.66rem)',
                 letterSpacing: '0.32em',
                 color: '#3dd9c4',
-                opacity: 0.25,
+                opacity: 0.4,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5em',
+                paddingLeft: '0.32em',
               }}
             >
               <span>{heroLocationLabel}</span>
@@ -634,23 +692,14 @@ export function ScrollSections({
         <div
           tabIndex={isCompactLayout ? 0 : -1}
           style={{
-            position: 'sticky',
-            top: 0,
-            height: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: isCompactLayout ? 'flex-start' : 'center',
+            ...SECTION_SHELL_BASE,
             opacity: pocketOpacity,
             transform: pocketSectionTransform,
-            filter: isCompactLayout ? 'none' : `blur(${(1 - pocketEnterMix) * 1.2}px)`,
-            pointerEvents: pocketOpacity > 0.1 ? 'all' : 'none',
-            padding: '0 clamp(1.5rem, 5vw, 4rem)',
+            filter: isCompactLayout ? 'none' : `blur(${(1 - pocketEnterMix) * 0.6}px)`,
+            pointerEvents: pocketOpacity > 0.4 ? 'all' : 'none',
+            padding: 'clamp(2.5rem, 6vh, 4rem) clamp(1.5rem, 5vw, 4rem)',
             textAlign: 'left',
-            overflowY: isCompactLayout ? 'auto' : 'visible',
-            paddingTop: isCompactLayout ? 'clamp(3.5rem, 8vh, 5rem)' : '0',
-            paddingBottom: isCompactLayout ? 'clamp(2.5rem, 7vh, 4rem)' : '0',
-            willChange: 'transform, filter',
+            overflowY: isCompactLayout ? 'auto' : 'hidden',
           }}
         >
           <div
@@ -668,16 +717,16 @@ export function ScrollSections({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '1rem',
-                marginBottom: '1.25rem',
+                gap: '1.25rem',
+                marginBottom: '1.5rem',
                 ...pocketAnim(0),
               }}
             >
-              <p className="hud-text" style={{ fontSize: '0.38rem', letterSpacing: '0.42em', color: '#ff8c00', opacity: 0.45, whiteSpace: 'nowrap' }}>
-                {audioHeadline}
+              <p className="hud-text" style={{ fontSize: 'clamp(0.6rem, 0.8vw, 0.78rem)', letterSpacing: '0.48em', color: '#ff8c00', opacity: 0.7, whiteSpace: 'nowrap', paddingLeft: '0.48em' }}>
+                STAGE 02 — {audioHeadline}
               </p>
-              <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(255,140,0,0.22) 0%, rgba(255,140,0,0.04) 70%, transparent 100%)' }} />
-              <p className="hud-text" style={{ fontSize: '0.28rem', letterSpacing: '0.38em', color: '#ff8c00', opacity: 0.2, whiteSpace: 'nowrap' }}>
+              <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(255,140,0,0.35) 0%, rgba(255,140,0,0.06) 70%, transparent 100%)' }} />
+              <p className="hud-text" style={{ fontSize: 'clamp(0.54rem, 0.7vw, 0.66rem)', letterSpacing: '0.42em', color: '#ff8c00', opacity: 0.42, whiteSpace: 'nowrap', paddingLeft: '0.42em' }}>
                 SIGNAL FLOW
               </p>
             </div>
@@ -687,18 +736,18 @@ export function ScrollSections({
               style={{
                 display: 'flex',
                 alignItems: 'flex-end',
-                gap: '1.5rem',
-                marginBottom: '2rem',
+                gap: '1.75rem',
+                marginBottom: '2.5rem',
                 ...pocketAnim(0.08),
               }}
             >
               <h2
                 className="serif-text"
                 style={{
-                  fontSize: 'clamp(2.4rem, 5vw, 4rem)',
+                  fontSize: 'clamp(2.6rem, 5.5vw, 4.4rem)',
                   fontWeight: 300,
                   color: '#f5e6d0',
-                  letterSpacing: '0.05em',
+                  letterSpacing: '0.04em',
                   lineHeight: 1,
                   flexShrink: 0,
                 }}
@@ -707,12 +756,12 @@ export function ScrollSections({
               </h2>
 
               {/* Decorative waveform — fills remaining title row width */}
-              <div style={{ flex: 1, overflow: 'hidden', paddingBottom: '0.5rem' }}>
+              <div style={{ flex: 1, overflow: 'hidden', paddingBottom: '0.6rem' }}>
                 <svg
                   viewBox="0 0 120 32"
                   preserveAspectRatio="none"
                   width="100%"
-                  height="28"
+                  height="30"
                   style={{ display: 'block' }}
                 >
                   {WAVEFORM_BARS.map((h, i) => {
@@ -724,14 +773,14 @@ export function ScrollSections({
                         y={16 - halfH}
                         width={0.7}
                         height={halfH * 2}
-                        fill={`rgba(255,140,0,${(0.1 + h * 0.38).toFixed(3)})`}
+                        fill={`rgba(255,140,0,${(0.12 + h * 0.44).toFixed(3)})`}
                       />
                     );
                   })}
                 </svg>
               </div>
 
-              <p className="hud-text" style={{ fontSize: '0.28rem', letterSpacing: '0.38em', color: '#ff8c00', opacity: 0.2, paddingBottom: '0.5rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
+              <p className="hud-text" style={{ fontSize: 'clamp(0.56rem, 0.72vw, 0.68rem)', letterSpacing: '0.4em', color: '#ff8c00', opacity: 0.5, paddingBottom: '0.6rem', whiteSpace: 'nowrap', flexShrink: 0, paddingLeft: '0.4em' }}>
                 12+ YRS
               </p>
             </div>
@@ -754,33 +803,33 @@ export function ScrollSections({
 
                 {/* Stat readouts */}
                 <div style={{ ...pocketAnim(0.15) }}>
-                  <p className="hud-text" style={{ fontSize: '0.26rem', letterSpacing: '0.44em', color: '#ff8c00', opacity: 0.22, marginBottom: '0.65rem' }}>
+                  <p className="hud-text" style={{ fontSize: 'clamp(0.56rem, 0.72vw, 0.66rem)', letterSpacing: '0.44em', color: '#ff8c00', opacity: 0.5, marginBottom: '0.9rem', paddingLeft: '0.44em' }}>
                     CREDENTIALS
                   </p>
                   {stats.map(({ value, label }, i) => (
                     <div
                       key={label}
                       style={{
-                        paddingLeft: '0.65rem',
-                        paddingTop: '0.5rem',
-                        paddingBottom: '0.5rem',
-                        borderLeft: `1px solid rgba(255,140,0,${i === 0 ? 0.32 : 0.1})`,
-                        marginBottom: '0.08rem',
+                        paddingLeft: '0.85rem',
+                        paddingTop: '0.55rem',
+                        paddingBottom: '0.55rem',
+                        borderLeft: `1px solid rgba(255,140,0,${i === 0 ? 0.45 : 0.16})`,
+                        marginBottom: '0.15rem',
                       }}
                     >
                       <p
                         className="serif-text"
                         style={{
-                          fontSize: 'clamp(1.3rem, 2.2vw, 1.8rem)',
+                          fontSize: 'clamp(1.4rem, 2.3vw, 1.9rem)',
                           fontWeight: 300,
-                          color: '#ff8c00',
+                          color: '#ffa538',
                           lineHeight: 1,
-                          opacity: 1 - i * 0.18,
+                          opacity: 1 - i * 0.14,
                         }}
                       >
                         {value}
                       </p>
-                      <p className="hud-text" style={{ fontSize: '0.23rem', letterSpacing: '0.34em', color: '#ff8c00', opacity: 0.28, marginTop: '0.07rem' }}>
+                      <p className="hud-text" style={{ fontSize: 'clamp(0.5rem, 0.66vw, 0.6rem)', letterSpacing: '0.34em', color: '#ff8c00', opacity: 0.58, marginTop: '0.25rem', paddingLeft: '0.34em' }}>
                         {label}
                       </p>
                     </div>
@@ -788,32 +837,29 @@ export function ScrollSections({
                 </div>
 
                 {/* Signal-chain disciplines */}
-                <div style={{ marginTop: '1.3rem', ...pocketAnim(0.35) }}>
-                  <p className="hud-text" style={{ fontSize: '0.26rem', letterSpacing: '0.44em', color: '#ff8c00', opacity: 0.22, marginBottom: '0.5rem' }}>
+                <div style={{ marginTop: '1.8rem', ...pocketAnim(0.35) }}>
+                  <p className="hud-text" style={{ fontSize: 'clamp(0.56rem, 0.72vw, 0.66rem)', letterSpacing: '0.44em', color: '#ff8c00', opacity: 0.5, marginBottom: '0.7rem', paddingLeft: '0.44em' }}>
                     DISCIPLINES
                   </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.28rem' }}>
-                    {disciplines.map((d, i) => (
-                      <div key={d.code} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                        <span
-                          className="hud-text"
-                          style={{
-                            fontSize: '0.24rem',
-                            letterSpacing: '0.22em',
-                            color: '#ff8c00',
-                            opacity: 0.48,
-                            padding: '0.1rem 0.3rem',
-                            border: '1px solid rgba(255,140,0,0.16)',
-                            background: 'rgba(255,140,0,0.03)',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {d.code}
-                        </span>
-                        {i < disciplines.length - 1 && (
-                          <span className="hud-text" style={{ fontSize: '0.22rem', color: '#ff8c00', opacity: 0.16 }}>→</span>
-                        )}
-                      </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    {disciplines.map((d) => (
+                      <span
+                        key={d.code}
+                        className="hud-text"
+                        style={{
+                          fontSize: 'clamp(0.52rem, 0.68vw, 0.62rem)',
+                          letterSpacing: '0.22em',
+                          color: '#ffa538',
+                          opacity: 0.75,
+                          padding: '0.3rem 0.55rem',
+                          border: '1px solid rgba(255,140,0,0.28)',
+                          background: 'rgba(255,140,0,0.04)',
+                          whiteSpace: 'nowrap',
+                          paddingLeft: 'calc(0.55rem + 0.22em)',
+                        }}
+                      >
+                        {d.code}
+                      </span>
                     ))}
                   </div>
                 </div>
@@ -823,7 +869,7 @@ export function ScrollSections({
               {/* Center col: Featured Tracks */}
               <div style={{ position: 'relative', ...pocketAnim(0.22) }}>
 
-                <p className="hud-text" style={{ fontSize: '0.26rem', letterSpacing: '0.44em', color: '#ff8c00', opacity: 0.22, marginBottom: '0.65rem' }}>
+                <p className="hud-text" style={{ fontSize: 'clamp(0.56rem, 0.72vw, 0.66rem)', letterSpacing: '0.44em', color: '#ff8c00', opacity: 0.5, marginBottom: '0.9rem', paddingLeft: '0.44em' }}>
                   SELECTED TRACKS
                 </p>
 
@@ -838,9 +884,9 @@ export function ScrollSections({
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.75rem',
-                        padding: '0.6rem 0',
-                        borderBottom: `1px solid rgba(255,140,0,${i === tracks.length - 1 ? 0 : 0.08})`,
+                        gap: '0.85rem',
+                        padding: '0.8rem 0',
+                        borderBottom: `1px solid rgba(255,140,0,${i === tracks.length - 1 ? 0 : 0.14})`,
                         textDecoration: 'none',
                         cursor: 'pointer',
                         transition: 'opacity 0.2s ease',
@@ -849,7 +895,7 @@ export function ScrollSections({
                       onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
                     >
                       {/* Track number */}
-                      <span className="hud-text" style={{ fontSize: '0.2rem', letterSpacing: '0.2em', color: '#ff8c00', opacity: 0.28, minWidth: '1.4rem', flexShrink: 0 }}>
+                      <span className="hud-text" style={{ fontSize: 'clamp(0.5rem, 0.66vw, 0.58rem)', letterSpacing: '0.22em', color: '#ff8c00', opacity: 0.55, minWidth: '1.6rem', flexShrink: 0, paddingLeft: '0.22em' }}>
                         {String(i + 1).padStart(2, '0')}
                       </span>
 
@@ -858,13 +904,13 @@ export function ScrollSections({
                         <p
                           className="serif-text"
                           style={{
-                            fontSize: 'clamp(0.8rem, 1.1vw, 0.95rem)',
+                            fontSize: 'clamp(0.92rem, 1.18vw, 1.05rem)',
                             fontWeight: 400,
                             color: '#f5e6d0',
                             letterSpacing: '0.03em',
                             lineHeight: 1.2,
-                            marginBottom: '0.18rem',
-                            opacity: 0.9,
+                            marginBottom: '0.28rem',
+                            opacity: 0.95,
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -872,7 +918,7 @@ export function ScrollSections({
                         >
                           {track.trackName}
                         </p>
-                        <p className="hud-text" style={{ fontSize: '0.21rem', letterSpacing: '0.16em', color: '#ff8c00', opacity: 0.3 }}>
+                        <p className="hud-text" style={{ fontSize: 'clamp(0.5rem, 0.66vw, 0.58rem)', letterSpacing: '0.2em', color: '#ffa538', opacity: 0.65, paddingLeft: '0.2em' }}>
                           {track.artistName}
                         </p>
                       </div>
@@ -882,14 +928,15 @@ export function ScrollSections({
                         <span
                           className="hud-text"
                           style={{
-                            fontSize: '0.19rem',
-                            letterSpacing: '0.18em',
+                            fontSize: 'clamp(0.48rem, 0.62vw, 0.56rem)',
+                            letterSpacing: '0.22em',
                             color: '#ff8c00',
-                            opacity: 0.28,
-                            border: '1px solid rgba(255,140,0,0.14)',
-                            padding: '0.08rem 0.28rem',
+                            opacity: 0.6,
+                            border: '1px solid rgba(255,140,0,0.28)',
+                            padding: '0.22rem 0.5rem',
                             whiteSpace: 'nowrap',
                             flexShrink: 0,
+                            paddingLeft: 'calc(0.5rem + 0.22em)',
                           }}
                         >
                           {track.role}
@@ -897,7 +944,7 @@ export function ScrollSections({
                       )}
 
                       {/* Spotify arrow */}
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0, opacity: 0.22 }}>
+                      <svg width="11" height="11" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0, opacity: 0.4 }}>
                         <path d="M1 9L9 1M9 1H3M9 1V7" stroke="#ff8c00" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </a>
@@ -905,28 +952,29 @@ export function ScrollSections({
                 </div>
 
                 {/* "All tracks" link */}
-                <div style={{ marginTop: '0.65rem', display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
                   <a
                     href={spotifyUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hud-text"
                     style={{
-                      fontSize: '0.21rem',
-                      letterSpacing: '0.28em',
+                      fontSize: 'clamp(0.5rem, 0.66vw, 0.58rem)',
+                      letterSpacing: '0.3em',
                       color: '#ff8c00',
-                      opacity: 0.18,
+                      opacity: 0.5,
                       textDecoration: 'none',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.3rem',
+                      gap: '0.45rem',
                       transition: 'opacity 0.2s ease',
+                      paddingLeft: '0.3em',
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.opacity = '0.45')}
-                    onMouseLeave={e => (e.currentTarget.style.opacity = '0.18')}
+                    onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
+                    onMouseLeave={e => (e.currentTarget.style.opacity = '0.5')}
                   >
                     FULL CATALOG ON SPOTIFY
-                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                    <svg width="9" height="9" viewBox="0 0 8 8" fill="none">
                       <path d="M1 7L7 1M7 1H2.5M7 1V5.5" stroke="#ff8c00" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </a>
@@ -937,7 +985,7 @@ export function ScrollSections({
               {/* Right col: Touring credits + Specialties */}
               <div style={{ ...pocketAnim(0.30) }}>
 
-                <p className="hud-text" style={{ fontSize: '0.26rem', letterSpacing: '0.44em', color: '#ff8c00', opacity: 0.22, marginBottom: '0.65rem' }}>
+                <p className="hud-text" style={{ fontSize: 'clamp(0.56rem, 0.72vw, 0.66rem)', letterSpacing: '0.44em', color: '#ff8c00', opacity: 0.5, marginBottom: '0.9rem', paddingLeft: '0.44em' }}>
                   TOURING CREDITS
                 </p>
 
@@ -946,28 +994,28 @@ export function ScrollSections({
                     <div
                       key={artistName}
                       style={{
-                        padding: '0.65rem 0',
-                        borderBottom: `1px solid rgba(255,140,0,${i === 0 ? 0.1 : 0.04})`,
+                        padding: '0.75rem 0',
+                        borderBottom: `1px solid rgba(255,140,0,${i === touringCredits.length - 1 ? 0 : 0.14})`,
                       }}
                     >
-                      <p className="hud-text" style={{ fontSize: '0.21rem', letterSpacing: '0.34em', color: '#ff8c00', opacity: 0.18, marginBottom: '0.25rem' }}>
+                      <p className="hud-text" style={{ fontSize: 'clamp(0.48rem, 0.62vw, 0.56rem)', letterSpacing: '0.3em', color: '#ff8c00', opacity: 0.4, marginBottom: '0.3rem', paddingLeft: '0.3em' }}>
                         {String(i + 1).padStart(2, '0')}
                       </p>
                       <p
                         className="serif-text"
                         style={{
-                          fontSize: 'clamp(0.85rem, 1.3vw, 1.05rem)',
+                          fontSize: 'clamp(0.95rem, 1.35vw, 1.1rem)',
                           fontWeight: 400,
                           color: '#f5e6d0',
                           letterSpacing: '0.04em',
                           lineHeight: 1.15,
-                          marginBottom: '0.25rem',
-                          opacity: 0.88,
+                          marginBottom: '0.3rem',
+                          opacity: 0.95,
                         }}
                       >
                         {artistName}
                       </p>
-                      <p className="hud-text" style={{ fontSize: '0.23rem', letterSpacing: '0.18em', color: '#ff8c00', opacity: 0.32 }}>
+                      <p className="hud-text" style={{ fontSize: 'clamp(0.5rem, 0.66vw, 0.58rem)', letterSpacing: '0.2em', color: '#ffa538', opacity: 0.65, paddingLeft: '0.2em' }}>
                         {role}
                       </p>
                     </div>
@@ -975,15 +1023,15 @@ export function ScrollSections({
                 </div>
 
                 {/* Specialties */}
-                <div style={{ marginTop: '1.2rem' }}>
-                  <p className="hud-text" style={{ fontSize: '0.26rem', letterSpacing: '0.44em', color: '#ff8c00', opacity: 0.22, marginBottom: '0.5rem' }}>
+                <div style={{ marginTop: '1.6rem' }}>
+                  <p className="hud-text" style={{ fontSize: 'clamp(0.56rem, 0.72vw, 0.66rem)', letterSpacing: '0.44em', color: '#ff8c00', opacity: 0.5, marginBottom: '0.7rem', paddingLeft: '0.44em' }}>
                     SPECIALTIES
                   </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     {['FRONT OF HOUSE', 'MIX ENGINEERING', 'LIVE PRODUCTION'].map((s) => (
-                      <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <div style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,140,0,0.32)', flexShrink: 0 }} />
-                        <span className="hud-text" style={{ fontSize: '0.23rem', letterSpacing: '0.2em', color: '#ff8c00', opacity: 0.28 }}>
+                      <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                        <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(255,140,0,0.55)', flexShrink: 0 }} />
+                        <span className="hud-text" style={{ fontSize: 'clamp(0.5rem, 0.66vw, 0.58rem)', letterSpacing: '0.22em', color: '#ffa538', opacity: 0.65, paddingLeft: '0.22em' }}>
                           {s}
                         </span>
                       </div>
@@ -1002,22 +1050,14 @@ export function ScrollSections({
       <section data-scroll-section data-atmosphere="engine-room" data-section-index={2} style={{ height: '100vh', position: 'relative' }}>
         <div
           style={{
-            position: 'sticky',
-            top: 0,
-            height: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
+            ...SECTION_SHELL_BASE,
             opacity: engineRoomOpacity,
             transform: engineSectionTransform,
-            filter: isCompactLayout ? 'none' : `blur(${(1 - engineEnterMix) * 1.4}px)`,
-            pointerEvents: engineRoomOpacity > 0.1 ? 'all' : 'none',
-            gap: 'clamp(1.2rem, 3.8vh, 2.4rem)',
-            paddingTop: 'clamp(1.2rem, 3vh, 2.2rem)',
-            paddingBottom: 'clamp(1.2rem, 3vh, 2.2rem)',
-            justifyContent: isCompactLayout ? 'flex-start' : 'center',
+            filter: isCompactLayout ? 'none' : `blur(${(1 - engineEnterMix) * 0.7}px)`,
+            pointerEvents: engineRoomOpacity > 0.4 ? 'all' : 'none',
+            gap: 'clamp(1.4rem, 3.5vh, 2.4rem)',
+            padding: 'clamp(2.5rem, 6vh, 4rem) clamp(1.5rem, 5vw, 3rem)',
             overflowY: isCompactLayout ? 'auto' : 'hidden',
-            willChange: 'transform, filter',
           }}
         >
           {/* Data cascade overlay */}
@@ -1035,28 +1075,36 @@ export function ScrollSections({
             </div>
           ))}
 
-          <p
-            className="hud-text"
-            style={{ fontSize: '0.45rem', letterSpacing: '0.4em', color: '#888', opacity: 0.4, textAlign: 'center' }}
-          >
-            SELECTED WORK  //  BUILD + SHIP
-          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+            <p
+              className="hud-text"
+              style={{ fontSize: 'clamp(0.6rem, 0.8vw, 0.78rem)', letterSpacing: '0.48em', color: '#c8c8c8', opacity: 0.75, textAlign: 'center', paddingLeft: '0.48em' }}
+            >
+              STAGE 03 — WORK LAB
+            </p>
+            <p
+              className="hud-text"
+              style={{ fontSize: 'clamp(0.5rem, 0.7vw, 0.62rem)', letterSpacing: '0.35em', color: '#888', opacity: 0.5, textAlign: 'center', paddingLeft: '0.35em' }}
+            >
+              SELECTED WORK  //  BUILD + SHIP
+            </p>
+          </div>
 
           {/* Portfolio grid */}
           <div
-            style={{ position: 'relative', width: 'clamp(320px, 80vw, 920px)' }}
+            style={{ position: 'relative', width: 'clamp(320px, 82vw, 960px)' }}
           >
             <div
               data-lenis-prevent
               style={{
                 display: 'grid',
                 gridTemplateColumns: isCompactLayout ? '1fr' : 'repeat(3, 1fr)',
-                gap: '1rem',
-                maxHeight: isCompactLayout ? 'min(52vh, 480px)' : 'min(36vh, 340px)',
+                gap: '1.1rem',
+                maxHeight: isCompactLayout ? 'min(56vh, 520px)' : 'min(48vh, 440px)',
                 overflowY: 'auto',
                 scrollbarWidth: 'thin',
                 scrollbarColor: 'rgba(136,136,136,0.3) transparent',
-                padding: '0.25rem',
+                padding: '0.35rem',
               }}
             >
             {devProjects.map((p) => (
@@ -1067,10 +1115,10 @@ export function ScrollSections({
                 rel="noopener noreferrer"
                 className="targeting-card"
                 style={{
-                  border: '1px solid rgba(136,136,136,0.15)',
-                  padding: '1.25rem 1.5rem',
+                  border: '1px solid rgba(136,136,136,0.2)',
+                  padding: '1.35rem 1.55rem',
                   position: 'relative',
-                  background: 'rgba(0,0,0,0.6)',
+                  background: 'rgba(0,0,0,0.55)',
                   cursor: 'crosshair',
                   display: 'block',
                   textDecoration: 'none',
@@ -1083,32 +1131,32 @@ export function ScrollSections({
                 <div className="target-corner target-corner--tl" />
                 <div className="target-corner target-corner--br" />
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                  <p className="hud-text" style={{ fontSize: '0.32rem', letterSpacing: '0.3em', color: '#888', opacity: 0.35 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.9rem' }}>
+                  <p className="hud-text" style={{ fontSize: 'clamp(0.5rem, 0.65vw, 0.58rem)', letterSpacing: '0.3em', color: '#888', opacity: 0.6, paddingLeft: '0.3em' }}>
                     {p.num}
                   </p>
-                  <p className="hud-text" style={{ fontSize: '0.28rem', letterSpacing: '0.25em', color: '#00ff88', opacity: 0.5 }}>
+                  <p className="hud-text" style={{ fontSize: 'clamp(0.5rem, 0.65vw, 0.58rem)', letterSpacing: '0.28em', color: '#00ff88', opacity: 0.8, paddingLeft: '0.28em' }}>
                     {p.status}
                   </p>
                 </div>
 
                 <h3
                   className="serif-text"
-                  style={{ fontSize: '1.1rem', fontWeight: 400, color: '#ccc', letterSpacing: '0.05em', marginBottom: '0.4rem' }}
+                  style={{ fontSize: 'clamp(1rem, 1.3vw, 1.15rem)', fontWeight: 400, color: '#eaeaea', letterSpacing: '0.04em', marginBottom: '0.5rem', lineHeight: 1.2 }}
                 >
                   {p.name}
                 </h3>
 
-                <p className="hud-text" style={{ fontSize: '0.32rem', letterSpacing: '0.08em', color: '#666', lineHeight: 1.7, marginBottom: '0.75rem' }}>
+                <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 'clamp(0.6rem, 0.78vw, 0.72rem)', letterSpacing: '0.04em', color: '#9a9a9a', lineHeight: 1.55, marginBottom: '0.95rem' }}>
                   {p.desc}
                 </p>
 
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                   {p.tech.map((t) => (
                     <span
                       key={t}
                       className="hud-text tech-tag"
-                      style={{ fontSize: '0.28rem', letterSpacing: '0.15em', color: '#555', opacity: 0.8, padding: '0.1rem 0.3rem', border: '1px solid rgba(85,85,85,0.3)' }}
+                      style={{ fontSize: 'clamp(0.48rem, 0.62vw, 0.56rem)', letterSpacing: '0.16em', color: '#888', opacity: 0.9, padding: '0.22rem 0.45rem', border: '1px solid rgba(136,136,136,0.32)', paddingLeft: 'calc(0.45rem + 0.16em)' }}
                     >
                       {t}
                     </span>
@@ -1144,29 +1192,30 @@ export function ScrollSections({
       <section data-scroll-section data-atmosphere="engine-room" data-section-index={3} style={{ height: '100vh', position: 'relative' }}>
         <div
           style={{
-            position: 'sticky',
-            top: 0,
-            height: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
+            ...SECTION_SHELL_BASE,
             opacity: webOpacity,
             transform: webSectionTransform,
-            filter: isCompactLayout ? 'none' : `blur(${(1 - webEnterMix) * 1.2}px)`,
-            pointerEvents: webOpacity > 0.1 ? 'all' : 'none',
-            gap: 'clamp(1rem, 3vh, 2.2rem)',
-            padding: 'clamp(1rem, 3vh, 2rem)',
+            filter: isCompactLayout ? 'none' : `blur(${(1 - webEnterMix) * 0.6}px)`,
+            pointerEvents: webOpacity > 0.4 ? 'all' : 'none',
+            gap: 'clamp(1.25rem, 3vh, 2.2rem)',
+            padding: 'clamp(2.5rem, 6vh, 4rem) clamp(1.5rem, 5vw, 3rem)',
             overflow: 'hidden',
-            willChange: 'transform, filter',
           }}
         >
-          <p
-            className="hud-text"
-            style={{ fontSize: '0.4rem', letterSpacing: '0.36em', color: '#00ff88', opacity: 0.45, textAlign: 'center' }}
-          >
-            WEBSITE SHOWCASE  //  LIVE PREVIEWS
-          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+            <p
+              className="hud-text"
+              style={{ fontSize: 'clamp(0.6rem, 0.8vw, 0.78rem)', letterSpacing: '0.48em', color: '#d0f7e4', opacity: 0.75, textAlign: 'center', paddingLeft: '0.48em' }}
+            >
+              STAGE 04 — LIVE PREVIEWS
+            </p>
+            <p
+              className="hud-text"
+              style={{ fontSize: 'clamp(0.5rem, 0.7vw, 0.62rem)', letterSpacing: '0.38em', color: '#00ff88', opacity: 0.55, textAlign: 'center', paddingLeft: '0.38em' }}
+            >
+              WEBSITE SHOWCASE  //  ROTATING CATALOG
+            </p>
+          </div>
           <SelectedWorkBrowser webProjects={webProjects} />
         </div>
       </section>
@@ -1175,20 +1224,14 @@ export function ScrollSections({
       <section data-scroll-section data-atmosphere="horizon" data-section-index={4} style={{ height: '100vh', position: 'relative' }}>
         <div
           style={{
-            position: 'sticky',
-            top: 0,
-            height: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
+            ...SECTION_SHELL_BASE,
             opacity: horizonOpacity,
             transform: horizonSectionTransform,
-            filter: isCompactLayout ? 'none' : `blur(${(1 - horizonEnterMix) * 1.8}px)`,
-            pointerEvents: horizonOpacity > 0.1 ? 'all' : 'none',
-            gap: '0.4rem',
+            filter: isCompactLayout ? 'none' : `blur(${(1 - horizonEnterMix) * 0.8}px)`,
+            pointerEvents: horizonOpacity > 0.4 ? 'all' : 'none',
+            gap: '0.5rem',
+            padding: 'clamp(2.5rem, 6vh, 4rem) clamp(1.5rem, 5vw, 3rem)',
             overflow: 'hidden',
-            willChange: 'transform, filter',
           }}
         >
           {/* Aviation background photo — from Sanity or falls back to la-altitude.jpg */}
@@ -1215,27 +1258,37 @@ export function ScrollSections({
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '0.6rem',
-              width: 'min(92vw, 880px)',
-              padding: 'clamp(0.8rem, 2.6vw, 1.7rem)',
+              gap: '0.85rem',
+              width: 'min(92vw, 920px)',
+              padding: 'clamp(1.75rem, 4vw, 2.8rem) clamp(1.25rem, 3.5vw, 2.4rem)',
+              borderRadius: '2px',
               border: `1px solid ${HORIZON_PANEL_BORDER}`,
               background: `linear-gradient(180deg, ${HORIZON_PANEL_BG_TOP}, ${HORIZON_PANEL_BG_BOTTOM})`,
-              backdropFilter: 'blur(6px)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.3)',
             }}
           >
 
             <p
               className="hud-text"
-              style={{ fontSize: '0.35rem', letterSpacing: '0.5em', color: '#aaa', opacity: 0.4 }}
+              style={{ fontSize: 'clamp(0.58rem, 0.8vw, 0.72rem)', letterSpacing: '0.48em', color: '#555', opacity: 0.85, paddingLeft: '0.48em' }}
+            >
+              STAGE 05 — HORIZON
+            </p>
+
+            <p
+              className="hud-text"
+              style={{ fontSize: 'clamp(0.56rem, 0.76vw, 0.68rem)', letterSpacing: '0.42em', color: '#2a2a2a', opacity: 0.7, paddingLeft: '0.42em' }}
             >
               {callsign}  //  {certLabel}
             </p>
 
-            <div style={{ width: '80px', height: '1px', background: 'rgba(68,68,68,0.3)', margin: '0.5rem 0' }} />
+            <div style={{ width: '100px', height: '1px', background: 'rgba(68,68,68,0.35)', margin: '0.65rem 0' }} />
 
             <p
               className="hud-text"
-              style={{ fontSize: '0.35rem', letterSpacing: '0.5em', color: '#333', opacity: 0.3 }}
+              style={{ fontSize: 'clamp(0.54rem, 0.72vw, 0.64rem)', letterSpacing: '0.44em', color: '#444', opacity: 0.55, paddingLeft: '0.44em' }}
             >
               {aviationCoords}
             </p>
@@ -1243,21 +1296,22 @@ export function ScrollSections({
             <h2
               className="serif-text"
               style={{
-                fontSize: 'clamp(1.5rem, 4vw, 3rem)',
+                fontSize: 'clamp(1.7rem, 4.2vw, 3.2rem)',
                 fontWeight: 300,
                 fontStyle: 'italic',
-                color: '#2a2a2a',
-                letterSpacing: '0.1em',
+                color: '#1a1a1a',
+                letterSpacing: '0.08em',
                 textAlign: 'center',
-                marginTop: '0.5rem',
-                marginBottom: '0.5rem',
+                marginTop: '0.85rem',
+                marginBottom: '0.85rem',
+                lineHeight: 1.15,
               }}
             >
               {tagline}
             </h2>
 
             {/* Flight instruments */}
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '1.15rem', marginTop: '1.15rem', flexWrap: 'wrap', justifyContent: 'center' }}>
               {gauges.map(({ label, value }) => (
                 <div
                   key={label}
@@ -1265,30 +1319,31 @@ export function ScrollSections({
                   style={{
                     textAlign: 'center',
                     padding: '0.85rem 1rem',
-                    width: 'min(90px, 22vw)',
-                    height: 'min(90px, 22vw)',
-                    minWidth: '72px',
-                    minHeight: '72px',
+                    width: 'min(108px, 24vw)',
+                    height: 'min(108px, 24vw)',
+                    minWidth: '86px',
+                    minHeight: '86px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    gap: '0.35rem',
                   }}
                 >
-                  <p className="hud-text" style={{ fontSize: '0.3rem', letterSpacing: '0.3em', color: '#aaa', marginBottom: '0.4rem' }}>
+                  <p className="hud-text" style={{ fontSize: 'clamp(0.5rem, 0.66vw, 0.58rem)', letterSpacing: '0.3em', color: '#666', opacity: 0.8, paddingLeft: '0.3em' }}>
                     {label}
                   </p>
-                  <p className="hud-text" style={{ fontSize: '0.55rem', letterSpacing: '0.1em', color: '#333' }}>
+                  <p className="hud-text" style={{ fontSize: 'clamp(0.78rem, 1.05vw, 0.92rem)', letterSpacing: '0.08em', color: '#1a1a1a' }}>
                     {value}
                   </p>
                 </div>
               ))}
             </div>
 
-            <div style={{ width: '80px', height: '1px', background: 'rgba(68,68,68,0.3)', margin: '1rem 0 0.5rem' }} />
+            <div style={{ width: '100px', height: '1px', background: 'rgba(68,68,68,0.35)', margin: '1.15rem 0 0.65rem' }} />
 
             {/* Social / company links */}
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '0.65rem' }}>
               {beaconLinks.map(({ label, href, sub }) => (
                 <a
                   key={label}
@@ -1300,19 +1355,19 @@ export function ScrollSections({
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: '0.2rem',
-                    padding: '0.6rem 1.1rem',
-                    border: '1px solid rgba(42,42,42,0.35)',
+                    gap: '0.3rem',
+                    padding: '0.8rem 1.3rem',
+                    border: '1px solid rgba(42,42,42,0.4)',
                     textDecoration: 'none',
-                    background: 'rgba(245,245,247,0.62)',
+                    background: 'rgba(245,245,247,0.7)',
                     backdropFilter: 'blur(4px)',
                     transition: 'background 0.2s ease, border-color 0.2s ease',
                   }}
                 >
-                  <span className="hud-text" style={{ fontSize: '0.38rem', letterSpacing: '0.25em', color: '#2a2a2a' }}>
+                  <span className="hud-text" style={{ fontSize: 'clamp(0.58rem, 0.78vw, 0.7rem)', letterSpacing: '0.28em', color: '#1a1a1a', paddingLeft: '0.28em' }}>
                     {label} →
                   </span>
-                  <span className="hud-text" style={{ fontSize: '0.28rem', letterSpacing: '0.3em', color: '#888', opacity: 0.6 }}>
+                  <span className="hud-text" style={{ fontSize: 'clamp(0.48rem, 0.62vw, 0.56rem)', letterSpacing: '0.32em', color: '#555', opacity: 0.8, paddingLeft: '0.32em' }}>
                     {sub}
                   </span>
                 </a>
